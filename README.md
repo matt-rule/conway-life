@@ -1,14 +1,14 @@
 # conway-life
-Conway's Game of Life implemented in .NET 7 and WebGL
+Conway's Game of Life implemented in .NET 7, TypeScript and WebGL
 
-# Periodic Oscillations
-Colours are used to highlight periodic oscillations
-Red = period of 2
-Blue = period of 3
-Green = period of 5
-Purple = period of 6
+### Periodic Oscillations
+Colours are used to highlight periodic oscillations<br>
+Red = period of 2<br>
+Blue = period of 3<br>
+Green = period of 5<br>
+Purple = period of 6<br>
 
-# Controls
-Left click: Toggle cell on/off
-Space: Toggle pause
-R: Reset (all cells set to off state)
+### Controls
+Left click: Toggle cell on/off<br>
+Space: Toggle pause<br>
+R: Reset (all cells set to off state)<br>
