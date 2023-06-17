@@ -7,4 +7,8 @@
     <RootNamespace>conway_life</RootNamespace>
   </PropertyGroup>
 
+  <Target Name="CompileTypeScript" BeforeTargets="Build">
+      <Message Text="Compiling TypeScript files..." Importance="high" />
+      <Exec Command="npx tsc &amp;&amp; npx webpack" />
+  </Target>
 </Project>
