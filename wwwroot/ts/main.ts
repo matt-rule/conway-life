@@ -5,7 +5,13 @@ interface LifeCell {
     history: boolean[];
 }
 
-function createGrid(gridWidth : number, gridHeight : number, historyLength : number): LifeCell[][] {
+const cellWidth : number = 20;
+const gridWidth : number = 40;
+const gridHeight : number = 30;
+const historyLength : number = 15;
+const updateIntervalMs : number = 1000 / 4; // milliseconds between each update
+
+function createGrid(): LifeCell[][] {
     const result: LifeCell[][] = new Array(gridWidth);
     for (let x = 0; x < gridWidth; x++) {
         result[x] = new Array<LifeCell>(gridHeight);
@@ -20,96 +26,19 @@ function createGrid(gridWidth : number, gridHeight : number, historyLength : num
     return result;
 }
 
-let canvas : HTMLElement | null = document.getElementById("my_canvas");
+class Renderer {
+    // Define members (properties)
+    public canvas: HTMLElement;
+    public gl: WebGL2RenderingContext;
 
-if (!(canvas instanceof HTMLCanvasElement)) {
-    alert('Canvas element not found');
-}
-else
-{
-    let gl : WebGL2RenderingContext | null = canvas.getContext("webgl2");
-
-    if (!gl) {
-        alert('Your browser does not support WebGL');
-    }
-    
-    canvas.width  = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
-    let cellWidth : number = 20;
-    let lastUpdateTime : number = 0;
-    let updateIntervalMs : number = 1000 / 4; // interval per update in milliseconds
-    let gridWidth : number = 40;
-    let gridHeight : number = 30;
-    let historyLength : number = 15;
-    let grid : LifeCell[][] = createGrid(gridWidth, gridHeight, historyLength);
-    let nextFrame : LifeCell[][] = createGrid(gridWidth, gridHeight, historyLength);
-
-    let pause : boolean = true;
-
-    function wrap(x : number, y : number) {
-        return (x + y) % y;
+    // Define a constructor
+    constructor(canvas: HTMLElement, gl: WebGL2RenderingContext) {
+        this.canvas = canvas;
+        this.gl = gl;
     }
 
-    function animate(timestamp : any): void {
-        if (pause)
-        {
-            draw();
-            return;
-        }
-        let elapsedTime : number = timestamp - lastUpdateTime;
-        if (elapsedTime >= updateIntervalMs) {
-            lastUpdateTime = timestamp;
-
-            for (let x = 0; x < gridWidth; x++) {
-                for (let y = 0; y < gridHeight; y++) {
-                    let liveNeighbors = 0;
-
-                    // Calculate the number of live neighbors
-                    for (let dx = -1; dx <= 1; dx++) {
-                        for (let dy = -1; dy <= 1; dy++) {
-                            if (dx !== 0 || dy !== 0) {
-                                let nx = wrap(x + dx, gridWidth);
-                                let ny = wrap(y + dy, gridHeight);
-
-                                if (grid[nx][ny].active) {
-                                    liveNeighbors++;
-                                }
-                            }
-                        }
-                    }
-
-                    if (grid[x][y].active && (liveNeighbors < 2 || liveNeighbors > 3)) {
-                        nextFrame[x][y].active = false;
-                    } else if (!grid[x][y].active && liveNeighbors === 3) {
-                        nextFrame[x][y].active = true;
-                    } else {
-                        nextFrame[x][y].active = grid[x][y].active;
-                    }
-
-                    // Treat nextFrame[x][y].history as a queue, remove from end and add to beginning
-                    nextFrame[x][y].history.pop();
-                    nextFrame[x][y].history.unshift(nextFrame[x][y].active);
-                }
-            }
-
-            // Copy the contents of nextFrame into grid
-            for (let x = 0; x < gridWidth; x++) {
-                for (let y = 0; y < gridHeight; y++) {
-                    grid[x][y].active = nextFrame[x][y].active;
-                    grid[x][y].history = nextFrame[x][y].history.slice();
-                }
-            }
-        }
-
-        draw();
-        requestAnimationFrame(animate);
-    }
-
-    function drawGrid(program: any, matrixLocation: any, colorLocation: any, projectionMatrix: any): void
+    public drawGrid(program: any, matrixLocation: any, colorLocation: any, projectionMatrix: any): void
     {
-        if (!gl)
-            return;
-
         let gridVertices = [];
 
         // Vertical lines
@@ -124,26 +53,24 @@ else
             gridVertices.push(cellWidth*gridWidth, j);
         }
 
-        let gridVertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gridVertices), gl.STATIC_DRAW);
+        let gridVertexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, gridVertexBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(gridVertices), this.gl.STATIC_DRAW);
 
-        let positionLocation = gl.getAttribLocation(program, "position");
-        gl.enableVertexAttribArray(positionLocation);
-        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        let positionLocation = this.gl.getAttribLocation(program, "position");
+        this.gl.enableVertexAttribArray(positionLocation);
+        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let matrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(matrix, projectionMatrix, [0, 0, 0]);
-        gl.uniformMatrix4fv(matrixLocation, false, matrix);
+        this.gl.uniformMatrix4fv(matrixLocation, false, matrix);
 
-        gl.uniform4f(colorLocation, 0.3, 0.3, 0.3, 1);
-        gl.drawArrays(gl.LINES, 0, gridVertices.length / 2);   
+        this.gl.uniform4f(colorLocation, 0.3, 0.3, 0.3, 1);
+        this.gl.drawArrays(this.gl.LINES, 0, gridVertices.length / 2);   
     }
 
-    function drawSquare(program : WebGLProgram, matrixLocation : WebGLUniformLocation | null, colorLocation : WebGLUniformLocation | null,
+    public drawSquare(program : WebGLProgram, matrixLocation : WebGLUniformLocation | null, colorLocation : WebGLUniformLocation | null,
         projectionMatrix : glMatrix.mat4, size : number, color : number[], x : number, y : number) {
-        if (!gl)
-            return;
 
         let squareVertices = [
             0, 0,
@@ -157,34 +84,32 @@ else
             2, 1, 3
         ];
 
-        let squareVertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVertices), gl.STATIC_DRAW);
+        let squareVertexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, squareVertexBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(squareVertices), this.gl.STATIC_DRAW);
 
-        let squareIndexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, squareIndexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(squareIndices), gl.STATIC_DRAW);
+        let squareIndexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, squareIndexBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(squareIndices), this.gl.STATIC_DRAW);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexBuffer);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, squareIndexBuffer);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, squareVertexBuffer);
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, squareIndexBuffer);
 
-        let positionLocation = gl.getAttribLocation(program, "position");
-        gl.enableVertexAttribArray(positionLocation);
-        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        let positionLocation = this.gl.getAttribLocation(program, "position");
+        this.gl.enableVertexAttribArray(positionLocation);
+        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let matrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(matrix, projectionMatrix, [x, y, 0]);
-        gl.uniformMatrix4fv(matrixLocation, false, matrix);
+        this.gl.uniformMatrix4fv(matrixLocation, false, matrix);
 
-        gl.uniform4f(colorLocation, color[0], color[1], color[2], color[3]);
+        this.gl.uniform4f(colorLocation, color[0], color[1], color[2], color[3]);
 
-        gl.drawElements(gl.TRIANGLES, squareIndices.length, gl.UNSIGNED_SHORT, 0);
+        this.gl.drawElements(this.gl.TRIANGLES, squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
     }
 
-    function drawBorder(program : WebGLProgram, matrixLocation : WebGLUniformLocation | null, colorLocation : WebGLUniformLocation | null,
+    public drawBorder(program : WebGLProgram, matrixLocation : WebGLUniformLocation | null, colorLocation : WebGLUniformLocation | null,
         projectionMatrix : glMatrix.mat4, borderWidth : number, cellWidth : number, x : number, y : number) {
-        if (!gl)
-            return;
 
         let borderVertices = [];
 
@@ -212,24 +137,24 @@ else
             borderVertices.push(cellWidth, i);
         }
 
-        let borderVertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, borderVertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(borderVertices), gl.STATIC_DRAW);
+        let borderVertexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, borderVertexBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(borderVertices), this.gl.STATIC_DRAW);
 
-        let positionLocation = gl.getAttribLocation(program, "position");
-        gl.enableVertexAttribArray(positionLocation);
-        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        let positionLocation = this.gl.getAttribLocation(program, "position");
+        this.gl.enableVertexAttribArray(positionLocation);
+        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let matrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(matrix, projectionMatrix, [x, y, 0]);
-        gl.uniformMatrix4fv(matrixLocation, false, matrix);
+        this.gl.uniformMatrix4fv(matrixLocation, false, matrix);
 
-        gl.uniform4f(colorLocation, 0.4, 0.45, 0.4, 1);
+        this.gl.uniform4f(colorLocation, 0.4, 0.45, 0.4, 1);
 
-        gl.drawArrays(gl.LINES, 0, borderVertices.length / 2);   
+        this.gl.drawArrays(this.gl.LINES, 0, borderVertices.length / 2);   
     }
 
-    function countRepeatingPattern(arr : boolean[], patternLen : number) : number {
+    public countRepeatingPattern(arr : boolean[], patternLen : number) : number {
         if (patternLen <= 0 || patternLen > arr.length) {
             return 0;
         }
@@ -256,17 +181,14 @@ else
 
         return count;
     }
-
-    function draw()
+    
+    public draw(): void
     {
-        if (!gl)
-            return;
-
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.disable(gl.BLEND);
-        gl.disable(gl.CULL_FACE);
+        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+        this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        this.gl.disable(this.gl.BLEND);
+        this.gl.disable(this.gl.CULL_FACE);
 
         let vertexShaderSource : string = `
             attribute vec2 position;
@@ -277,11 +199,11 @@ else
             }
         `;
         
-        let vertexShader : WebGLShader | null = gl.createShader(gl.VERTEX_SHADER);
+        let vertexShader : WebGLShader | null = this.gl.createShader(this.gl.VERTEX_SHADER);
         if (!vertexShader)
             return;
-        gl.shaderSource(vertexShader, vertexShaderSource);
-        gl.compileShader(vertexShader);
+        this.gl.shaderSource(vertexShader, vertexShaderSource);
+        this.gl.compileShader(vertexShader);
 
         let fragmentShaderSource : string = `
             precision mediump float;
@@ -292,33 +214,33 @@ else
             }
         `;
 
-        let fragmentShader : WebGLShader | null = gl.createShader(gl.FRAGMENT_SHADER);
+        let fragmentShader : WebGLShader | null = this.gl.createShader(this.gl.FRAGMENT_SHADER);
         if (!fragmentShader)
             return;
-        gl.shaderSource(fragmentShader, fragmentShaderSource);
-        gl.compileShader(fragmentShader);
+        this.gl.shaderSource(fragmentShader, fragmentShaderSource);
+        this.gl.compileShader(fragmentShader);
 
-        let program : WebGLProgram | null = gl.createProgram();
+        let program : WebGLProgram | null = this.gl.createProgram();
         if (!program)
             return;
 
-        gl.attachShader(program, vertexShader);
-        gl.attachShader(program, fragmentShader);
-        gl.linkProgram(program);
-        gl.useProgram(program);
+        this.gl.attachShader(program, vertexShader);
+        this.gl.attachShader(program, fragmentShader);
+        this.gl.linkProgram(program);
+        this.gl.useProgram(program);
 
         let projectionMatrix : glMatrix.mat4 = glMatrix.mat4.create();
-        glMatrix.mat4.ortho(projectionMatrix, 0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+        glMatrix.mat4.ortho(projectionMatrix, 0, this.gl.canvas.width, this.gl.canvas.height, 0, -1, 1);
 
-        let matrixLocation : WebGLUniformLocation | null = gl.getUniformLocation(program, "u_matrix");
-        let colorLocation : WebGLUniformLocation | null = gl.getUniformLocation(program, "u_color");
+        let matrixLocation : WebGLUniformLocation | null = this.gl.getUniformLocation(program, "u_matrix");
+        let colorLocation : WebGLUniformLocation | null = this.gl.getUniformLocation(program, "u_color");
 
         for (let x = 0; x < gridWidth; x += 1) {
             for (let y = 0; y < gridHeight; y += 1) {
 
-                let r_repeats = countRepeatingPattern(grid[x][y].history, 2);
-                let g_repeats = countRepeatingPattern(grid[x][y].history, 5);
-                let b_repeats = countRepeatingPattern(grid[x][y].history, 3);
+                let r_repeats = this.countRepeatingPattern(thisFrame[x][y].history, 2);
+                let g_repeats = this.countRepeatingPattern(thisFrame[x][y].history, 5);
+                let b_repeats = this.countRepeatingPattern(thisFrame[x][y].history, 3);
 
                 let r = (1.0 / 6) * r_repeats;    // floor(15/2) - 1
                 let g = (1.0 / 2) * g_repeats;    // 15/5 - 1
@@ -326,7 +248,7 @@ else
 
                 if (r_repeats<3 && b_repeats<2)
                 {
-                    let repeats_6 = countRepeatingPattern(grid[x][y].history, 6);
+                    let repeats_6 = this.countRepeatingPattern(thisFrame[x][y].history, 6);
                     let val_6 = (1.0 / 2) * repeats_6;
                     r = val_6;
                     b = val_6;
@@ -334,63 +256,151 @@ else
 
                 let color = [r,g,b,1];
 
-                drawSquare(program, matrixLocation, colorLocation, projectionMatrix, cellWidth, color, x*cellWidth, y*cellWidth);
+                this.drawSquare(program, matrixLocation, colorLocation, projectionMatrix, cellWidth, color, x*cellWidth, y*cellWidth);
 
-                if (grid[x][y].active)
-                    drawBorder(program, matrixLocation, colorLocation, projectionMatrix, 3, cellWidth, x*cellWidth, y*cellWidth);
+                if (thisFrame[x][y].active)
+                this.drawBorder(program, matrixLocation, colorLocation, projectionMatrix, 3, cellWidth, x*cellWidth, y*cellWidth);
             }
         }
 
-        drawGrid(program, matrixLocation, colorLocation, projectionMatrix);
+        this.drawGrid(program, matrixLocation, colorLocation, projectionMatrix);
+    }
+}
+
+class GameRules {
+    private static wrap(x : number, y : number) {
+        return (x + y) % y;
     }
 
-    document.addEventListener('keydown', function(event) {
-        if (event.code === 'Space') {
-            pause = !pause;
-            if (!pause)
-                requestAnimationFrame(animate);
-        }
-        if (event.code === 'KeyR') {
-            for (let x = 0; x < gridWidth; x++) {
-                for (let y = 0; y < gridHeight; y++) {
-                    grid[x][y].active = false;
-                }
-            }
-        
-            draw();
-        }
-    });
+    public static update(thisFrame : LifeCell[][], nextFrame : LifeCell[][]) {
+        for (let x = 0; x < gridWidth; x++) {
+            for (let y = 0; y < gridHeight; y++) {
+                let liveNeighbors = 0;
 
-    if (canvas) {
-        canvas.addEventListener('mousedown', function(event) {
-            if (!canvas)
+                // Calculate the number of live neighbors
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        if (dx !== 0 || dy !== 0) {
+                            let nx = this.wrap(x + dx, gridWidth);
+                            let ny = this.wrap(y + dy, gridHeight);
+
+                            if (thisFrame[nx][ny].active) {
+                                liveNeighbors++;
+                            }
+                        }
+                    }
+                }
+
+                if (thisFrame[x][y].active && (liveNeighbors < 2 || liveNeighbors > 3)) {
+                    nextFrame[x][y].active = false;
+                } else if (!thisFrame[x][y].active && liveNeighbors === 3) {
+                    nextFrame[x][y].active = true;
+                } else {
+                    nextFrame[x][y].active = thisFrame[x][y].active;
+                }
+
+                // Treat nextFrame[x][y].history as a queue, remove from end and add to beginning
+                nextFrame[x][y].history.pop();
+                nextFrame[x][y].history.unshift(nextFrame[x][y].active);
+            }
+        }
+
+        // Copy the contents of nextFrame into thisFrame
+        for (let x = 0; x < gridWidth; x++) {
+            for (let y = 0; y < gridHeight; y++) {
+                thisFrame[x][y].active = nextFrame[x][y].active;
+                thisFrame[x][y].history = nextFrame[x][y].history.slice();
+            }
+        }
+    }
+}
+
+let canvas : HTMLElement | null = document.getElementById("my_canvas");
+let lastUpdateTime : number = 0;
+let thisFrame : LifeCell[][] = createGrid();
+let nextFrame : LifeCell[][] = createGrid();
+let pause : boolean = true;
+
+if (!(canvas instanceof HTMLCanvasElement)) {
+    alert('Canvas element not found');
+}
+else
+{
+    canvas.width  = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    let gl : WebGL2RenderingContext | null = canvas.getContext("webgl2");
+
+    if (!gl) {
+        alert('Your browser does not support WebGL');
+    }
+    else
+    {
+        let renderer = new Renderer(canvas, gl);
+
+        function animate(timestamp : any): void {
+            if (pause)
+            {
+                renderer.draw();
                 return;
-                
-            let rect = canvas.getBoundingClientRect();
-            let mouseX = event.clientX - rect.left;
-            let mouseY = event.clientY - rect.top;
-
-            let cellX = Math.floor(mouseX / cellWidth);
-            let cellY = Math.floor(mouseY / cellWidth);
-
-            if (cellX >= 0 && cellX < gridWidth && cellY >= 0 && cellY < gridHeight) {
-                if (event.button === 0) {           // Left mouse button
-                    grid[cellX][cellY].active = !grid[cellX][cellY].active;
-                }
-                // if (event.button === 2) {           // Right mouse button
-                    
-                // }
             }
-
-            draw();
+            let elapsedTime : number = timestamp - lastUpdateTime;
+            if (elapsedTime >= updateIntervalMs) {
+                lastUpdateTime = timestamp;
+                GameRules.update(thisFrame, nextFrame);
+            }
+    
+            renderer.draw();
+            requestAnimationFrame(animate);
+        }
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space') {
+                pause = !pause;
+                if (!pause)
+                    requestAnimationFrame(animate);
+            }
+            if (event.code === 'KeyR') {
+                for (let x = 0; x < gridWidth; x++) {
+                    for (let y = 0; y < gridHeight; y++) {
+                        thisFrame[x][y].active = false;
+                    }
+                }
+            
+                renderer.draw();
+            }
         });
-    }
 
-    if (canvas) {
-        canvas.addEventListener('contextmenu', function(event) {
-            event.preventDefault();
-        });
-    }
+        if (canvas) {
+            canvas.addEventListener('mousedown', function(event) {
+                if (!canvas)
+                    return;
+                    
+                let rect = canvas.getBoundingClientRect();
+                let mouseX = event.clientX - rect.left;
+                let mouseY = event.clientY - rect.top;
 
-    requestAnimationFrame(animate);
+                let cellX = Math.floor(mouseX / cellWidth);
+                let cellY = Math.floor(mouseY / cellWidth);
+
+                if (cellX >= 0 && cellX < gridWidth && cellY >= 0 && cellY < gridHeight) {
+                    if (event.button === 0) {           // Left mouse button
+                        thisFrame[cellX][cellY].active = !thisFrame[cellX][cellY].active;
+                    }
+                    // if (event.button === 2) {           // Right mouse button
+                        
+                    // }
+                }
+
+                renderer.draw();
+            });
+        }
+
+        if (canvas) {
+            canvas.addEventListener('contextmenu', function(event) {
+                event.preventDefault();
+            });
+        }
+
+        requestAnimationFrame(animate);
+    }
 }
