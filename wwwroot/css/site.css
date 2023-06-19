@@ -28,7 +28,7 @@ body {
   padding: 0;
 }
 
-body, div, main, canvas {
+body, div, main {
   display: block;
   width: 100%;
   min-height: 100%;
@@ -37,4 +37,77 @@ body, div, main, canvas {
   padding: 0;
   height: 100%;
   box-sizing: border-box;
+  background-color: #333;
+}
+
+canvas {
+  display: block;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+h4, p {
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  color: #ddd;
+}
+
+.toolbar-button {
+  width: 40px;
+  height: 40px;
+  max-width: 40px;
+  max-height: 40px;
+  margin: 0px;
+  padding: 4px;
+  font-size: 21px;
+  border: 0px;
+  text-align: center;
+}
+
+#tooltip {
+  background-color: #ddd;
+  color: black;
+  padding: 5px;
+  border-radius: 5px;
+  white-space: nowrap;
+  width: fit-content;
+  height: fit-content;
+  min-width: 20px;
+  min-height: 10px;
+  max-width: 200px;
+  max-height: 50px;
+}
+
+.text-icon {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+button {
+  font-family: 'Courier New', Courier, monospace;
+  border-radius: 4px;
+}
+
+.white-span {
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  color: #ddd;
+}
+
+.numeric-edit {
+  width: 40px;
+}
+
+.rounded-border {
+  border: 2px solid white;
+  border-radius: 10px;
+  background-color: transparent;
+  width: fit-content;
+  height: fit-content;
+  min-width: 0px;
+  min-height: 0px;
+  margin: 12px;
+  padding: 6px;
+}
+
+input[type=checkbox] {
+  transform: scale(1.5);
 }

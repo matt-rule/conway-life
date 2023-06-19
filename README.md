@@ -1,5 +1,5 @@
 # conway-life
-Conway's Game of Life implemented in .NET 7, TypeScript and WebGL
+Conway's Game of Life emulator written in TypeScript and WebGL served by an ASP.NET 7 web server
 
 ### Periodic Oscillations
 Colours are used to highlight periodic oscillations<br>

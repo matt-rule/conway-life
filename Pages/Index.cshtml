@@ -4,4 +4,22 @@
     ViewData["Title"] = "Home page";
 }
 
-<canvas id="my_canvas" style="width: 100%; height: 100%"></canvas>
+<div class="rounded-border">
+    <span style="font-size: 1.2rem; font-weight: 500">
+        <p style="display: inline">Conway's Game of Life</p>
+        <button id="pause-button" class="toolbar-button" style="display: inline-block">▶️</button>
+        <button id="reset-button" class="toolbar-button" style="display: inline-block">🔄</button>
+    </span>
+    <span class="white-span">
+        Timestep (ms): <input class="numeric-edit" id="timestep-edit" value="125" />
+        Cell Size: <input class="numeric-edit" id="cell-size-edit" value="20" />
+        Width: <input class="numeric-edit" id="grid-width-edit" value="40" />
+        Height: <input class="numeric-edit" id="grid-height-edit" value="30" />
+        Show Grid: <input type="checkbox" id="show-grid-checkbox" checked="true" />
+        Detect Oscillations: <input type="checkbox" id="detect-oscillations-checkbox" checked="true" />
+    </span>
+</div>
+
+<canvas id="my_canvas"></canvas>
+
+<div id="tooltip" style="display: none; position: absolute;"></div>
