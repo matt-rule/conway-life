@@ -611,6 +611,8 @@ else
             const detectOscillationsCheckBox = document.getElementById('detect-oscillations-checkbox') as HTMLInputElement;
             const survivalRulesEdit = document.getElementById('survival-rules-edit') as HTMLInputElement;
             const birthRulesEdit = document.getElementById('birth-rules-edit') as HTMLInputElement;
+            const lexiconLabel = document.getElementById('lexicon-input-label') as HTMLSpanElement;
+            const lexiconTextArea = document.getElementById('lexicon-input-textarea') as HTMLTextAreaElement;
             const tooltip = document.getElementById('tooltip');
         
             if (resetButton == null || pauseButton == null || timestepEdit == null || showGridCheckBox == null || tooltip == null)
@@ -789,6 +791,59 @@ else
                 pauseButton.textContent = pause ? '▶️' : '⏸️';
                 if (!pause)
                     requestAnimationFrame(animate);
+            });
+
+            addTooltipToElements([lexiconLabel, lexiconTextArea], 'Warning: Overwrites grid contents; requires grid dimensions to be sufficient for input. Copy-paste patterns from https://conwaylife.com/ref/lexicon/lex.htm');
+
+            lexiconTextArea.addEventListener('input', (event) => {
+                let inputText = lexiconTextArea.value;
+                
+                // Remove all '\t' characters from the input
+                inputText = inputText.replace(/\t/g, '');
+
+                // Validate input to contain only 'O' and '.'
+                if (!/^[\n\.O]*$/.test(inputText)) {
+                    console.log('unwanted characters detected');
+                    return;
+                }
+            
+                // Split the input into lines
+                const lines = inputText.split('\n');
+            
+                // Initialize 2D boolean array
+                const boolArray = lines.map(line => {
+                    return line.split('').map(char => char === 'O');
+                });
+            
+                const patternWidth = boolArray.length;
+                const patternHeight = (boolArray[0] || []).length;
+
+                // Check if the grid is big enough for the pattern
+                if (patternWidth > gridWidth || patternHeight > gridHeight) {
+                    return;
+                }
+
+                // Clear the grid
+                let thisFrame = frames[currentFrame];
+                for (let x = 0; x < gridWidth; x++) {
+                    for (let y = 0; y < gridHeight; y++) {
+                        thisFrame[x][y].active = false;
+                    }
+                }
+            
+                // Calculate the start position to center the pattern
+                const startX = Math.floor((gridWidth - patternWidth) / 2);
+                const startY = Math.floor((gridHeight - patternHeight) / 2);
+
+                // Copy the boolean array into thisFrame centered
+                for (let x = 0; x < patternWidth; x++) {
+                    for (let y = 0; y < patternHeight; y++) {
+                        thisFrame[startX + x][startY + y].active = boolArray[x][y];
+                    }
+                }
+            
+                // Draw the frame
+                renderer.draw(thisFrame);
             });
         });
         
