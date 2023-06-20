@@ -5,18 +5,17 @@
 }
 
 <div class="rounded-border">
-    <span style="font-size: 1.2rem; font-weight: 500">
-        <p style="display: inline">Conway's Game of Life</p>
+    <span class="white-span">
+        <span class="left-pad" id="timestep-label">Timestep:</span> <input class="numeric-edit" id="timestep-edit" value="125" />
+        <span class="left-pad" id="cell-size-label">Cell Size:</span> <input class="numeric-edit" id="cell-size-edit" value="20" />
+        <span class="left-pad" id="grid-width-label">Width:</span> <input class="numeric-edit" id="grid-width-edit" value="40" />
+        <span class="left-pad" id="grid-height-label">Height:</span> <input class="numeric-edit" id="grid-height-edit" value="30" />
+        <span class="left-pad" id="show-grid-label">Show Grid:</span> <input type="checkbox" id="show-grid-checkbox" checked="true" />
+        <span class="left-pad" id="detect-oscillations-label">Oscillations:</span> <input type="checkbox" id="detect-oscillations-checkbox" checked="true" />
+        <span class="left-pad" id="survival-rules-label">Survival Rules:</span> <input class="rule-edit" id="survival-rules-edit" value="2,3" />
+        <span class="left-pad" id="birth-rules-label">Birth Rules:</span> <input class="rule-edit" id="birth-rules-edit" value="3" />
         <button id="pause-button" class="toolbar-button" style="display: inline-block">▶️</button>
         <button id="reset-button" class="toolbar-button" style="display: inline-block">🔄</button>
-    </span>
-    <span class="white-span">
-        Timestep (ms): <input class="numeric-edit" id="timestep-edit" value="125" />
-        Cell Size: <input class="numeric-edit" id="cell-size-edit" value="20" />
-        Width: <input class="numeric-edit" id="grid-width-edit" value="40" />
-        Height: <input class="numeric-edit" id="grid-height-edit" value="30" />
-        Show Grid: <input type="checkbox" id="show-grid-checkbox" checked="true" />
-        Detect Oscillations: <input type="checkbox" id="detect-oscillations-checkbox" checked="true" />
     </span>
 </div>
 

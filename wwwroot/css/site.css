@@ -57,7 +57,7 @@ h4, p {
   height: 40px;
   max-width: 40px;
   max-height: 40px;
-  margin: 0px;
+  margin: 0px 4px 0px 4px;
   padding: 4px;
   font-size: 21px;
   border: 0px;
@@ -69,13 +69,14 @@ h4, p {
   color: black;
   padding: 5px;
   border-radius: 5px;
-  white-space: nowrap;
   width: fit-content;
   height: fit-content;
   min-width: 20px;
   min-height: 10px;
-  max-width: 200px;
-  max-height: 50px;
+  max-width: 300px;
+  max-height: 120px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .text-icon {
@@ -96,6 +97,10 @@ button {
   width: 40px;
 }
 
+.rule-edit {
+  width: 80px;
+}
+
 .rounded-border {
   border: 2px solid white;
   border-radius: 10px;
@@ -105,9 +110,13 @@ button {
   min-width: 0px;
   min-height: 0px;
   margin: 12px;
-  padding: 6px;
+  padding: 6px 15px 6px 15px;
 }
 
 input[type=checkbox] {
   transform: scale(1.5);
+}
+
+.left-pad {
+  padding-left: 12px;
 }

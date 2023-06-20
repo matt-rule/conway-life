@@ -16,6 +16,8 @@ let history: boolean[][][] = createHistory();
 let cursorCellX: number = -1;
 let cursorCellY: number = -1;
 let timestepMs = 125;
+let surviveConditions: boolean[] = [false,false,true,true,false,false,false,false,false];
+let birthConditions: boolean[] = [false,false,false,true,false,false,false,false,false];
 
 function createGrid(): LifeCell[][] {
     const result: LifeCell[][] = new Array(gridWidth);
@@ -416,9 +418,9 @@ class GameRules {
                 }
 
                 let active: boolean = false;
-                if (thisFrame[x][y].active && (liveNeighbors < 2 || liveNeighbors > 3)) {
+                if (thisFrame[x][y].active && !surviveConditions[liveNeighbors]) {
                     active = false;
-                } else if (!thisFrame[x][y].active && liveNeighbors === 3) {
+                } else if (!thisFrame[x][y].active && birthConditions[liveNeighbors]) {
                     active = true;
                 } else {
                     active = thisFrame[x][y].active;
@@ -554,9 +556,6 @@ else
                 cursorCellX = Math.floor(mouseX / cellWidth);
                 cursorCellY = Math.floor(mouseY / cellWidth);
 
-                console.log('x:', cursorCellX);
-                console.log('y:', cursorCellY);
-
                 renderer.draw(frames[currentFrame]);
             });
         }
@@ -596,61 +595,56 @@ else
         document.addEventListener('DOMContentLoaded', () => {
             const resetButton = document.getElementById('reset-button');
             const pauseButton = document.getElementById('pause-button');
+            const timestepLabel = document.getElementById('timestep-label') as HTMLSpanElement;
+            const cellSizeLabel = document.getElementById('cell-size-label') as HTMLSpanElement;
+            const gridWidthLabel = document.getElementById('grid-width-label') as HTMLSpanElement;
+            const gridHeightLabel = document.getElementById('grid-height-label') as HTMLSpanElement;
+            const showGridLabel = document.getElementById('show-grid-label') as HTMLSpanElement;
+            const detectOscillationsLabel = document.getElementById('detect-oscillations-label') as HTMLSpanElement;
+            const survivalRulesLabel = document.getElementById('survival-rules-label') as HTMLSpanElement;
+            const birthRulesLabel = document.getElementById('birth-rules-label') as HTMLSpanElement;
             const timestepEdit = document.getElementById('timestep-edit') as HTMLInputElement;
             const cellSizeEdit = document.getElementById('cell-size-edit') as HTMLInputElement;
             const gridWidthEdit = document.getElementById('grid-width-edit') as HTMLInputElement;
             const gridHeightEdit = document.getElementById('grid-height-edit') as HTMLInputElement;
             const showGridCheckBox = document.getElementById('show-grid-checkbox') as HTMLInputElement;
             const detectOscillationsCheckBox = document.getElementById('detect-oscillations-checkbox') as HTMLInputElement;
+            const survivalRulesEdit = document.getElementById('survival-rules-edit') as HTMLInputElement;
+            const birthRulesEdit = document.getElementById('birth-rules-edit') as HTMLInputElement;
             const tooltip = document.getElementById('tooltip');
         
             if (resetButton == null || pauseButton == null || timestepEdit == null || showGridCheckBox == null || tooltip == null)
                 return;
-        
-            resetButton.addEventListener('mousemove', (event) => {
-                tooltip.style.display = 'inline';
-                tooltip.textContent = 'Reset (R)';
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY + 10) + 'px';
-            });
-        
-            resetButton.addEventListener('mouseleave', () => {
-                tooltip.style.display = 'none';
-            });
-        
-            resetButton.addEventListener('click', () => {
-                let thisFrame: LifeCell[][] = frames[currentFrame];
-                for (let x = 0; x < gridWidth; x++) {
-                    for (let y = 0; y < gridHeight; y++) {
-                        thisFrame[x][y].active = false;
+
+            function addTooltipToElements(elements : HTMLElement[], tooltipText : string) {
+                if (!tooltip)
+                    return;
+
+                elements.forEach(element => {
+                    if (element)
+                    {
+                        element.addEventListener('mousemove', (event) => {
+                            tooltip.style.display = 'block';
+                            tooltip.textContent = tooltipText;
+                            tooltip.style.left = (event.pageX + 10) + 'px';
+                            tooltip.style.top = (event.pageY + 10) + 'px';
+                        });
+                
+                        element.addEventListener('mouseleave', () => {
+                            tooltip.style.display = 'none';
+                        });
                     }
-                }
-            
-                renderer.draw(thisFrame);
-            });
-        
-            pauseButton.addEventListener('mousemove', (event) => {
-                tooltip.style.display = 'inline';
-                tooltip.textContent = 'Pause (spacebar)';
-                tooltip.style.left = (event.pageX + 10) + 'px';
-                tooltip.style.top = (event.pageY + 10) + 'px';
-            });
-        
-            pauseButton.addEventListener('mouseleave', () => {
-                tooltip.style.display = 'none';
-            });
-        
-            pauseButton.addEventListener('click', () => {
-                pause = !pause;
-                pauseButton.textContent = pause ? '▶️' : '⏸️';
-                if (!pause)
-                    requestAnimationFrame(animate);
-            });
+                });
+            }
+
+            addTooltipToElements([showGridLabel, showGridCheckBox], 'Timestep in milliseconds (1-1000)');
 
             showGridCheckBox.addEventListener('click', () => {
                 showGrid = showGridCheckBox.checked;
                 renderer.draw(frames[currentFrame]);
             });
+
+            addTooltipToElements([timestepLabel, timestepEdit], 'Timestep in milliseconds (1-1000)');
 
             timestepEdit.addEventListener('input', () => {
                 const value = timestepEdit.value;
@@ -660,13 +654,15 @@ else
                     console.log('Please enter a numeric value');
                 }
 
-                if (numericValue >= 15 && numericValue <= 1000) {
+                if (numericValue >= 1 && numericValue <= 1000) {
                     timestepMs = numericValue;
                     console.log(`timestepMs has been set to: ${timestepMs}`);
                 } else {
-                    console.log('Value must be between 15 and 1000 inclusive');
+                    console.log('Value must be between 1 and 1000 inclusive');
                 }
             });
+
+            addTooltipToElements([cellSizeLabel, cellSizeEdit], 'Cell size in pixels (1-50)');
 
             cellSizeEdit.addEventListener('input', () => {
                 const value = cellSizeEdit.value;
@@ -686,6 +682,8 @@ else
                 resizeCanvas(cellWidth*gridWidth, cellWidth*gridHeight);
             });
 
+            addTooltipToElements([gridWidthLabel, gridWidthEdit], 'Grid width measured in cells (1-1000)');
+
             gridWidthEdit.addEventListener('input', () => {
                 const value = gridWidthEdit.value;
                 const numericValue = parseInt(value, 10);
@@ -694,17 +692,19 @@ else
                     console.log('Please enter a numeric value');
                 }
 
-                if (numericValue >= 3 && numericValue <= 100) {
+                if (numericValue >= 3 && numericValue <= 1000) {
                     gridWidth = numericValue;
                     console.log(`gridWidth has been set to: ${gridWidth}`);
                 } else {
-                    console.log('Value must be between 3 and 100 inclusive');
+                    console.log('Value must be between 3 and 1000 inclusive');
                 }
 
                 frames = [createGrid(), createGrid()];
                 history = createHistory();
                 resizeCanvas(cellWidth*gridWidth, cellWidth*gridHeight);
             });
+
+            addTooltipToElements([gridHeightLabel, gridHeightEdit], 'Grid height measured in cells (1-1000)');
 
             gridHeightEdit.addEventListener('input', () => {
                 const value = gridHeightEdit.value;
@@ -714,11 +714,11 @@ else
                     console.log('Please enter a numeric value');
                 }
 
-                if (numericValue >= 3 && numericValue <= 100) {
+                if (numericValue >= 3 && numericValue <= 1000) {
                     gridHeight = numericValue;
                     console.log(`gridHeight has been set to: ${gridHeight}`);
                 } else {
-                    console.log('Value must be between 3 and 100 inclusive');
+                    console.log('Value must be between 3 and 1000 inclusive');
                 }
 
                 frames = [createGrid(), createGrid()];
@@ -726,9 +726,69 @@ else
                 resizeCanvas(cellWidth*gridWidth, cellWidth*gridHeight);
             });
 
+            addTooltipToElements([detectOscillationsLabel, detectOscillationsCheckBox], 'Detect and highlight oscillations. Period 2 = red, 3 = blue, 5 = green, 6 = purple');
+
             detectOscillationsCheckBox.addEventListener('click', () => {
                 detectOscillations = detectOscillationsCheckBox.checked;
                 renderer.draw(frames[currentFrame]);
+            });
+
+            addTooltipToElements([survivalRulesLabel, survivalRulesEdit],
+                'Comma-separated list of numbers. If a live cell has N neighbours and N is listed here, it stays alive, eg. Game of Life is "2,3"');
+
+            survivalRulesEdit.addEventListener('input', () => {
+                const value = survivalRulesEdit.value;
+            
+                surviveConditions = [false, false, false, false, false, false, false, false, false];
+            
+                const numbers = value.split(',');
+                for (let numStr of numbers) {
+                    let num = parseInt(numStr, 10);
+            
+                    if (!isNaN(num) && num < 9) {
+                        surviveConditions[num] = true;
+                    }
+                }
+            });
+
+            addTooltipToElements([birthRulesLabel, birthRulesEdit],
+                'Comma-separated list of numbers. If a dead cell has N neighbours and N is listed here, it is activated, eg. Game of Life is "3"');
+
+            birthRulesEdit.addEventListener('input', () => {
+                const value = birthRulesEdit.value;
+            
+                birthConditions = [false, false, false, false, false, false, false, false, false];
+            
+                const numbers = value.split(',');
+                for (let numStr of numbers) {
+                    let num = parseInt(numStr, 10);
+            
+                    if (!isNaN(num) && num < 9) {
+                        birthConditions[num] = true;
+                    }
+                }
+            });
+
+            addTooltipToElements([resetButton], 'Reset (R)');
+        
+            resetButton.addEventListener('click', () => {
+                let thisFrame: LifeCell[][] = frames[currentFrame];
+                for (let x = 0; x < gridWidth; x++) {
+                    for (let y = 0; y < gridHeight; y++) {
+                        thisFrame[x][y].active = false;
+                    }
+                }
+            
+                renderer.draw(thisFrame);
+            });
+        
+            addTooltipToElements([pauseButton], 'Pause (spacebar)');
+        
+            pauseButton.addEventListener('click', () => {
+                pause = !pause;
+                pauseButton.textContent = pause ? '▶️' : '⏸️';
+                if (!pause)
+                    requestAnimationFrame(animate);
             });
         });
         
