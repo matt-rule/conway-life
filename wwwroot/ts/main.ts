@@ -639,7 +639,7 @@ else
                 });
             }
 
-            addTooltipToElements([showGridLabel, showGridCheckBox], 'Timestep in milliseconds (1-1000)');
+            addTooltipToElements([showGridLabel, showGridCheckBox], 'Show gridlines');
 
             showGridCheckBox.addEventListener('click', () => {
                 showGrid = showGridCheckBox.checked;
@@ -771,7 +771,7 @@ else
                 }
             });
 
-            addTooltipToElements([resetButton], 'Reset (R)');
+            addTooltipToElements([resetButton], 'Reset (R key on non-mobile devices)');
         
             resetButton.addEventListener('click', () => {
                 let thisFrame: LifeCell[][] = frames[currentFrame];
@@ -784,7 +784,7 @@ else
                 renderer.draw(thisFrame);
             });
         
-            addTooltipToElements([pauseButton], 'Pause (spacebar)');
+            addTooltipToElements([pauseButton], 'Play/pause (spacebar on non-mobile devices)');
         
             pauseButton.addEventListener('click', () => {
                 pause = !pause;
