@@ -18,6 +18,9 @@ let cursorCellY: number = -1;
 let timestepMs = 125;
 let surviveConditions: boolean[] = [false,false,true,true,false,false,false,false,false];
 let birthConditions: boolean[] = [false,false,false,true,false,false,false,false,false];
+let brush: boolean[][] | null = null;
+let brushWidth = 0;
+let brushHeight = 0;
 
 function createGrid(): LifeCell[][] {
     const result: LifeCell[][] = new Array(gridWidth);
@@ -354,8 +357,32 @@ class Renderer {
             }
         }
 
-        if (cursorCellX >= 0 && cursorCellX < gridWidth && cursorCellY >= 0 && cursorCellY < gridHeight) {
-            this.drawBorder(cursorCellX*cellWidth, cursorCellY*cellWidth, true);
+        if (cursorCellX >= 0 && cursorCellX < gridWidth && cursorCellY >= 0 && cursorCellY < gridHeight)
+        {
+            if (!brush)
+            {
+                this.drawBorder(cursorCellX*cellWidth, cursorCellY*cellWidth, true);
+            }
+            else
+            {
+                // Calculate offsets to center the brush around the cursor
+                const offsetX = Math.floor(brushWidth / 2);
+                const offsetY = Math.floor(brushHeight / 2);
+        
+                // Iterate through each cell in the brush
+                for (let brushX = 0; brushX < brushWidth; brushX++) {
+                    for (let brushY = 0; brushY < brushHeight; brushY++) {
+                        // Calculate the corresponding grid position
+                        const gridX = cursorCellX - offsetX + brushX;
+                        const gridY = cursorCellY - offsetY + brushY;
+        
+                        // Check if the position is within the grid boundaries
+                        if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+                            this.drawBorder(gridX * cellWidth, gridY * cellWidth, brush[brushX][brushY]);
+                        }
+                    }
+                }
+            }
         }
 
         this.drawGrid();
@@ -575,11 +602,34 @@ else
                 let thisFrame: LifeCell[][] = frames[currentFrame];
                 if (cellX >= 0 && cellX < gridWidth && cellY >= 0 && cellY < gridHeight) {
                     if (event.button === 0) {           // Left mouse button
-                        thisFrame[cellX][cellY].active = !thisFrame[cellX][cellY].active;
+
+                        if (!brush)
+                        {
+                            thisFrame[cellX][cellY].active = !thisFrame[cellX][cellY].active;
+                        }
+                        else
+                        {
+                            // Calculate offsets to center the brush around the cursor
+                            const offsetX = Math.floor(brushWidth / 2);
+                            const offsetY = Math.floor(brushHeight / 2);
+                    
+                            // Iterate through each cell in the brush
+                            for (let brushX = 0; brushX < brushWidth; brushX++) {
+                                for (let brushY = 0; brushY < brushHeight; brushY++) {
+                                    // Calculate the corresponding grid position
+                                    const gridX = cellX - offsetX + brushX;
+                                    const gridY = cellY - offsetY + brushY;
+                    
+                                    // Check if the position is within the grid boundaries
+                                    if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+                                        // Place the brush cell on the grid
+                                        thisFrame[gridX][gridY].active = brush[brushX][brushY];
+                    
+                                    }
+                                }
+                            }
+                        }
                     }
-                    // if (event.button === 2) {           // Right mouse button
-                        
-                    // }
                 }
 
                 renderer.draw(thisFrame);
@@ -801,49 +851,28 @@ else
                 // Remove all '\t' characters from the input
                 inputText = inputText.replace(/\t/g, '');
 
+                if (inputText.length === 0)
+                {
+                    brush = null;
+                    return;
+                }
+
                 // Validate input to contain only 'O' and '.'
                 if (!/^[\n\.O]*$/.test(inputText)) {
                     console.log('unwanted characters detected');
+                    brush = null;
                     return;
                 }
             
                 // Split the input into lines
                 const lines = inputText.split('\n');
             
-                // Initialize 2D boolean array
-                const boolArray = lines.map(line => {
+                brush = lines.map(line => {
                     return line.split('').map(char => char === 'O');
                 });
-            
-                const patternWidth = boolArray.length;
-                const patternHeight = (boolArray[0] || []).length;
+                brushWidth = brush.length;
+                brushHeight = (brush[0] || []).length;
 
-                // Check if the grid is big enough for the pattern
-                if (patternWidth > gridWidth || patternHeight > gridHeight) {
-                    return;
-                }
-
-                // Clear the grid
-                let thisFrame = frames[currentFrame];
-                for (let x = 0; x < gridWidth; x++) {
-                    for (let y = 0; y < gridHeight; y++) {
-                        thisFrame[x][y].active = false;
-                    }
-                }
-            
-                // Calculate the start position to center the pattern
-                const startX = Math.floor((gridWidth - patternWidth) / 2);
-                const startY = Math.floor((gridHeight - patternHeight) / 2);
-
-                // Copy the boolean array into thisFrame centered
-                for (let x = 0; x < patternWidth; x++) {
-                    for (let y = 0; y < patternHeight; y++) {
-                        thisFrame[startX + x][startY + y].active = boolArray[x][y];
-                    }
-                }
-            
-                // Draw the frame
-                renderer.draw(thisFrame);
             });
         });
         
