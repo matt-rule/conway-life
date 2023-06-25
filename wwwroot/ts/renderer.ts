@@ -2,6 +2,8 @@ import * as glMatrix from 'gl-matrix';
 
 import { LifeCell } from './lifecell';
 import { GameState } from './gamestate';
+import { FiniteGrid } from './finitegrid';
+import { SparseMatrixGrid } from './sparsematrix';
 
 export class Renderer {
     // Define members (properties)
@@ -298,7 +300,16 @@ export class Renderer {
         glMatrix.mat4.identity(this.projectionMatrix);
     }
 
-    public draw(frame: LifeCell[][], cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
+    public draw(grid: FiniteGrid | SparseMatrixGrid, cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
+        brushWidth: number, brushHeight: number, showOscillations: boolean): void
+    {
+        if (grid instanceof FiniteGrid)
+            this.drawFiniteGrid(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, showOscillations);
+        else if (grid instanceof SparseMatrixGrid)
+            this.drawSparse(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight);
+    }
+
+    public drawFiniteGrid(frame: LifeCell[][], cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
         brushWidth: number, brushHeight: number, showOscillations: boolean): void
     {
         if (!this.initialised)
@@ -351,5 +362,11 @@ export class Renderer {
         }
 
         this.drawGrid();
+    }
+
+    public drawSparse(grid : SparseMatrixGrid, cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
+        brushWidth: number, brushHeight: number): void
+    {
+        
     }
 }

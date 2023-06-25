@@ -3,6 +3,7 @@ import { LifeCell } from './lifecell';
 import { GameRules } from './gamerules';
 import { GameState } from './gamestate';
 import { FiniteGrid } from './finitegrid';
+import { SparseMatrixGrid } from './sparsematrix';
 
 const borderWidth: number = 3;
 const historyLength: number = 15;
@@ -23,7 +24,9 @@ let canvas: HTMLCanvasElement | null = document.getElementById("my_canvas") as H
 let lastUpdateTime: number = 0;
 let pause: boolean = true;
 let showGrid: boolean = true;
-let grid: FiniteGrid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+
+let grid: FiniteGrid | SparseMatrixGrid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+//let grid: FiniteGrid | SparseMatrixGrid = new SparseMatrixGrid;
 
 if (!canvas) {
     alert('Canvas element not found');
@@ -61,13 +64,13 @@ else
                 return;
             }
             renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid);
-            renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
         }
 
         function animate(timestamp : any): void {
             if (pause)
             {
-                renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
                 return;
             }
             let elapsedTime : number = timestamp - lastUpdateTime;
@@ -76,7 +79,7 @@ else
                 GameRules.update(grid);
             }
     
-            renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+             renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             requestAnimationFrame(animate);
         }
         
@@ -91,15 +94,13 @@ else
                     requestAnimationFrame(animate);
             }
 
-            let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
             if (event.code === 'KeyR') {
-                for (let x = 0; x < GameState.gridWidth; x++) {
-                    for (let y = 0; y < GameState.gridHeight; y++) {
-                        thisFrame[x][y].active = false;
-                    }
-                }
+                if (grid instanceof FiniteGrid)
+                    grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+                else if (grid instanceof SparseMatrixGrid)
+                    grid = new SparseMatrixGrid;
             
-                renderer.draw(thisFrame, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             }
         });
 
@@ -115,7 +116,7 @@ else
                 cursorCellX = Math.floor(mouseX / cellWidth);
                 cursorCellY = Math.floor(mouseY / cellWidth);
 
-                renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
         }
 
@@ -131,40 +132,10 @@ else
                 let cellX = Math.floor(mouseX / cellWidth);
                 let cellY = Math.floor(mouseY / cellWidth);
 
-                let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
-                if (cellX >= 0 && cellX < GameState.gridWidth && cellY >= 0 && cellY < GameState.gridHeight) {
-                    if (event.button === 0) {           // Left mouse button
+                if (event.button === 0)           // Left mouse button
+                    grid.userClickCell(cellX, cellY, GameState.gridWidth, GameState.gridHeight, brush, brushWidth, brushHeight);
 
-                        if (!brush)
-                        {
-                            thisFrame[cellX][cellY].active = !thisFrame[cellX][cellY].active;
-                        }
-                        else
-                        {
-                            // Calculate offsets to center the brush around the cursor
-                            const offsetX = Math.floor(brushWidth / 2);
-                            const offsetY = Math.floor(brushHeight / 2);
-                    
-                            // Iterate through each cell in the brush
-                            for (let brushX = 0; brushX < brushWidth; brushX++) {
-                                for (let brushY = 0; brushY < brushHeight; brushY++) {
-                                    // Calculate the corresponding grid position
-                                    const gridX = cellX - offsetX + brushX;
-                                    const gridY = cellY - offsetY + brushY;
-                    
-                                    // Check if the position is within the grid boundaries
-                                    if (gridX >= 0 && gridX < GameState.gridWidth && gridY >= 0 && gridY < GameState.gridHeight) {
-                                        // Place the brush cell on the grid
-                                        thisFrame[gridX][gridY].active = brush[brushX][brushY];
-                    
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                renderer.draw(thisFrame, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
         }
 
@@ -225,7 +196,7 @@ else
 
             showGridCheckBox.addEventListener('click', () => {
                 showGrid = showGridCheckBox.checked;
-                renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
 
             addTooltipToElements([timestepLabel, timestepEdit], 'Timestep in milliseconds (1-1000)');
@@ -312,7 +283,7 @@ else
 
             detectOscillationsCheckBox.addEventListener('click', () => {
                 GameRules.detectOscillations = detectOscillationsCheckBox.checked;
-                renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
 
             addTooltipToElements([survivalRulesLabel, survivalRulesEdit],
@@ -354,14 +325,12 @@ else
             addTooltipToElements([resetButton], 'Reset (R key on non-mobile devices)');
         
             resetButton.addEventListener('click', () => {
-                let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
-                for (let x = 0; x < GameState.gridWidth; x++) {
-                    for (let y = 0; y < GameState.gridHeight; y++) {
-                        thisFrame[x][y].active = false;
-                    }
-                }
+                if (grid instanceof FiniteGrid)
+                    grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+                else if (grid instanceof SparseMatrixGrid)
+                    grid = new SparseMatrixGrid;
             
-                renderer.draw(thisFrame, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
         
             addTooltipToElements([pauseButton], 'Play/pause (spacebar on non-mobile devices)');

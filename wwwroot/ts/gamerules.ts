@@ -1,6 +1,7 @@
 import { LifeCell } from './lifecell';
 import { GameState } from './gamestate';
 import { FiniteGrid } from './finitegrid';
+import { SparseMatrixGrid } from './sparsematrix';
 
 export class GameRules {
     public static surviveConditions: boolean[] = [false,false,true,true,false,false,false,false,false];
@@ -39,7 +40,15 @@ export class GameRules {
         return count;
     }
 
-    public static update(grid: FiniteGrid) {
+    public static update(grid: FiniteGrid | SparseMatrixGrid): void
+    {
+        if (grid instanceof FiniteGrid)
+            this.updateFiniteGrid(grid);
+        else if (grid instanceof SparseMatrixGrid)
+            this.updateSparseGrid(grid);
+    }
+
+    public static updateFiniteGrid(grid: FiniteGrid) {
         let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
         let nextFrame: LifeCell[][] = grid.frames[(grid.currentFrame+1) % 2];
 
@@ -100,5 +109,9 @@ export class GameRules {
         }
 
         grid.currentFrame = (grid.currentFrame+1) % 2;
+    }
+
+    public static updateSparseGrid(grid: SparseMatrixGrid): void {
+        
     }
 }
