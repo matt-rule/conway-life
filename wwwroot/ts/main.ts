@@ -2,36 +2,28 @@ import { Renderer } from './renderer';
 import { LifeCell } from './lifecell';
 import { GameRules } from './gamerules';
 import { GameState } from './gamestate';
+import { FiniteGrid } from './finitegrid';
 
-const borderWidth = 3;
+const borderWidth: number = 3;
+const historyLength: number = 15;
 
 let cellWidth: number = 20;
+let timestepMs: number = 125;
+
+// cursor
 let cursorCellX: number = -1;
 let cursorCellY: number = -1;
-let timestepMs = 125;
+
+// brush
 let brush: boolean[][] | null = null;
-let brushWidth = 0;
-let brushHeight = 0;
-let canvas : HTMLCanvasElement | null = document.getElementById("my_canvas") as HTMLCanvasElement;
-let lastUpdateTime : number = 0;
-let frames: LifeCell[][][] = [createGrid(), createGrid()];
-let pause : boolean = true;
-let showGrid : boolean = true;
+let brushWidth: number = 0;
+let brushHeight: number = 0;
 
-function createGrid(): LifeCell[][] {
-    const result: LifeCell[][] = new Array(GameState.gridWidth);
-    for (let x = 0; x < GameState.gridWidth; x++) {
-        result[x] = new Array<LifeCell>(GameState.gridHeight);
-
-        for (let y = 0; y < GameState.gridHeight; y++) {
-            result[x][y] = {
-                active: false,
-                color: [0,0,0]
-            };
-        }
-    }
-    return result;
-}
+let canvas: HTMLCanvasElement | null = document.getElementById("my_canvas") as HTMLCanvasElement;
+let lastUpdateTime: number = 0;
+let pause: boolean = true;
+let showGrid: boolean = true;
+let grid: FiniteGrid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
 
 if (!canvas) {
     alert('Canvas element not found');
@@ -69,22 +61,22 @@ else
                 return;
             }
             renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid);
-            renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
         }
 
         function animate(timestamp : any): void {
             if (pause)
             {
-                renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
                 return;
             }
             let elapsedTime : number = timestamp - lastUpdateTime;
             if (elapsedTime >= timestepMs) {
                 lastUpdateTime = timestamp;
-                GameRules.update(frames);
+                GameRules.update(grid);
             }
     
-            renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             requestAnimationFrame(animate);
         }
         
@@ -99,7 +91,7 @@ else
                     requestAnimationFrame(animate);
             }
 
-            let thisFrame: LifeCell[][] = frames[GameState.currentFrame];
+            let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
             if (event.code === 'KeyR') {
                 for (let x = 0; x < GameState.gridWidth; x++) {
                     for (let y = 0; y < GameState.gridHeight; y++) {
@@ -123,7 +115,7 @@ else
                 cursorCellX = Math.floor(mouseX / cellWidth);
                 cursorCellY = Math.floor(mouseY / cellWidth);
 
-                renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
         }
 
@@ -139,7 +131,7 @@ else
                 let cellX = Math.floor(mouseX / cellWidth);
                 let cellY = Math.floor(mouseY / cellWidth);
 
-                let thisFrame: LifeCell[][] = frames[GameState.currentFrame];
+                let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
                 if (cellX >= 0 && cellX < GameState.gridWidth && cellY >= 0 && cellY < GameState.gridHeight) {
                     if (event.button === 0) {           // Left mouse button
 
@@ -233,7 +225,7 @@ else
 
             showGridCheckBox.addEventListener('click', () => {
                 showGrid = showGridCheckBox.checked;
-                renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
 
             addTooltipToElements([timestepLabel, timestepEdit], 'Timestep in milliseconds (1-1000)');
@@ -291,8 +283,7 @@ else
                     console.log('Value must be between 3 and 1000 inclusive');
                 }
 
-                frames = [createGrid(), createGrid()];
-                GameRules.history = GameRules.createHistory();
+                grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
                 resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
             });
 
@@ -313,8 +304,7 @@ else
                     console.log('Value must be between 3 and 1000 inclusive');
                 }
 
-                frames = [createGrid(), createGrid()];
-                GameRules.history = GameRules.createHistory();
+                grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
                 resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
             });
 
@@ -322,7 +312,7 @@ else
 
             detectOscillationsCheckBox.addEventListener('click', () => {
                 GameRules.detectOscillations = detectOscillationsCheckBox.checked;
-                renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
 
             addTooltipToElements([survivalRulesLabel, survivalRulesEdit],
@@ -364,7 +354,7 @@ else
             addTooltipToElements([resetButton], 'Reset (R key on non-mobile devices)');
         
             resetButton.addEventListener('click', () => {
-                let thisFrame: LifeCell[][] = frames[GameState.currentFrame];
+                let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
                 for (let x = 0; x < GameState.gridWidth; x++) {
                     for (let y = 0; y < GameState.gridHeight; y++) {
                         thisFrame[x][y].active = false;

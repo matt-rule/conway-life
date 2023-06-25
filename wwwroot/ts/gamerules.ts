@@ -1,24 +1,11 @@
 import { LifeCell } from './lifecell';
 import { GameState } from './gamestate';
-
-const historyLength: number = 15;
+import { FiniteGrid } from './finitegrid';
 
 export class GameRules {
     public static surviveConditions: boolean[] = [false,false,true,true,false,false,false,false,false];
     public static birthConditions: boolean[] = [false,false,false,true,false,false,false,false,false];
     public static detectOscillations : boolean = true;
-    public static history: boolean[][][] = this.createHistory();
-
-    public static createHistory(): boolean[][][] {
-        const result: boolean[][][] = new Array(GameState.gridWidth);
-        for (let x = 0; x < GameState.gridWidth; x++) {
-            result[x] = new Array(GameState.gridHeight);
-            for (let y = 0; y < GameState.gridHeight; y++) {
-                result[x][y] = new Array(historyLength).fill(false);
-            }
-        }
-        return result;
-    }
 
     private static wrap(x : number, y : number) {
         return (x + y) % y;
@@ -52,9 +39,9 @@ export class GameRules {
         return count;
     }
 
-    public static update(frames: LifeCell[][][]) {
-        let thisFrame: LifeCell[][] = frames[GameState.currentFrame];
-        let nextFrame: LifeCell[][] = frames[(GameState.currentFrame+1) % 2];
+    public static update(grid: FiniteGrid) {
+        let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
+        let nextFrame: LifeCell[][] = grid.frames[(grid.currentFrame+1) % 2];
 
         for (let x = 0; x < GameState.gridWidth; x++) {
             for (let y = 0; y < GameState.gridHeight; y++) {
@@ -87,7 +74,7 @@ export class GameRules {
                 if (this.detectOscillations)
                 {
                     //Treat history as a queue, remove from end and add to beginning
-                    let thisCellHistory = this.history[x][y];
+                    let thisCellHistory = grid.history[x][y];
                     thisCellHistory.pop();
                     thisCellHistory.unshift(active);
     
@@ -112,6 +99,6 @@ export class GameRules {
             }
         }
 
-        GameState.currentFrame = (GameState.currentFrame+1) % 2;
+        grid.currentFrame = (grid.currentFrame+1) % 2;
     }
 }
