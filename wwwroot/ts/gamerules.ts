@@ -1,4 +1,5 @@
 import { LifeCell } from './lifecell';
+import { GameState } from './gamestate';
 
 const historyLength: number = 15;
 
@@ -6,16 +7,13 @@ export class GameRules {
     public static surviveConditions: boolean[] = [false,false,true,true,false,false,false,false,false];
     public static birthConditions: boolean[] = [false,false,false,true,false,false,false,false,false];
     public static detectOscillations : boolean = true;
-    public static currentFrame: number = 0;
-    public static gridWidth: number = 40;
-    public static gridHeight: number = 30;
     public static history: boolean[][][] = this.createHistory();
 
     public static createHistory(): boolean[][][] {
-        const result: boolean[][][] = new Array(this.gridWidth);
-        for (let x = 0; x < this.gridWidth; x++) {
-            result[x] = new Array(this.gridHeight);
-            for (let y = 0; y < this.gridHeight; y++) {
+        const result: boolean[][][] = new Array(GameState.gridWidth);
+        for (let x = 0; x < GameState.gridWidth; x++) {
+            result[x] = new Array(GameState.gridHeight);
+            for (let y = 0; y < GameState.gridHeight; y++) {
                 result[x][y] = new Array(historyLength).fill(false);
             }
         }
@@ -55,19 +53,19 @@ export class GameRules {
     }
 
     public static update(frames: LifeCell[][][]) {
-        let thisFrame: LifeCell[][] = frames[this.currentFrame];
-        let nextFrame: LifeCell[][] = frames[(this.currentFrame+1) % 2];
+        let thisFrame: LifeCell[][] = frames[GameState.currentFrame];
+        let nextFrame: LifeCell[][] = frames[(GameState.currentFrame+1) % 2];
 
-        for (let x = 0; x < this.gridWidth; x++) {
-            for (let y = 0; y < this.gridHeight; y++) {
+        for (let x = 0; x < GameState.gridWidth; x++) {
+            for (let y = 0; y < GameState.gridHeight; y++) {
                 let liveNeighbors = 0;
 
                 // Calculate the number of live neighbors
                 for (let dx = -1; dx <= 1; dx++) {
                     for (let dy = -1; dy <= 1; dy++) {
                         if (dx !== 0 || dy !== 0) {
-                            let nx = this.wrap(x + dx, this.gridWidth);
-                            let ny = this.wrap(y + dy, this.gridHeight);
+                            let nx = this.wrap(x + dx, GameState.gridWidth);
+                            let ny = this.wrap(y + dy, GameState.gridHeight);
 
                             if (thisFrame[nx][ny].active) {
                                 liveNeighbors++;
@@ -114,6 +112,6 @@ export class GameRules {
             }
         }
 
-        this.currentFrame = (this.currentFrame+1) % 2;
+        GameState.currentFrame = (GameState.currentFrame+1) % 2;
     }
 }

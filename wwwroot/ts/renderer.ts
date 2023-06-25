@@ -1,6 +1,7 @@
 import * as glMatrix from 'gl-matrix';
 
 import { LifeCell } from './lifecell';
+import { GameState } from './gamestate';
 
 export class Renderer {
     // Define members (properties)
@@ -22,13 +23,11 @@ export class Renderer {
     public squareIndexBuffer: WebGLBuffer | null;
     public borderVertexBuffer: WebGLBuffer | null;
     public cellWidth: number;
-    public gridWidth: number;
-    public gridHeight: number;
     public borderWidth: number;
     public showGrid: boolean;
     
     // Define a constructor
-    constructor(canvas: HTMLElement, gl: WebGL2RenderingContext, cellWidth: number, gridWidth: number, gridHeight: number, borderWidth: number, 
+    constructor(canvas: HTMLElement, gl: WebGL2RenderingContext, cellWidth: number, borderWidth: number, 
         showGrid: boolean)
     {
         this.canvas = canvas;
@@ -53,8 +52,6 @@ export class Renderer {
         this.borderVertexBuffer = null;
 
         this.cellWidth = cellWidth;
-        this.gridWidth = gridWidth;
-        this.gridHeight = gridHeight;
         this.borderWidth = borderWidth;
         this.showGrid = showGrid;
     }
@@ -143,15 +140,15 @@ export class Renderer {
         }
 
         // Vertical gridlines
-        for (let i = 0; i <= this.cellWidth*this.gridWidth; i += this.cellWidth) {
+        for (let i = 0; i <= this.cellWidth*GameState.gridWidth; i += this.cellWidth) {
             this.gridVertices.push(i, 0);
-            this.gridVertices.push(i, this.cellWidth*this.gridHeight);
+            this.gridVertices.push(i, this.cellWidth*GameState.gridHeight);
         }
 
         // Horizontal gridlines
-        for (let j = 0; j <= this.cellWidth*this.gridHeight; j += this.cellWidth) {
+        for (let j = 0; j <= this.cellWidth*GameState.gridHeight; j += this.cellWidth) {
             this.gridVertices.push(0, j);
-            this.gridVertices.push(this.cellWidth*this.gridWidth, j);
+            this.gridVertices.push(this.cellWidth*GameState.gridWidth, j);
         }
 
         this.squareVertices = [
@@ -209,7 +206,7 @@ export class Renderer {
 
     public init(): void
     {
-        this.gl.viewport(0, 0, this.cellWidth*this.gridWidth, this.cellWidth*this.gridHeight);
+        this.gl.viewport(0, 0, this.cellWidth*GameState.gridWidth, this.cellWidth*GameState.gridHeight);
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.disable(this.gl.BLEND);
         this.gl.disable(this.gl.CULL_FACE);
@@ -315,8 +312,8 @@ export class Renderer {
 
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-        for (let x = 0; x < this.gridWidth; x += 1) {
-            for (let y = 0; y < this.gridHeight; y += 1) {
+        for (let x = 0; x < GameState.gridWidth; x += 1) {
+            for (let y = 0; y < GameState.gridHeight; y += 1) {
                 if (showOscillations)
                     this.drawSquare(frame[x][y].color, x*this.cellWidth, y*this.cellWidth);
 
@@ -325,7 +322,7 @@ export class Renderer {
             }
         }
 
-        if (cursorCellX >= 0 && cursorCellX < this.gridWidth && cursorCellY >= 0 && cursorCellY < this.gridHeight)
+        if (cursorCellX >= 0 && cursorCellX < GameState.gridWidth && cursorCellY >= 0 && cursorCellY < GameState.gridHeight)
         {
             if (!brush)
             {
@@ -345,7 +342,7 @@ export class Renderer {
                         const gridY = cursorCellY - offsetY + brushY;
         
                         // Check if the position is within the grid boundaries
-                        if (gridX >= 0 && gridX < this.gridWidth && gridY >= 0 && gridY < this.gridHeight) {
+                        if (gridX >= 0 && gridX < GameState.gridWidth && gridY >= 0 && gridY < GameState.gridHeight) {
                             this.drawBorder(gridX * this.cellWidth, gridY * this.cellWidth, brush[brushX][brushY]);
                         }
                     }

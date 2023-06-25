@@ -1,26 +1,29 @@
 import { Renderer } from './renderer';
 import { LifeCell } from './lifecell';
 import { GameRules } from './gamerules';
+import { GameState } from './gamestate';
 
 const borderWidth = 3;
 
-let currentFrame: number = 0;
 let cellWidth: number = 20;
-let gridWidth: number = 40;
-let gridHeight: number = 30;
 let cursorCellX: number = -1;
 let cursorCellY: number = -1;
 let timestepMs = 125;
 let brush: boolean[][] | null = null;
 let brushWidth = 0;
 let brushHeight = 0;
+let canvas : HTMLCanvasElement | null = document.getElementById("my_canvas") as HTMLCanvasElement;
+let lastUpdateTime : number = 0;
+let frames: LifeCell[][][] = [createGrid(), createGrid()];
+let pause : boolean = true;
+let showGrid : boolean = true;
 
 function createGrid(): LifeCell[][] {
-    const result: LifeCell[][] = new Array(gridWidth);
-    for (let x = 0; x < gridWidth; x++) {
-        result[x] = new Array<LifeCell>(gridHeight);
+    const result: LifeCell[][] = new Array(GameState.gridWidth);
+    for (let x = 0; x < GameState.gridWidth; x++) {
+        result[x] = new Array<LifeCell>(GameState.gridHeight);
 
-        for (let y = 0; y < gridHeight; y++) {
+        for (let y = 0; y < GameState.gridHeight; y++) {
             result[x][y] = {
                 active: false,
                 color: [0,0,0]
@@ -30,23 +33,17 @@ function createGrid(): LifeCell[][] {
     return result;
 }
 
-let canvas : HTMLCanvasElement | null = document.getElementById("my_canvas") as HTMLCanvasElement;
-let lastUpdateTime : number = 0;
-let frames: LifeCell[][][] = [createGrid(), createGrid()];
-let pause : boolean = true;
-let showGrid : boolean = true;
-
 if (!canvas) {
     alert('Canvas element not found');
 }
 else
 {
-    canvas.width = cellWidth*gridWidth;
-    canvas.height = cellWidth*gridHeight;
-    canvas.style.width = `${cellWidth*gridWidth}px`;
-    canvas.style.height = `${cellWidth*gridHeight}px`;
-    canvas.style.maxWidth = `${cellWidth*gridWidth}px`;
-    canvas.style.maxHeight = `${cellWidth*gridHeight}px`;
+    canvas.width = cellWidth*GameState.gridWidth;
+    canvas.height = cellWidth*GameState.gridHeight;
+    canvas.style.width = `${cellWidth*GameState.gridWidth}px`;
+    canvas.style.height = `${cellWidth*GameState.gridHeight}px`;
+    canvas.style.maxWidth = `${cellWidth*GameState.gridWidth}px`;
+    canvas.style.maxHeight = `${cellWidth*GameState.gridHeight}px`;
     let gl : WebGL2RenderingContext | null = canvas.getContext("webgl2");
 
     if (!gl) {
@@ -54,7 +51,7 @@ else
     }
     else
     {
-        let renderer = new Renderer(canvas, gl, cellWidth, gridWidth, gridHeight, borderWidth, showGrid);
+        let renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid);
 
         function resizeCanvas(width: number, height: number): void {
             if (!canvas)
@@ -71,14 +68,14 @@ else
             if (!gl) {
                 return;
             }
-            renderer = new Renderer(canvas, gl, cellWidth, gridWidth, gridHeight, borderWidth, showGrid);
-            renderer.draw(frames[currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid);
+            renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
         }
 
         function animate(timestamp : any): void {
             if (pause)
             {
-                renderer.draw(frames[currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
                 return;
             }
             let elapsedTime : number = timestamp - lastUpdateTime;
@@ -87,7 +84,7 @@ else
                 GameRules.update(frames);
             }
     
-            renderer.draw(frames[currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             requestAnimationFrame(animate);
         }
         
@@ -102,10 +99,10 @@ else
                     requestAnimationFrame(animate);
             }
 
-            let thisFrame: LifeCell[][] = frames[currentFrame];
+            let thisFrame: LifeCell[][] = frames[GameState.currentFrame];
             if (event.code === 'KeyR') {
-                for (let x = 0; x < gridWidth; x++) {
-                    for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < GameState.gridWidth; x++) {
+                    for (let y = 0; y < GameState.gridHeight; y++) {
                         thisFrame[x][y].active = false;
                     }
                 }
@@ -126,7 +123,7 @@ else
                 cursorCellX = Math.floor(mouseX / cellWidth);
                 cursorCellY = Math.floor(mouseY / cellWidth);
 
-                renderer.draw(frames[currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
         }
 
@@ -142,8 +139,8 @@ else
                 let cellX = Math.floor(mouseX / cellWidth);
                 let cellY = Math.floor(mouseY / cellWidth);
 
-                let thisFrame: LifeCell[][] = frames[currentFrame];
-                if (cellX >= 0 && cellX < gridWidth && cellY >= 0 && cellY < gridHeight) {
+                let thisFrame: LifeCell[][] = frames[GameState.currentFrame];
+                if (cellX >= 0 && cellX < GameState.gridWidth && cellY >= 0 && cellY < GameState.gridHeight) {
                     if (event.button === 0) {           // Left mouse button
 
                         if (!brush)
@@ -164,7 +161,7 @@ else
                                     const gridY = cellY - offsetY + brushY;
                     
                                     // Check if the position is within the grid boundaries
-                                    if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+                                    if (gridX >= 0 && gridX < GameState.gridWidth && gridY >= 0 && gridY < GameState.gridHeight) {
                                         // Place the brush cell on the grid
                                         thisFrame[gridX][gridY].active = brush[brushX][brushY];
                     
@@ -236,7 +233,7 @@ else
 
             showGridCheckBox.addEventListener('click', () => {
                 showGrid = showGridCheckBox.checked;
-                renderer.draw(frames[currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
 
             addTooltipToElements([timestepLabel, timestepEdit], 'Timestep in milliseconds (1-1000)');
@@ -274,7 +271,7 @@ else
                     console.log('Value must be between 1 and 50 inclusive');
                 }
 
-                resizeCanvas(cellWidth*gridWidth, cellWidth*gridHeight);
+                resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
             });
 
             addTooltipToElements([gridWidthLabel, gridWidthEdit], 'Grid width measured in cells (1-1000)');
@@ -288,15 +285,15 @@ else
                 }
 
                 if (numericValue >= 3 && numericValue <= 1000) {
-                    gridWidth = numericValue;
-                    console.log(`gridWidth has been set to: ${gridWidth}`);
+                    GameState.gridWidth = numericValue;
+                    console.log(`gridWidth has been set to: ${GameState.gridWidth}`);
                 } else {
                     console.log('Value must be between 3 and 1000 inclusive');
                 }
 
                 frames = [createGrid(), createGrid()];
                 GameRules.history = GameRules.createHistory();
-                resizeCanvas(cellWidth*gridWidth, cellWidth*gridHeight);
+                resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
             });
 
             addTooltipToElements([gridHeightLabel, gridHeightEdit], 'Grid height measured in cells (1-1000)');
@@ -310,22 +307,22 @@ else
                 }
 
                 if (numericValue >= 3 && numericValue <= 1000) {
-                    gridHeight = numericValue;
-                    console.log(`gridHeight has been set to: ${gridHeight}`);
+                    GameState.gridHeight = numericValue;
+                    console.log(`gridHeight has been set to: ${GameState.gridHeight}`);
                 } else {
                     console.log('Value must be between 3 and 1000 inclusive');
                 }
 
                 frames = [createGrid(), createGrid()];
                 GameRules.history = GameRules.createHistory();
-                resizeCanvas(cellWidth*gridWidth, cellWidth*gridHeight);
+                resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
             });
 
             addTooltipToElements([detectOscillationsLabel, detectOscillationsCheckBox], 'Detect and highlight oscillations. Period 2 = red, 3 = blue, 5 = green, 6 = purple');
 
             detectOscillationsCheckBox.addEventListener('click', () => {
                 GameRules.detectOscillations = detectOscillationsCheckBox.checked;
-                renderer.draw(frames[currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(frames[GameState.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
 
             addTooltipToElements([survivalRulesLabel, survivalRulesEdit],
@@ -367,9 +364,9 @@ else
             addTooltipToElements([resetButton], 'Reset (R key on non-mobile devices)');
         
             resetButton.addEventListener('click', () => {
-                let thisFrame: LifeCell[][] = frames[currentFrame];
-                for (let x = 0; x < gridWidth; x++) {
-                    for (let y = 0; y < gridHeight; y++) {
+                let thisFrame: LifeCell[][] = frames[GameState.currentFrame];
+                for (let x = 0; x < GameState.gridWidth; x++) {
+                    for (let y = 0; y < GameState.gridHeight; y++) {
                         thisFrame[x][y].active = false;
                     }
                 }
