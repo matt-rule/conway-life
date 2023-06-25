@@ -8,6 +8,9 @@ import { SparseMatrixGrid } from './sparsematrix';
 const borderWidth: number = 3;
 const historyLength: number = 15;
 
+let minZoom: number = 0.1;
+let maxZoom: number = 10;
+let unzoomedCellWidth: number = 20;
 let cellWidth: number = 20;
 let timestepMs: number = 125;
 
@@ -46,7 +49,7 @@ else
     }
     else
     {
-        let renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid);
+        let renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, 1.0);
 
         function resizeCanvas(width: number, height: number): void {
             if (!canvas)
@@ -63,7 +66,7 @@ else
             if (!gl) {
                 return;
             }
-            renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid);
+            renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
             renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
         }
 
@@ -104,6 +107,14 @@ else
             }
         });
 
+        document.addEventListener('wheel', function(event) {
+            let uncropped = renderer.zoomLevel + (event.deltaY < 0 ? 0.1 : -0.1);
+            renderer.zoomLevel = Math.min(Math.max(uncropped, minZoom), maxZoom);
+
+            cellWidth = unzoomedCellWidth * renderer.zoomLevel;
+            resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
+        });
+
         if (canvas) {
             window.addEventListener('mousemove', function(event) {
                 if (!canvas)
@@ -116,7 +127,7 @@ else
                 cursorCellX = Math.floor(mouseX / cellWidth);
                 cursorCellY = Math.floor(mouseY / cellWidth);
 
-                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
         }
 
@@ -149,7 +160,6 @@ else
             const resetButton = document.getElementById('reset-button');
             const pauseButton = document.getElementById('pause-button');
             const timestepLabel = document.getElementById('timestep-label') as HTMLSpanElement;
-            const cellSizeLabel = document.getElementById('cell-size-label') as HTMLSpanElement;
             const gridWidthLabel = document.getElementById('grid-width-label') as HTMLSpanElement;
             const gridHeightLabel = document.getElementById('grid-height-label') as HTMLSpanElement;
             const showGridLabel = document.getElementById('show-grid-label') as HTMLSpanElement;
@@ -157,7 +167,6 @@ else
             const survivalRulesLabel = document.getElementById('survival-rules-label') as HTMLSpanElement;
             const birthRulesLabel = document.getElementById('birth-rules-label') as HTMLSpanElement;
             const timestepEdit = document.getElementById('timestep-edit') as HTMLInputElement;
-            const cellSizeEdit = document.getElementById('cell-size-edit') as HTMLInputElement;
             const gridWidthEdit = document.getElementById('grid-width-edit') as HTMLInputElement;
             const gridHeightEdit = document.getElementById('grid-height-edit') as HTMLInputElement;
             const showGridCheckBox = document.getElementById('show-grid-checkbox') as HTMLInputElement;
@@ -215,26 +224,6 @@ else
                 } else {
                     console.log('Value must be between 1 and 1000 inclusive');
                 }
-            });
-
-            addTooltipToElements([cellSizeLabel, cellSizeEdit], 'Cell size in pixels (1-50)');
-
-            cellSizeEdit.addEventListener('input', () => {
-                const value = cellSizeEdit.value;
-                const numericValue = parseInt(value, 10);
-
-                if (isNaN(numericValue)) {
-                    console.log('Please enter a numeric value');
-                }
-
-                if (numericValue >= 1 && numericValue <= 50) {
-                    cellWidth = numericValue;
-                    console.log(`cellWidth has been set to: ${cellWidth}`);
-                } else {
-                    console.log('Value must be between 1 and 50 inclusive');
-                }
-
-                resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
             });
 
             addTooltipToElements([gridWidthLabel, gridWidthEdit], 'Grid width measured in cells (1-1000)');

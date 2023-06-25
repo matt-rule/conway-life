@@ -27,10 +27,11 @@ export class Renderer {
     public cellWidth: number;
     public borderWidth: number;
     public showGrid: boolean;
+    public zoomLevel: number;   // 1.0 is unzoomed, larger values are more zoomed-in.
     
     // Define a constructor
     constructor(canvas: HTMLElement, gl: WebGL2RenderingContext, cellWidth: number, borderWidth: number, 
-        showGrid: boolean)
+        showGrid: boolean, zoomLevel: number)
     {
         this.canvas = canvas;
         this.gl = gl;
@@ -56,6 +57,8 @@ export class Renderer {
         this.cellWidth = cellWidth;
         this.borderWidth = borderWidth;
         this.showGrid = showGrid;
+
+        this.zoomLevel = zoomLevel;
     }
 
     public drawGrid(): void
