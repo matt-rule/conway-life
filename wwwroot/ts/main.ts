@@ -113,6 +113,21 @@ else
 
             cellWidth = unzoomedCellWidth * renderer.zoomLevel;
             resizeCanvas(window.innerWidth, window.innerHeight);
+
+            // also run mousemove eventlistener to ensure selected cell is updated
+            if (!canvas)
+                return;
+            
+            let rect = canvas.getBoundingClientRect();
+            let mouseX = event.clientX - rect.left;
+            let mouseY = event.clientY - rect.top;
+
+            let posX = (canvas.width - cellWidth*GameState.gridWidth) / 2;
+            let posY = (canvas.height - cellWidth*GameState.gridHeight) / 2;
+            cursorCellX = Math.floor((mouseX - posX) / cellWidth);
+            cursorCellY = Math.floor((mouseY - posY) / cellWidth);
+
+            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
         });
 
         if (canvas) {
