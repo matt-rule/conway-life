@@ -7,7 +7,7 @@ import { SparseMatrixGrid } from './sparsematrix';
 
 export class Renderer {
     // Define members (properties)
-    public canvas: HTMLElement;
+    public canvas: HTMLCanvasElement;
     public gl: WebGL2RenderingContext;
     public initialised: boolean;
     public shaderProgram: WebGLProgram | null;
@@ -30,7 +30,7 @@ export class Renderer {
     public zoomLevel: number;   // 1.0 is unzoomed, larger values are more zoomed-in.
     
     // Define a constructor
-    constructor(canvas: HTMLElement, gl: WebGL2RenderingContext, cellWidth: number, borderWidth: number, 
+    constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, cellWidth: number, borderWidth: number, 
         showGrid: boolean, zoomLevel: number)
     {
         this.canvas = canvas;
@@ -211,7 +211,7 @@ export class Renderer {
 
     public init(): void
     {
-        this.gl.viewport(0, 0, this.cellWidth*GameState.gridWidth, this.cellWidth*GameState.gridHeight);
+        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.disable(this.gl.BLEND);
         this.gl.disable(this.gl.CULL_FACE);

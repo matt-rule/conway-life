@@ -36,12 +36,12 @@ if (!canvas) {
 }
 else
 {
-    canvas.width = cellWidth*GameState.gridWidth;
-    canvas.height = cellWidth*GameState.gridHeight;
-    canvas.style.width = `${cellWidth*GameState.gridWidth}px`;
-    canvas.style.height = `${cellWidth*GameState.gridHeight}px`;
-    canvas.style.maxWidth = `${cellWidth*GameState.gridWidth}px`;
-    canvas.style.maxHeight = `${cellWidth*GameState.gridHeight}px`;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
+    canvas.style.maxWidth = `${window.innerWidth}px`;
+    canvas.style.maxHeight = `${window.innerHeight}px`;
     let gl : WebGL2RenderingContext | null = canvas.getContext("webgl2");
 
     if (!gl) {
@@ -82,7 +82,7 @@ else
                 GameRules.update(grid);
             }
     
-             renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             requestAnimationFrame(animate);
         }
         
@@ -112,7 +112,7 @@ else
             renderer.zoomLevel = Math.min(Math.max(uncropped, minZoom), maxZoom);
 
             cellWidth = unzoomedCellWidth * renderer.zoomLevel;
-            resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
+            resizeCanvas(window.innerWidth, window.innerHeight);
         });
 
         if (canvas) {
@@ -244,7 +244,7 @@ else
                 }
 
                 grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
-                resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
+                resizeCanvas(window.innerWidth, window.innerHeight);
             });
 
             addTooltipToElements([gridHeightLabel, gridHeightEdit], 'Grid height measured in cells (1-1000)');
@@ -265,7 +265,7 @@ else
                 }
 
                 grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
-                resizeCanvas(cellWidth*GameState.gridWidth, cellWidth*GameState.gridHeight);
+                resizeCanvas(window.innerWidth, window.innerHeight);
             });
 
             addTooltipToElements([detectOscillationsLabel, detectOscillationsCheckBox], 'Detect and highlight oscillations. Period 2 = red, 3 = blue, 5 = green, 6 = purple');
