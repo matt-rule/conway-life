@@ -117,7 +117,6 @@ else
             renderer.zoomLevel = Math.min(Math.max(uncropped, minZoom), maxZoom);
 
             cellWidth = unzoomedCellWidth * renderer.zoomLevel;
-            resizeCanvas(window.innerWidth, window.innerHeight);
 
             // also run mousemove eventlistener to ensure selected cell is updated
             if (!canvas)
@@ -132,6 +131,8 @@ else
             cursorCellX = Math.floor((mouseX - (posX + dynamicViewPosition.x)) / cellWidth);
             cursorCellY = Math.floor((mouseY - (posY + dynamicViewPosition.y)) / cellWidth);
 
+            if (canvas && gl)
+                renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
             renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
         });
 
@@ -294,7 +295,9 @@ else
                 }
 
                 grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
-                resizeCanvas(window.innerWidth, window.innerHeight);
+                if (canvas && gl)
+                    renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
             });
 
             addTooltipToElements([gridHeightLabel, gridHeightEdit], 'Grid height measured in cells (1-1000)');
@@ -315,7 +318,9 @@ else
                 }
 
                 grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
-                resizeCanvas(window.innerWidth, window.innerHeight);
+                if (canvas && gl)
+                    renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
             });
 
             addTooltipToElements([detectOscillationsLabel, detectOscillationsCheckBox], 'Detect and highlight oscillations. Period 2 = red, 3 = blue, 5 = green, 6 = purple');
