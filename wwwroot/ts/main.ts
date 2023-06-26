@@ -46,6 +46,10 @@ else
     canvas.style.maxWidth = `${window.innerWidth}px`;
     canvas.style.maxHeight = `${window.innerHeight}px`;
     let gl : WebGL2RenderingContext | null = canvas.getContext("webgl2");
+    dynamicViewPosition = commitViewPosition = new Vec(
+        (canvas.width - cellWidth*GameState.gridWidth) / 2,
+        (canvas.height - cellWidth*GameState.gridHeight) / 2
+    );
 
     if (!gl) {
         alert('Your browser does not support WebGL');
@@ -111,27 +115,32 @@ else
         });
 
         document.addEventListener('wheel', function(event) {
+            if (!canvas || !gl)
+                return;
+            if (startDragScreenPosition)
+                return;
+
             let oldZoomLevel = renderer.zoomLevel;
-            let uncropped = renderer.zoomLevel + (event.deltaY < 0 ? 0.1 : -0.1);
+            let uncropped = renderer.zoomLevel * (event.deltaY < 0 ? 1.25 : 0.8);
             renderer.zoomLevel = Math.min(Math.max(uncropped, minZoom), maxZoom);
             let scaleFactor = renderer.zoomLevel / oldZoomLevel;
 
-            cellWidth = unzoomedCellWidth * renderer.zoomLevel;
-
-            // also run mousemove eventlistener to ensure selected cell is updated
-            if (!canvas)
-                return;
-            
             let rect = canvas.getBoundingClientRect();
             let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
-            let centredOffset = new Vec(
-                (canvas.width - cellWidth*GameState.gridWidth) / 2,
-                (canvas.height - cellWidth*GameState.gridHeight) / 2
-            );
-            cursorCellPos = mousePos.subtract(centredOffset.add(dynamicViewPosition)).divide(cellWidth).floor();
 
-            if (canvas && gl)
-                renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
+            let viewPosRelativeToMouse = dynamicViewPosition.subtract(mousePos);
+            let scaled = viewPosRelativeToMouse.multiply(scaleFactor);
+            dynamicViewPosition = commitViewPosition = mousePos.add(scaled);
+
+            console.log('dynamicViewPosition:', dynamicViewPosition);
+            console.log('mousePos:', mousePos);
+            console.log('old zoom:', oldZoomLevel);
+            console.log('new zoom:', renderer.zoomLevel);
+            console.log('scale factor:', scaleFactor);
+            // if mouse is positioned inside the grid, move dynamicViewPosition away from the cursor if zooming in, towards if zooming out.
+
+            cellWidth = unzoomedCellWidth * renderer.zoomLevel;
+            renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
             renderer.draw(grid, cursorCellPos, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
         });
 
@@ -142,12 +151,7 @@ else
                 
                 let rect = canvas.getBoundingClientRect();
                 let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
-
-                let centredOffset = new Vec(
-                    (canvas.width - cellWidth*GameState.gridWidth) / 2,
-                    (canvas.height - cellWidth*GameState.gridHeight) / 2
-                );
-                cursorCellPos = mousePos.subtract(centredOffset.add(dynamicViewPosition)).divide(cellWidth).floor();
+                cursorCellPos = mousePos.subtract(dynamicViewPosition).divide(cellWidth).floor();
 
                 if ( startDragScreenPosition )
                     dynamicViewPosition = commitViewPosition.add(mousePos.subtract( startDragScreenPosition ));
@@ -167,10 +171,8 @@ else
 
                 if (event.button === 0)         // Left mouse button
                 {
-                    let posX = (canvas.width - cellWidth*GameState.gridWidth) / 2;
-                    let posY = (canvas.height - cellWidth*GameState.gridHeight) / 2;
-                    let cellX = Math.floor((mouseX - (posX + dynamicViewPosition.x)) / cellWidth);
-                    let cellY = Math.floor((mouseY - (posY + dynamicViewPosition.y)) / cellWidth);
+                    let cellX = Math.floor((mouseX - dynamicViewPosition.x) / cellWidth);
+                    let cellY = Math.floor((mouseY - dynamicViewPosition.y) / cellWidth);
                     grid.userClickCell(cellX, cellY, GameState.gridWidth, GameState.gridHeight, brush, brushWidth, brushHeight);
                 }
                 else if (event.button === 2)    // Right mouse button

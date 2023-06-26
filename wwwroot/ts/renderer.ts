@@ -74,9 +74,7 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let matrix = glMatrix.mat4.create();
-        let posX = (this.canvas.width - this.cellWidth*GameState.gridWidth) / 2;
-        let posY = (this.canvas.height - this.cellWidth*GameState.gridHeight) / 2;
-        glMatrix.mat4.translate(matrix, this.projectionMatrix, [posX + viewPosition.x, posY + viewPosition.y, 0]);
+        glMatrix.mat4.translate(matrix, this.projectionMatrix, [viewPosition.x, viewPosition.y, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
 
         this.gl.uniform4f(this.colorLocation, 0.3, 0.3, 0.3, 1);
@@ -329,16 +327,13 @@ export class Renderer {
 
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-        let posX = (this.canvas.width - this.cellWidth*GameState.gridWidth) / 2;
-        let posY = (this.canvas.height - this.cellWidth*GameState.gridHeight) / 2;
-
         for (let x = 0; x < GameState.gridWidth; x += 1) {
             for (let y = 0; y < GameState.gridHeight; y += 1) {
                 if (showOscillations)
-                    this.drawSquare(frame[x][y].color, posX + viewPosition.x + x*this.cellWidth, posY + viewPosition.y + y*this.cellWidth);
+                    this.drawSquare(frame[x][y].color, viewPosition.x + x*this.cellWidth, viewPosition.y + y*this.cellWidth);
 
                 if (frame[x][y].active)
-                    this.drawBorder(posX + viewPosition.x + x*this.cellWidth, posY + viewPosition.y + y*this.cellWidth, false);
+                    this.drawBorder(viewPosition.x + x*this.cellWidth, viewPosition.y + y*this.cellWidth, false);
             }
         }
 
@@ -346,7 +341,7 @@ export class Renderer {
         {
             if (!brush)
             {
-                this.drawBorder(posX +  + viewPosition.x + cursorCellPos.x*this.cellWidth, posY + viewPosition.y + cursorCellPos.y*this.cellWidth, true);
+                this.drawBorder(viewPosition.x + cursorCellPos.x*this.cellWidth, viewPosition.y + cursorCellPos.y*this.cellWidth, true);
             }
             else
             {
@@ -363,7 +358,7 @@ export class Renderer {
         
                         // Check if the position is within the grid boundaries
                         if (gridX >= 0 && gridX < GameState.gridWidth && gridY >= 0 && gridY < GameState.gridHeight) {
-                            this.drawBorder(gridX * this.cellWidth, gridY * this.cellWidth, brush[brushX][brushY]);
+                            this.drawBorder(viewPosition.x + gridX * this.cellWidth, viewPosition.y + gridY * this.cellWidth, brush[brushX][brushY]);
                         }
                     }
                 }
