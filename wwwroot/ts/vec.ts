@@ -8,4 +8,10 @@ export class Vec
     subtract(v: Vec): Vec {
         return new Vec(this.x - v.x, this.y - v.y);
     }
+    divide(scalar: number): Vec {
+        return new Vec(this.x / scalar, this.y / scalar);
+    }
+    floor(): Vec {
+        return new Vec(Math.floor(this.x), Math.floor(this.y));
+    }
 }

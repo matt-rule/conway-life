@@ -306,16 +306,16 @@ export class Renderer {
         glMatrix.mat4.identity(this.projectionMatrix);
     }
 
-    public draw(grid: FiniteGrid | SparseMatrixGrid, cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
+    public draw(grid: FiniteGrid | SparseMatrixGrid, cursorCellPos: Vec | null, brush: boolean[][] | null,
         brushWidth: number, brushHeight: number, showOscillations: boolean, viewPosition: Vec): void
     {
         if (grid instanceof FiniteGrid)
-            this.drawFiniteGrid(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, showOscillations, viewPosition);
+            this.drawFiniteGrid(grid.frames[grid.currentFrame], cursorCellPos, brush, brushWidth, brushHeight, showOscillations, viewPosition);
         else if (grid instanceof SparseMatrixGrid)
-            this.drawSparse(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, viewPosition);
+            this.drawSparse(grid, cursorCellPos, brush, brushWidth, brushHeight, viewPosition);
     }
 
-    public drawFiniteGrid(frame: LifeCell[][], cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
+    public drawFiniteGrid(frame: LifeCell[][], cursorCellPos: Vec | null, brush: boolean[][] | null,
         brushWidth: number, brushHeight: number, showOscillations: boolean, viewPosition: Vec): void
     {
         if (!this.initialised)
@@ -342,11 +342,11 @@ export class Renderer {
             }
         }
 
-        if (cursorCellX >= 0 && cursorCellX < GameState.gridWidth && cursorCellY >= 0 && cursorCellY < GameState.gridHeight)
+        if (cursorCellPos && cursorCellPos.x >= 0 && cursorCellPos.x < GameState.gridWidth && cursorCellPos.y >= 0 && cursorCellPos.y < GameState.gridHeight)
         {
             if (!brush)
             {
-                this.drawBorder(posX +  + viewPosition.x + cursorCellX*this.cellWidth, posY + viewPosition.y + cursorCellY*this.cellWidth, true);
+                this.drawBorder(posX +  + viewPosition.x + cursorCellPos.x*this.cellWidth, posY + viewPosition.y + cursorCellPos.y*this.cellWidth, true);
             }
             else
             {
@@ -358,8 +358,8 @@ export class Renderer {
                 for (let brushX = 0; brushX < brushWidth; brushX++) {
                     for (let brushY = 0; brushY < brushHeight; brushY++) {
                         // Calculate the corresponding grid position
-                        const gridX = cursorCellX - offsetX + brushX;
-                        const gridY = cursorCellY - offsetY + brushY;
+                        const gridX = cursorCellPos.x - offsetX + brushX;
+                        const gridY = cursorCellPos.y - offsetY + brushY;
         
                         // Check if the position is within the grid boundaries
                         if (gridX >= 0 && gridX < GameState.gridWidth && gridY >= 0 && gridY < GameState.gridHeight) {
@@ -373,7 +373,7 @@ export class Renderer {
         this.drawGrid(viewPosition);
     }
 
-    public drawSparse(grid : SparseMatrixGrid, cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
+    public drawSparse(grid : SparseMatrixGrid, cursorCellPos: Vec | null, brush: boolean[][] | null,
         brushWidth: number, brushHeight: number, viewPosition: Vec): void
     {
         
