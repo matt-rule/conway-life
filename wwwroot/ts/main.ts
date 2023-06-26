@@ -124,8 +124,10 @@ else
                 let mouseX = event.clientX - rect.left;
                 let mouseY = event.clientY - rect.top;
 
-                cursorCellX = Math.floor(mouseX / cellWidth);
-                cursorCellY = Math.floor(mouseY / cellWidth);
+                let posX = (canvas.width - cellWidth*GameState.gridWidth) / 2;
+                let posY = (canvas.height - cellWidth*GameState.gridHeight) / 2;
+                cursorCellX = Math.floor((mouseX - posX) / cellWidth);
+                cursorCellY = Math.floor((mouseY - posY) / cellWidth);
 
                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
             });
@@ -140,8 +142,10 @@ else
                 let mouseX = event.clientX - rect.left;
                 let mouseY = event.clientY - rect.top;
 
-                let cellX = Math.floor(mouseX / cellWidth);
-                let cellY = Math.floor(mouseY / cellWidth);
+                let posX = (canvas.width - cellWidth*GameState.gridWidth) / 2;
+                let posY = (canvas.height - cellWidth*GameState.gridHeight) / 2;
+                let cellX = Math.floor((mouseX - posX) / cellWidth);
+                let cellY = Math.floor((mouseY - posY) / cellWidth);
 
                 if (event.button === 0)           // Left mouse button
                     grid.userClickCell(cellX, cellY, GameState.gridWidth, GameState.gridHeight, brush, brushWidth, brushHeight);

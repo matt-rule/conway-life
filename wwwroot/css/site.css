@@ -109,7 +109,7 @@ button {
   height: fit-content;
   min-width: 0px;
   min-height: 0px;
-  margin: 12px;
+  margin: 15px;
   padding: 6px 15px 6px 15px;
 }
 
@@ -119,4 +119,15 @@ input[type=checkbox] {
 
 .left-pad {
   padding-left: 12px;
+}
+
+.div-container {
+  display: grid;
+  place-content: center;
+  background-color: transparent;
+  height: 60px;
+  position: absolute;
+  width: 100%;
+  min-width: 100%;
+  min-height: 60px;
 }
