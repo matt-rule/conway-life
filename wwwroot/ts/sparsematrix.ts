@@ -1,10 +1,6 @@
+import { Vec } from "./vec";
 
 export type SparseMatrix = Map<number, Set<number>>;
-
-export type Vec = {
-    x: number;
-    y: number;
-}
 
 export class SparseMatrixGrid
 {
@@ -13,7 +9,7 @@ export class SparseMatrixGrid
 
     constructor() {
         this.data = new Map();
-        this.viewPos = { x: 0, y: 0 };
+        this.viewPos = new Vec(0, 0);
     }
 
     public userClickCell(x: number, y: number, gridWidth: number, gridHeight: number, brush: boolean[][] | null,

@@ -4,6 +4,7 @@ import { LifeCell } from './lifecell';
 import { GameState } from './gamestate';
 import { FiniteGrid } from './finitegrid';
 import { SparseMatrixGrid } from './sparsematrix';
+import { Vec } from './vec';
 
 export class Renderer {
     // Define members (properties)
@@ -61,7 +62,7 @@ export class Renderer {
         this.zoomLevel = zoomLevel;
     }
     
-    public drawGrid(): void
+    public drawGrid(viewPosition: Vec): void
     {
         if (!this.shaderProgram || !this.showGrid)
             return;
@@ -75,7 +76,7 @@ export class Renderer {
         let matrix = glMatrix.mat4.create();
         let posX = (this.canvas.width - this.cellWidth*GameState.gridWidth) / 2;
         let posY = (this.canvas.height - this.cellWidth*GameState.gridHeight) / 2;
-        glMatrix.mat4.translate(matrix, this.projectionMatrix, [posX, posY, 0]);
+        glMatrix.mat4.translate(matrix, this.projectionMatrix, [posX + viewPosition.x, posY + viewPosition.y, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
 
         this.gl.uniform4f(this.colorLocation, 0.3, 0.3, 0.3, 1);
@@ -306,16 +307,16 @@ export class Renderer {
     }
 
     public draw(grid: FiniteGrid | SparseMatrixGrid, cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
-        brushWidth: number, brushHeight: number, showOscillations: boolean): void
+        brushWidth: number, brushHeight: number, showOscillations: boolean, viewPosition: Vec): void
     {
         if (grid instanceof FiniteGrid)
-            this.drawFiniteGrid(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, showOscillations);
+            this.drawFiniteGrid(grid.frames[grid.currentFrame], cursorCellX, cursorCellY, brush, brushWidth, brushHeight, showOscillations, viewPosition);
         else if (grid instanceof SparseMatrixGrid)
-            this.drawSparse(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight);
+            this.drawSparse(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, viewPosition);
     }
 
     public drawFiniteGrid(frame: LifeCell[][], cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
-        brushWidth: number, brushHeight: number, showOscillations: boolean): void
+        brushWidth: number, brushHeight: number, showOscillations: boolean, viewPosition: Vec): void
     {
         if (!this.initialised)
         {
@@ -334,10 +335,10 @@ export class Renderer {
         for (let x = 0; x < GameState.gridWidth; x += 1) {
             for (let y = 0; y < GameState.gridHeight; y += 1) {
                 if (showOscillations)
-                    this.drawSquare(frame[x][y].color, posX + x*this.cellWidth, posY + y*this.cellWidth);
+                    this.drawSquare(frame[x][y].color, posX + viewPosition.x + x*this.cellWidth, posY + viewPosition.y + y*this.cellWidth);
 
                 if (frame[x][y].active)
-                    this.drawBorder(posX + x*this.cellWidth, posY + y*this.cellWidth, false);
+                    this.drawBorder(posX + viewPosition.x + x*this.cellWidth, posY + viewPosition.y + y*this.cellWidth, false);
             }
         }
 
@@ -345,7 +346,7 @@ export class Renderer {
         {
             if (!brush)
             {
-                this.drawBorder(posX + cursorCellX*this.cellWidth, posY + cursorCellY*this.cellWidth, true);
+                this.drawBorder(posX +  + viewPosition.x + cursorCellX*this.cellWidth, posY + viewPosition.y + cursorCellY*this.cellWidth, true);
             }
             else
             {
@@ -369,11 +370,11 @@ export class Renderer {
             }
         }
 
-        this.drawGrid();
+        this.drawGrid(viewPosition);
     }
 
     public drawSparse(grid : SparseMatrixGrid, cursorCellX: number, cursorCellY: number, brush: boolean[][] | null,
-        brushWidth: number, brushHeight: number): void
+        brushWidth: number, brushHeight: number, viewPosition: Vec): void
     {
         
     }

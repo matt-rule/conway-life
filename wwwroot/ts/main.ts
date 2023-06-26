@@ -4,6 +4,7 @@ import { GameRules } from './gamerules';
 import { GameState } from './gamestate';
 import { FiniteGrid } from './finitegrid';
 import { SparseMatrixGrid } from './sparsematrix';
+import { Vec } from './vec';
 
 const borderWidth: number = 3;
 const historyLength: number = 15;
@@ -27,6 +28,10 @@ let canvas: HTMLCanvasElement | null = document.getElementById("my_canvas") as H
 let lastUpdateTime: number = 0;
 let pause: boolean = true;
 let showGrid: boolean = true;
+
+let dynamicViewPosition: Vec = new Vec(0, 0);       // Changes all the time when panning the view
+let commitViewPosition: Vec = new Vec(0, 0);        // Does not change until finished panning the view
+let startDragScreenPosition: Vec | null = null;
 
 let grid: FiniteGrid | SparseMatrixGrid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
 //let grid: FiniteGrid | SparseMatrixGrid = new SparseMatrixGrid;
@@ -67,13 +72,13 @@ else
                 return;
             }
             renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
-            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
         }
 
         function animate(timestamp : any): void {
             if (pause)
             {
-                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
                 return;
             }
             let elapsedTime : number = timestamp - lastUpdateTime;
@@ -82,7 +87,7 @@ else
                 GameRules.update(grid);
             }
     
-            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
             requestAnimationFrame(animate);
         }
         
@@ -103,7 +108,7 @@ else
                 else if (grid instanceof SparseMatrixGrid)
                     grid = new SparseMatrixGrid;
             
-                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
             }
         });
 
@@ -124,10 +129,10 @@ else
 
             let posX = (canvas.width - cellWidth*GameState.gridWidth) / 2;
             let posY = (canvas.height - cellWidth*GameState.gridHeight) / 2;
-            cursorCellX = Math.floor((mouseX - posX) / cellWidth);
-            cursorCellY = Math.floor((mouseY - posY) / cellWidth);
+            cursorCellX = Math.floor((mouseX - (posX + dynamicViewPosition.x)) / cellWidth);
+            cursorCellY = Math.floor((mouseY - (posY + dynamicViewPosition.y)) / cellWidth);
 
-            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+            renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
         });
 
         if (canvas) {
@@ -141,10 +146,13 @@ else
 
                 let posX = (canvas.width - cellWidth*GameState.gridWidth) / 2;
                 let posY = (canvas.height - cellWidth*GameState.gridHeight) / 2;
-                cursorCellX = Math.floor((mouseX - posX) / cellWidth);
-                cursorCellY = Math.floor((mouseY - posY) / cellWidth);
+                cursorCellX = Math.floor((mouseX - (posX + dynamicViewPosition.x)) / cellWidth);
+                cursorCellY = Math.floor((mouseY - (posY + dynamicViewPosition.y)) / cellWidth);
 
-                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                if ( startDragScreenPosition )
+                    dynamicViewPosition = commitViewPosition.add(new Vec( mouseX, mouseY ).subtract( startDragScreenPosition ));
+
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
             });
         }
 
@@ -157,15 +165,38 @@ else
                 let mouseX = event.clientX - rect.left;
                 let mouseY = event.clientY - rect.top;
 
-                let posX = (canvas.width - cellWidth*GameState.gridWidth) / 2;
-                let posY = (canvas.height - cellWidth*GameState.gridHeight) / 2;
-                let cellX = Math.floor((mouseX - posX) / cellWidth);
-                let cellY = Math.floor((mouseY - posY) / cellWidth);
-
-                if (event.button === 0)           // Left mouse button
+                if (event.button === 0)         // Left mouse button
+                {
+                    let posX = (canvas.width - cellWidth*GameState.gridWidth) / 2;
+                    let posY = (canvas.height - cellWidth*GameState.gridHeight) / 2;
+                    let cellX = Math.floor((mouseX - (posX + dynamicViewPosition.x)) / cellWidth);
+                    let cellY = Math.floor((mouseY - (posY + dynamicViewPosition.y)) / cellWidth);
                     grid.userClickCell(cellX, cellY, GameState.gridWidth, GameState.gridHeight, brush, brushWidth, brushHeight);
+                }
+                else if (event.button === 2)    // Right mouse button
+                {
+                    startDragScreenPosition = new Vec( mouseX, mouseY );
+                }
 
-                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
+            });
+            canvas.addEventListener('mouseup', function(event) {
+                if (!canvas)
+                    return;
+
+                if (event.button === 2)         // Right mouse button
+                {
+                    if (startDragScreenPosition)
+                    {
+                        let rect = canvas.getBoundingClientRect();
+                        let mouseX = event.clientX - rect.left;
+                        let mouseY = event.clientY - rect.top;
+
+                        commitViewPosition = commitViewPosition.add(new Vec( mouseX, mouseY ).subtract( startDragScreenPosition ));
+                        dynamicViewPosition = commitViewPosition;
+                        startDragScreenPosition = null;
+                    }
+                }
             });
         }
 
@@ -224,7 +255,7 @@ else
 
             showGridCheckBox.addEventListener('click', () => {
                 showGrid = showGridCheckBox.checked;
-                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
             });
 
             addTooltipToElements([timestepLabel, timestepEdit], 'Timestep in milliseconds (1-1000)');
@@ -291,7 +322,7 @@ else
 
             detectOscillationsCheckBox.addEventListener('click', () => {
                 GameRules.detectOscillations = detectOscillationsCheckBox.checked;
-                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                 renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
             });
 
             addTooltipToElements([survivalRulesLabel, survivalRulesEdit],
@@ -338,7 +369,7 @@ else
                 else if (grid instanceof SparseMatrixGrid)
                     grid = new SparseMatrixGrid;
             
-                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations);
+                renderer.draw(grid, cursorCellX, cursorCellY, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
             });
         
             addTooltipToElements([pauseButton], 'Play/pause (spacebar on non-mobile devices)');
