@@ -5,6 +5,9 @@ export class Vec
     clone(): Vec {
         return new Vec(this.x, this.y);
     }
+    negative(): Vec {
+        return new Vec(-this.x, -this.y);
+    }
     add(v: Vec): Vec {
         return new Vec(this.x + v.x, this.y + v.y);
     }

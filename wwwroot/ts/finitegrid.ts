@@ -1,5 +1,6 @@
 import { LifeCell } from './lifecell';
 import { Vec } from './vec';
+import { Brush } from './brush';
 
 export class FiniteGrid {
     public size: Vec = new Vec(0, 0);
@@ -14,8 +15,7 @@ export class FiniteGrid {
         this.history = FiniteGrid.createHistory(size.x, size.y, historyLength);
     }
 
-    public userClickCell(x: number, y: number, gridSize: Vec, brush: boolean[][] | null,
-        brushWidth: number, brushHeight: number)
+    public userClickCell(x: number, y: number, gridSize: Vec, brush: Brush | null)
     {
         let thisFrame: LifeCell[][] = this.frames[this.currentFrame];
 
@@ -27,12 +27,12 @@ export class FiniteGrid {
             else
             {
                 // Calculate offsets to center the brush around the cursor
-                const offsetX = Math.floor(brushWidth / 2);
-                const offsetY = Math.floor(brushHeight / 2);
+                const offsetX = Math.floor(brush.size.x / 2);
+                const offsetY = Math.floor(brush.size.y / 2);
         
                 // Iterate through each cell in the brush
-                for (let brushX = 0; brushX < brushWidth; brushX++) {
-                    for (let brushY = 0; brushY < brushHeight; brushY++) {
+                for (let brushX = 0; brushX < brush.size.x; brushX++) {
+                    for (let brushY = 0; brushY < brush.size.y; brushY++) {
                         // Calculate the corresponding grid position
                         const gridX = x - offsetX + brushX;
                         const gridY = y - offsetY + brushY;
@@ -40,7 +40,7 @@ export class FiniteGrid {
                         // Check if the position is within the grid boundaries
                         if (gridX >= 0 && gridX < this.size.x && gridY >= 0 && gridY < this.size.y) {
                             // Place the brush cell on the grid
-                            thisFrame[gridX][gridY].active = brush[brushX][brushY];
+                            thisFrame[gridX][gridY].active = brush.pattern[brushX][brushY];
                         }
                     }
                 }

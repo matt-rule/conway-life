@@ -4,6 +4,7 @@ import { LifeCell } from './lifecell';
 import { FiniteGrid } from './finitegrid';
 import { SparseMatrixGrid } from './sparsematrix';
 import { Vec } from './vec';
+import { Brush } from './brush';
 
 export class Renderer {
     // Define members (properties)
@@ -318,17 +319,15 @@ export class Renderer {
         glMatrix.mat4.identity(this.projectionMatrix);
     }
 
-    public draw(grid: FiniteGrid | SparseMatrixGrid, cursorCellPos: Vec | null, brush: boolean[][] | null,
-        brushWidth: number, brushHeight: number, showOscillations: boolean, viewPosition: Vec): void
+    public draw(grid: FiniteGrid | SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPosition: Vec): void
     {
         if (grid instanceof FiniteGrid)
-            this.drawFiniteGrid(grid, grid.frames[grid.currentFrame], cursorCellPos, brush, brushWidth, brushHeight, showOscillations, viewPosition);
+            this.drawFiniteGrid(grid, grid.frames[grid.currentFrame], cursorCellPos, brush, showOscillations, viewPosition);
         else if (grid instanceof SparseMatrixGrid)
-            this.drawSparse(grid, cursorCellPos, brush, brushWidth, brushHeight, viewPosition);
+            this.drawSparse(grid, cursorCellPos, brush, viewPosition);
     }
 
-    public drawFiniteGrid(grid: FiniteGrid, frame: LifeCell[][], cursorCellPos: Vec | null, brush: boolean[][] | null,
-        brushWidth: number, brushHeight: number, showOscillations: boolean, viewPosition: Vec): void
+    public drawFiniteGrid(grid: FiniteGrid, frame: LifeCell[][], cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPosition: Vec): void
     {
         if (!this.initialised)
         {
@@ -360,19 +359,19 @@ export class Renderer {
             else
             {
                 // Calculate offsets to center the brush around the cursor
-                const offsetX = Math.floor(brushWidth / 2);
-                const offsetY = Math.floor(brushHeight / 2);
+                const offsetX = Math.floor(brush.size.x / 2);
+                const offsetY = Math.floor(brush.size.y / 2);
         
                 // Iterate through each cell in the brush
-                for (let brushX = 0; brushX < brushWidth; brushX++) {
-                    for (let brushY = 0; brushY < brushHeight; brushY++) {
+                for (let brushX = 0; brushX < brush.size.x; brushX++) {
+                    for (let brushY = 0; brushY < brush.size.y; brushY++) {
                         // Calculate the corresponding grid position
                         const gridX = cursorCellPos.x - offsetX + brushX;
                         const gridY = cursorCellPos.y - offsetY + brushY;
         
                         // Check if the position is within the grid boundaries
                         if (gridX >= 0 && gridX < grid.size.x && gridY >= 0 && gridY < grid.size.y) {
-                            this.drawBorder(viewPosition.x + gridX * this.cellWidth, viewPosition.y + gridY * this.cellWidth, brush[brushX][brushY]);
+                            this.drawBorder(viewPosition.x + gridX * this.cellWidth, viewPosition.y + gridY * this.cellWidth, brush.pattern[brushX][brushY]);
                         }
                     }
                 }
@@ -382,8 +381,7 @@ export class Renderer {
         this.drawGrid(viewPosition);
     }
 
-    public drawSparse(grid : SparseMatrixGrid, cursorCellPos: Vec | null, brush: boolean[][] | null,
-        brushWidth: number, brushHeight: number, viewPosition: Vec): void
+    public drawSparse(grid : SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, viewPosition: Vec): void
     {
         
     }

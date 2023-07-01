@@ -111,6 +111,6 @@ export class GameRules {
     }
 
     public static updateSparseGrid(grid: SparseMatrixGrid): void {
-        
+        // TODO
     }
 }
