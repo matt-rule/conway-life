@@ -81,7 +81,7 @@ export class Renderer {
         this.gl.drawArrays(this.gl.LINES, 0, this.finiteGridVertices.length / 2);   
     }
 
-    public drawSquare(color : number[], x : number, y : number) {
+    public drawSquare(color: number[], x: number, y: number) {
         if (!this.shaderProgram)
             return;
 
@@ -232,7 +232,7 @@ export class Renderer {
         this.gl.disable(this.gl.BLEND);
         this.gl.disable(this.gl.CULL_FACE);
 
-        let vertexShaderSource : string = `
+        let vertexShaderSource: string = `
             attribute vec2 position;
             uniform mat4 u_matrix;
             
@@ -241,13 +241,13 @@ export class Renderer {
             }
         `;
         
-        let vertexShader : WebGLShader | null = this.gl.createShader(this.gl.VERTEX_SHADER);
+        let vertexShader: WebGLShader | null = this.gl.createShader(this.gl.VERTEX_SHADER);
         if (!vertexShader)
             return;
         this.gl.shaderSource(vertexShader, vertexShaderSource);
         this.gl.compileShader(vertexShader);
 
-        let fragmentShaderSource : string = `
+        let fragmentShaderSource: string = `
             precision mediump float;
             uniform vec4 u_color;
             
@@ -256,7 +256,7 @@ export class Renderer {
             }
         `;
 
-        let fragmentShader : WebGLShader | null = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+        let fragmentShader: WebGLShader | null = this.gl.createShader(this.gl.FRAGMENT_SHADER);
         if (!fragmentShader)
             return;
         this.gl.shaderSource(fragmentShader, fragmentShaderSource);
@@ -381,7 +381,7 @@ export class Renderer {
         this.drawGrid(viewPosition);
     }
 
-    public drawSparse(grid : SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, viewPosition: Vec): void
+    public drawSparse(grid: SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, viewPosition: Vec): void
     {
         
     }
