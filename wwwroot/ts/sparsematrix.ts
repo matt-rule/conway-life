@@ -15,6 +15,6 @@ export class SparseMatrixGrid
     public userClickCell(x: number, y: number, gridWidth: number, gridHeight: number, brush: boolean[][] | null,
         brushWidth: number, brushHeight: number)
     {
-
+        // perform transformation from screen to cell coordinates, considering panning, zoom, and grid cell width
     }
 }

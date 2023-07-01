@@ -1,22 +1,25 @@
 import { LifeCell } from './lifecell';
+import { Vec } from './vec';
 
 export class FiniteGrid {
+    public size: Vec = new Vec(0, 0);
     public frames: LifeCell[][][] = [];
     public history: boolean[][][] = [];
     public currentFrame: number = 0;
     
-    constructor(gridWidth: number, gridHeight: number, historyLength: number) {
-        this.frames.push(FiniteGrid.createGrid(gridWidth, gridHeight));
-        this.frames.push(FiniteGrid.createGrid(gridWidth, gridHeight));
-        this.history = FiniteGrid.createHistory(gridWidth, gridHeight, historyLength);
+    constructor(size: Vec, historyLength: number) {
+        this.size = size;
+        this.frames.push(FiniteGrid.createGrid(size.x, size.y));
+        this.frames.push(FiniteGrid.createGrid(size.x, size.y));
+        this.history = FiniteGrid.createHistory(size.x, size.y, historyLength);
     }
 
-    public userClickCell(x: number, y: number, gridWidth: number, gridHeight: number, brush: boolean[][] | null,
+    public userClickCell(x: number, y: number, gridSize: Vec, brush: boolean[][] | null,
         brushWidth: number, brushHeight: number)
     {
         let thisFrame: LifeCell[][] = this.frames[this.currentFrame];
 
-        if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight) {
+        if (x >= 0 && x < this.size.x && y >= 0 && y < this.size.y) {
             if (!brush)
             {
                 thisFrame[x][y].active = !thisFrame[x][y].active;
@@ -35,7 +38,7 @@ export class FiniteGrid {
                         const gridY = y - offsetY + brushY;
         
                         // Check if the position is within the grid boundaries
-                        if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+                        if (gridX >= 0 && gridX < this.size.x && gridY >= 0 && gridY < this.size.y) {
                             // Place the brush cell on the grid
                             thisFrame[gridX][gridY].active = brush[brushX][brushY];
                         }

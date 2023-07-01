@@ -1,5 +1,4 @@
 import { LifeCell } from './lifecell';
-import { GameState } from './gamestate';
 import { FiniteGrid } from './finitegrid';
 import { SparseMatrixGrid } from './sparsematrix';
 
@@ -52,16 +51,16 @@ export class GameRules {
         let thisFrame: LifeCell[][] = grid.frames[grid.currentFrame];
         let nextFrame: LifeCell[][] = grid.frames[(grid.currentFrame+1) % 2];
 
-        for (let x = 0; x < GameState.gridWidth; x++) {
-            for (let y = 0; y < GameState.gridHeight; y++) {
+        for (let x = 0; x < grid.size.x; x++) {
+            for (let y = 0; y < grid.size.y; y++) {
                 let liveNeighbors = 0;
 
                 // Calculate the number of live neighbors
                 for (let dx = -1; dx <= 1; dx++) {
                     for (let dy = -1; dy <= 1; dy++) {
                         if (dx !== 0 || dy !== 0) {
-                            let nx = this.wrap(x + dx, GameState.gridWidth);
-                            let ny = this.wrap(y + dy, GameState.gridHeight);
+                            let nx = this.wrap(x + dx, grid.size.x);
+                            let ny = this.wrap(y + dy, grid.size.y);
 
                             if (thisFrame[nx][ny].active) {
                                 liveNeighbors++;

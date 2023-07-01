@@ -1,7 +1,6 @@
 import { Renderer } from './renderer';
 import { LifeCell } from './lifecell';
 import { GameRules } from './gamerules';
-import { GameState } from './gamestate';
 import { FiniteGrid } from './finitegrid';
 import { SparseMatrixGrid } from './sparsematrix';
 import { Vec } from './vec';
@@ -14,8 +13,11 @@ let maxZoom: number = 10;
 let unzoomedCellWidth: number = 20;
 let cellWidth: number = 20;
 let timestepMs: number = 125;
-
 let cursorCellPos: Vec | null;
+let defaultGridWidth = 24;
+let defaultGridHeight = 24;
+let sparseMatrixWidth = 500000;
+let sparseMatrixHeight = 500000;
 
 // brush
 let brush: boolean[][] | null = null;
@@ -31,7 +33,7 @@ let dynamicViewPosition: Vec = new Vec(0, 0);       // Changes all the time when
 let commitViewPosition: Vec = new Vec(0, 0);        // Does not change until finished panning the view
 let startDragScreenPosition: Vec | null = null;
 
-let grid: FiniteGrid | SparseMatrixGrid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+let grid: FiniteGrid | SparseMatrixGrid = new FiniteGrid(new Vec(defaultGridWidth, defaultGridHeight), historyLength);
 //let grid: FiniteGrid | SparseMatrixGrid = new SparseMatrixGrid;
 
 if (!canvas) {
@@ -46,10 +48,15 @@ else
     canvas.style.maxWidth = `${window.innerWidth}px`;
     canvas.style.maxHeight = `${window.innerHeight}px`;
     let gl : WebGL2RenderingContext | null = canvas.getContext("webgl2");
-    dynamicViewPosition = commitViewPosition = new Vec(
-        (canvas.width - cellWidth*GameState.gridWidth) / 2,
-        (canvas.height - cellWidth*GameState.gridHeight) / 2
-    );
+    if (grid instanceof FiniteGrid)
+    {
+        let canvasSize = new Vec(canvas.width, canvas.height);
+        dynamicViewPosition = commitViewPosition = canvasSize.subtract(grid.size.multiply(cellWidth)).divide(2);
+    }
+    else
+    {
+        // TODO
+    }
 
     if (!gl) {
         alert('Your browser does not support WebGL');
@@ -106,7 +113,7 @@ else
 
             if (event.code === 'KeyR') {
                 if (grid instanceof FiniteGrid)
-                    grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+                    grid = new FiniteGrid(grid.size, historyLength);
                 else if (grid instanceof SparseMatrixGrid)
                     grid = new SparseMatrixGrid;
             
@@ -173,7 +180,14 @@ else
                 {
                     let cellX = Math.floor((mouseX - dynamicViewPosition.x) / cellWidth);
                     let cellY = Math.floor((mouseY - dynamicViewPosition.y) / cellWidth);
-                    grid.userClickCell(cellX, cellY, GameState.gridWidth, GameState.gridHeight, brush, brushWidth, brushHeight);
+                    if (grid instanceof FiniteGrid)
+                    {
+                        grid.userClickCell(cellX, cellY, grid.size, brush, brushWidth, brushHeight);
+                    }
+                    else
+                    {
+                        // TODO
+                    }
                 }
                 else if (event.button === 2)    // Right mouse button
                 {
@@ -281,21 +295,26 @@ else
             addTooltipToElements([gridWidthLabel, gridWidthEdit], 'Grid width measured in cells (1-1000)');
 
             gridWidthEdit.addEventListener('input', () => {
+                if (grid instanceof SparseMatrixGrid)
+                    return;
+
                 const value = gridWidthEdit.value;
                 const numericValue = parseInt(value, 10);
                 
                 if (isNaN(numericValue)) {
                     console.log('Please enter a numeric value');
+                    return;
                 }
 
-                if (numericValue >= 3 && numericValue <= 1000) {
-                    GameState.gridWidth = numericValue;
-                    console.log(`gridWidth has been set to: ${GameState.gridWidth}`);
-                } else {
+                if (numericValue < 3 || numericValue > 1000) {
                     console.log('Value must be between 3 and 1000 inclusive');
+                    return;
                 }
 
-                grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+                let newSize = new Vec(numericValue, grid.size.y);
+                console.log(`gridWidth has been set to: ${newSize.x}`);
+
+                grid = new FiniteGrid(newSize, historyLength);
                 if (canvas && gl)
                     renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
                 renderer.draw(grid, cursorCellPos, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
@@ -304,6 +323,9 @@ else
             addTooltipToElements([gridHeightLabel, gridHeightEdit], 'Grid height measured in cells (1-1000)');
 
             gridHeightEdit.addEventListener('input', () => {
+                if (grid instanceof SparseMatrixGrid)
+                    return;
+
                 const value = gridHeightEdit.value;
                 const numericValue = parseInt(value, 10);
                 
@@ -311,14 +333,15 @@ else
                     console.log('Please enter a numeric value');
                 }
 
-                if (numericValue >= 3 && numericValue <= 1000) {
-                    GameState.gridHeight = numericValue;
-                    console.log(`gridHeight has been set to: ${GameState.gridHeight}`);
-                } else {
+                if (numericValue < 3 || numericValue > 1000) {
                     console.log('Value must be between 3 and 1000 inclusive');
+                    return;
                 }
 
-                grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+                let newSize = new Vec(grid.size.x, numericValue);
+                console.log(`gridHeight has been set to: ${newSize.y}`);
+
+                grid = new FiniteGrid(newSize, historyLength);
                 if (canvas && gl)
                     renderer = new Renderer(canvas, gl, cellWidth, borderWidth, showGrid, renderer.zoomLevel);
                 renderer.draw(grid, cursorCellPos, brush, brushWidth, brushHeight, GameRules.detectOscillations, dynamicViewPosition);
@@ -371,7 +394,7 @@ else
         
             resetButton.addEventListener('click', () => {
                 if (grid instanceof FiniteGrid)
-                    grid = new FiniteGrid(GameState.gridWidth, GameState.gridHeight, historyLength);
+                    grid = new FiniteGrid(grid.size, historyLength);
                 else if (grid instanceof SparseMatrixGrid)
                     grid = new SparseMatrixGrid;
             

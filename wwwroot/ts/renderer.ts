@@ -1,7 +1,6 @@
 import * as glMatrix from 'gl-matrix';
 
 import { LifeCell } from './lifecell';
-import { GameState } from './gamestate';
 import { FiniteGrid } from './finitegrid';
 import { SparseMatrixGrid } from './sparsematrix';
 import { Vec } from './vec';
@@ -12,7 +11,7 @@ export class Renderer {
     public gl: WebGL2RenderingContext;
     public initialised: boolean;
     public shaderProgram: WebGLProgram | null;
-    public gridVertices: number[];
+    public finiteGridVertices: number[];
     public squareVertices: number[];
     public squareIndices: number[];
     public borderVertices: number[];
@@ -21,7 +20,7 @@ export class Renderer {
     public matrixLocation: WebGLUniformLocation | null;
     public colorLocation: WebGLUniformLocation | null;
     public positionLocation: number;
-    public gridVertexBuffer: WebGLBuffer | null;
+    public finiteGridVertexBuffer: WebGLBuffer | null;
     public squareVertexBuffer: WebGLBuffer | null;
     public squareIndexBuffer: WebGLBuffer | null;
     public borderVertexBuffer: WebGLBuffer | null;
@@ -38,7 +37,7 @@ export class Renderer {
         this.gl = gl;
         this.initialised = false;
         this.shaderProgram = null;
-        this.gridVertices = [];
+        this.finiteGridVertices = [];
         this.squareVertices = [];
         this.squareIndices = [];
         this.borderVertices = [];
@@ -50,7 +49,7 @@ export class Renderer {
         this.matrixLocation = null;
         this.colorLocation = null;
         this.positionLocation = -1;
-        this.gridVertexBuffer = null;
+        this.finiteGridVertexBuffer = null;
         this.squareVertexBuffer = null;
         this.squareIndexBuffer = null;
         this.borderVertexBuffer = null;
@@ -67,7 +66,7 @@ export class Renderer {
         if (!this.shaderProgram || !this.showGrid)
             return;
 
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.gridVertexBuffer);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.finiteGridVertexBuffer);
 
         let positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
         this.gl.enableVertexAttribArray(positionLocation);
@@ -78,7 +77,7 @@ export class Renderer {
         this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
 
         this.gl.uniform4f(this.colorLocation, 0.3, 0.3, 0.3, 1);
-        this.gl.drawArrays(this.gl.LINES, 0, this.gridVertices.length / 2);   
+        this.gl.drawArrays(this.gl.LINES, 0, this.finiteGridVertices.length / 2);   
     }
 
     public drawSquare(color : number[], x : number, y : number) {
@@ -125,15 +124,16 @@ export class Renderer {
         this.gl.drawArrays(this.gl.LINES, 0, this.borderVertices.length / 2);   
     }
 
-    public calcBufferData(): void
+    public calcBufferData(grid: FiniteGrid | SparseMatrixGrid): void
     {
         // Clear the arrays
-        this.gridVertices.length = 0;
+        this.finiteGridVertices.length = 0;
         this.borderVertices.length = 0;
         
         // Delete existing buffers
-        if (this.gridVertexBuffer) {
-            this.gl.deleteBuffer(this.gridVertexBuffer);
+        if (this.finiteGridVertexBuffer) {
+            this.gl.deleteBuffer(this.finiteGridVertexBuffer);
+            this.finiteGridVertexBuffer = null;
         }
         if (this.squareVertexBuffer) {
             this.gl.deleteBuffer(this.squareVertexBuffer);
@@ -145,16 +145,23 @@ export class Renderer {
             this.gl.deleteBuffer(this.borderVertexBuffer);
         }
 
-        // Vertical gridlines
-        for (let i = 0; i <= this.cellWidth*GameState.gridWidth; i += this.cellWidth) {
-            this.gridVertices.push(i, 0);
-            this.gridVertices.push(i, this.cellWidth*GameState.gridHeight);
-        }
+        if (grid instanceof FiniteGrid)
+        {
+            // Vertical gridlines
+            for (let i = 0; i <= this.cellWidth*grid.size.x; i += this.cellWidth) {
+                this.finiteGridVertices.push(i, 0);
+                this.finiteGridVertices.push(i, this.cellWidth*grid.size.y);
+            }
 
-        // Horizontal gridlines
-        for (let j = 0; j <= this.cellWidth*GameState.gridHeight; j += this.cellWidth) {
-            this.gridVertices.push(0, j);
-            this.gridVertices.push(this.cellWidth*GameState.gridWidth, j);
+            // Horizontal gridlines
+            for (let j = 0; j <= this.cellWidth*grid.size.y; j += this.cellWidth) {
+                this.finiteGridVertices.push(0, j);
+                this.finiteGridVertices.push(this.cellWidth*grid.size.x, j);
+            }
+        }
+        else
+        {
+            // TODO
         }
 
         this.squareVertices = [
@@ -193,9 +200,16 @@ export class Renderer {
             this.borderVertices.push(this.cellWidth, i);
         }
 
-        this.gridVertexBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.gridVertexBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.gridVertices), this.gl.STATIC_DRAW);
+        if (grid instanceof FiniteGrid)
+        {
+            this.finiteGridVertexBuffer = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.finiteGridVertexBuffer);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.finiteGridVertices), this.gl.STATIC_DRAW);
+        }
+        else
+        {
+            // TODO
+        }
 
         this.squareVertexBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareVertexBuffer);
@@ -210,7 +224,7 @@ export class Renderer {
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.borderVertices), this.gl.STATIC_DRAW);
     }
 
-    public init(): void
+    public init(grid: FiniteGrid | SparseMatrixGrid): void
     {
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -259,21 +273,21 @@ export class Renderer {
         this.matrixLocation = this.gl.getUniformLocation(this.shaderProgram, "u_matrix");
         this.colorLocation = this.gl.getUniformLocation(this.shaderProgram, "u_color");
 
-        this.calcBufferData();
+        this.calcBufferData(grid);
     }
 
     public cleanup(): void {
         // Clear the arrays
-        this.gridVertices.length = 0;
+        this.finiteGridVertices.length = 0;
         this.squareVertices.length = 0;
         this.squareIndices.length = 0;
         this.borderVertices.length = 0;
         this.borderIndices.length = 0;
     
         // Delete WebGL buffers
-        if (this.gridVertexBuffer) {
-            this.gl.deleteBuffer(this.gridVertexBuffer);
-            this.gridVertexBuffer = null;
+        if (this.finiteGridVertexBuffer) {
+            this.gl.deleteBuffer(this.finiteGridVertexBuffer);
+            this.finiteGridVertexBuffer = null;
         }
         if (this.squareVertexBuffer) {
             this.gl.deleteBuffer(this.squareVertexBuffer);
@@ -308,17 +322,17 @@ export class Renderer {
         brushWidth: number, brushHeight: number, showOscillations: boolean, viewPosition: Vec): void
     {
         if (grid instanceof FiniteGrid)
-            this.drawFiniteGrid(grid.frames[grid.currentFrame], cursorCellPos, brush, brushWidth, brushHeight, showOscillations, viewPosition);
+            this.drawFiniteGrid(grid, grid.frames[grid.currentFrame], cursorCellPos, brush, brushWidth, brushHeight, showOscillations, viewPosition);
         else if (grid instanceof SparseMatrixGrid)
             this.drawSparse(grid, cursorCellPos, brush, brushWidth, brushHeight, viewPosition);
     }
 
-    public drawFiniteGrid(frame: LifeCell[][], cursorCellPos: Vec | null, brush: boolean[][] | null,
+    public drawFiniteGrid(grid: FiniteGrid, frame: LifeCell[][], cursorCellPos: Vec | null, brush: boolean[][] | null,
         brushWidth: number, brushHeight: number, showOscillations: boolean, viewPosition: Vec): void
     {
         if (!this.initialised)
         {
-            this.init();
+            this.init(grid);
             this.initialised = true;
         }
 
@@ -327,8 +341,8 @@ export class Renderer {
 
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-        for (let x = 0; x < GameState.gridWidth; x += 1) {
-            for (let y = 0; y < GameState.gridHeight; y += 1) {
+        for (let x = 0; x < grid.size.x; x += 1) {
+            for (let y = 0; y < grid.size.y; y += 1) {
                 if (showOscillations)
                     this.drawSquare(frame[x][y].color, viewPosition.x + x*this.cellWidth, viewPosition.y + y*this.cellWidth);
 
@@ -337,7 +351,7 @@ export class Renderer {
             }
         }
 
-        if (cursorCellPos && cursorCellPos.x >= 0 && cursorCellPos.x < GameState.gridWidth && cursorCellPos.y >= 0 && cursorCellPos.y < GameState.gridHeight)
+        if (cursorCellPos && cursorCellPos.x >= 0 && cursorCellPos.x < grid.size.x && cursorCellPos.y >= 0 && cursorCellPos.y < grid.size.y)
         {
             if (!brush)
             {
@@ -357,7 +371,7 @@ export class Renderer {
                         const gridY = cursorCellPos.y - offsetY + brushY;
         
                         // Check if the position is within the grid boundaries
-                        if (gridX >= 0 && gridX < GameState.gridWidth && gridY >= 0 && gridY < GameState.gridHeight) {
+                        if (gridX >= 0 && gridX < grid.size.x && gridY >= 0 && gridY < grid.size.y) {
                             this.drawBorder(viewPosition.x + gridX * this.cellWidth, viewPosition.y + gridY * this.cellWidth, brush[brushX][brushY]);
                         }
                     }
