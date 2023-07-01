@@ -5,13 +5,13 @@ import { SparseMatrixGrid } from './sparsematrix';
 export class GameRules {
     public static surviveConditions: boolean[] = [false,false,true,true,false,false,false,false,false];
     public static birthConditions: boolean[] = [false,false,false,true,false,false,false,false,false];
-    public static detectOscillations : boolean = true;
+    public static detectOscillations: boolean = true;
 
-    private static wrap(x : number, y : number) {
+    private static wrap(x: number, y: number) {
         return (x + y) % y;
     }
 
-    public static countRepeatingPattern(arr : boolean[], patternLen : number) : number {
+    public static countRepeatingPattern(arr: boolean[], patternLen: number): number {
         if (patternLen <= 0 || patternLen > arr.length) {
             return 0;
         }

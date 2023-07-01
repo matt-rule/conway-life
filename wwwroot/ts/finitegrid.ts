@@ -15,14 +15,14 @@ export class FiniteGrid {
         this.history = FiniteGrid.createHistory(size.x, size.y, historyLength);
     }
 
-    public userClickCell(x: number, y: number, gridSize: Vec, brush: Brush | null)
+    public userClickCell(cellXY: Vec, gridSize: Vec, brush: Brush | null)
     {
         let thisFrame: LifeCell[][] = this.frames[this.currentFrame];
 
-        if (x >= 0 && x < this.size.x && y >= 0 && y < this.size.y) {
+        if (cellXY.x >= 0 && cellXY.x < this.size.x && cellXY.y >= 0 && cellXY.y < this.size.y) {
             if (!brush)
             {
-                thisFrame[x][y].active = !thisFrame[x][y].active;
+                thisFrame[cellXY.x][cellXY.y].active = !thisFrame[cellXY.x][cellXY.y].active;
             }
             else
             {
@@ -34,8 +34,8 @@ export class FiniteGrid {
                 for (let brushX = 0; brushX < brush.size.x; brushX++) {
                     for (let brushY = 0; brushY < brush.size.y; brushY++) {
                         // Calculate the corresponding grid position
-                        const gridX = x - offsetX + brushX;
-                        const gridY = y - offsetY + brushY;
+                        const gridX = cellXY.x - offsetX + brushX;
+                        const gridY = cellXY.y - offsetY + brushY;
         
                         // Check if the position is within the grid boundaries
                         if (gridX >= 0 && gridX < this.size.x && gridY >= 0 && gridY < this.size.y) {
