@@ -21,20 +21,4 @@ export class View
         // perform transformation from cell to screen coordinates, considering panning and zoomed grid cell width
         return cellXY.multiply(this.cellWidth).subtract(this.dynamicViewPosition);
     }
-    public getDynamicViewPosition(): Vec
-    {
-        return this.dynamicViewPosition.clone();
-    }
-    public setDynamicViewPosition(val: Vec): void
-    {
-        this.dynamicViewPosition = val.clone();
-    }
-    public getCommitViewPosition(): Vec
-    {
-        return this.commitViewPosition.clone();
-    }
-    public setCommitViewPosition(val: Vec): void
-    {
-        this.commitViewPosition = val.clone();
-    }
 }
