@@ -74,7 +74,7 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let matrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(matrix, this.projectionMatrix, [viewPosition.x, viewPosition.y, 0]);
+        glMatrix.mat4.translate(matrix, this.projectionMatrix, [-viewPosition.x, -viewPosition.y, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
 
         this.gl.uniform4f(this.colorLocation, 0.3, 0.3, 0.3, 1);
@@ -343,7 +343,7 @@ export class Renderer {
         for (let x = 0; x < grid.size.x; x += 1) {
             for (let y = 0; y < grid.size.y; y += 1)
             {
-                let pos: Vec = new Vec(x, y).multiply(this.cellWidth).add(viewPosition);
+                let pos: Vec = new Vec(x, y).multiply(this.cellWidth).subtract(viewPosition);
                 if (showOscillations)
                     this.drawSquare(frame[x][y].color, pos);
 
@@ -356,7 +356,7 @@ export class Renderer {
         {
             if (!brush)
             {
-                this.drawBorder(cursorCellPos.multiply(this.cellWidth).add(viewPosition), true);
+                this.drawBorder(cursorCellPos.multiply(this.cellWidth).subtract(viewPosition), true);
             }
             else
             {
@@ -372,7 +372,7 @@ export class Renderer {
         
                         // Check if the position is within the grid boundaries
                         if (gridXY.x >= 0 && gridXY.x < grid.size.x && gridXY.y >= 0 && gridXY.y < grid.size.y) {
-                            this.drawBorder(gridXY.multiply(this.cellWidth).add(viewPosition), brush.pattern[brushX][brushY]);
+                            this.drawBorder(gridXY.multiply(this.cellWidth).subtract(viewPosition), brush.pattern[brushX][brushY]);
                         }
                     }
                 }
