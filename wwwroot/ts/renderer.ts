@@ -81,7 +81,7 @@ export class Renderer {
         this.gl.drawArrays(this.gl.LINES, 0, this.finiteGridVertices.length / 2);   
     }
 
-    public drawSquare(color: number[], x: number, y: number) {
+    public drawSquare(color: number[], pos: Vec) {
         if (!this.shaderProgram)
             return;
 
@@ -93,7 +93,7 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let matrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(matrix, this.projectionMatrix, [x, y, 0]);
+        glMatrix.mat4.translate(matrix, this.projectionMatrix, [pos.x, pos.y, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
 
         this.gl.uniform4f(this.colorLocation, color[0], color[1], color[2], 1);
@@ -101,7 +101,7 @@ export class Renderer {
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
     }
 
-    public drawBorder(x: number, y: number, selected: boolean) {
+    public drawBorder(pos: Vec, selected: boolean) {
         if (!this.shaderProgram)
             return;
 
@@ -112,7 +112,7 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let matrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(matrix, this.projectionMatrix, [x, y, 0]);
+        glMatrix.mat4.translate(matrix, this.projectionMatrix, [pos.x, pos.y, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
 
         if (selected) {
@@ -341,12 +341,14 @@ export class Renderer {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
         for (let x = 0; x < grid.size.x; x += 1) {
-            for (let y = 0; y < grid.size.y; y += 1) {
+            for (let y = 0; y < grid.size.y; y += 1)
+            {
+                let pos: Vec = new Vec(x, y).multiply(this.cellWidth).add(viewPosition);
                 if (showOscillations)
-                    this.drawSquare(frame[x][y].color, viewPosition.x + x*this.cellWidth, viewPosition.y + y*this.cellWidth);
+                    this.drawSquare(frame[x][y].color, pos);
 
                 if (frame[x][y].active)
-                    this.drawBorder(viewPosition.x + x*this.cellWidth, viewPosition.y + y*this.cellWidth, false);
+                    this.drawBorder(pos, false);
             }
         }
 
@@ -354,24 +356,23 @@ export class Renderer {
         {
             if (!brush)
             {
-                this.drawBorder(viewPosition.x + cursorCellPos.x*this.cellWidth, viewPosition.y + cursorCellPos.y*this.cellWidth, true);
+                this.drawBorder(cursorCellPos.multiply(this.cellWidth).add(viewPosition), true);
             }
             else
             {
                 // Calculate offsets to center the brush around the cursor
-                const offsetX = Math.floor(brush.size.x / 2);
-                const offsetY = Math.floor(brush.size.y / 2);
+                const offset: Vec = brush.size.divide(2).floor();
         
                 // Iterate through each cell in the brush
                 for (let brushX = 0; brushX < brush.size.x; brushX++) {
                     for (let brushY = 0; brushY < brush.size.y; brushY++) {
                         // Calculate the corresponding grid position
-                        const gridX = cursorCellPos.x - offsetX + brushX;
-                        const gridY = cursorCellPos.y - offsetY + brushY;
+                        let brushXY = new Vec(brushX, brushY);
+                        let gridXY: Vec = cursorCellPos.subtract(offset).add(brushXY);
         
                         // Check if the position is within the grid boundaries
-                        if (gridX >= 0 && gridX < grid.size.x && gridY >= 0 && gridY < grid.size.y) {
-                            this.drawBorder(viewPosition.x + gridX * this.cellWidth, viewPosition.y + gridY * this.cellWidth, brush.pattern[brushX][brushY]);
+                        if (gridXY.x >= 0 && gridXY.x < grid.size.x && gridXY.y >= 0 && gridXY.y < grid.size.y) {
+                            this.drawBorder(gridXY.multiply(this.cellWidth).add(viewPosition), brush.pattern[brushX][brushY]);
                         }
                     }
                 }

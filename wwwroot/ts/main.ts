@@ -45,12 +45,12 @@ else
     if (grid instanceof FiniteGrid)
     {
         view.setCommitGridPosition(canvasSize.subtract(grid.size.multiply(view.cellWidth)).divide(2));
-        view.setDynamicGridPosition(view.getCommitGridPosition());
+        view.setDynamicViewPosition(view.getCommitViewPosition());
     }
     else
     {
         view.setCommitGridPosition(canvasSize.subtract(sparseMatrixSize.multiply(view.cellWidth)).divide(2));
-        view.setDynamicGridPosition(view.getCommitGridPosition());
+        view.setDynamicViewPosition(view.getCommitViewPosition());
     }
 
     if (!gl) {
@@ -133,7 +133,7 @@ else
             let viewPosRelativeToMouse = view.getDynamicGridPosition().subtract(mousePos);
             let scaled = viewPosRelativeToMouse.multiply(scaleFactor);
             view.setCommitGridPosition(mousePos.add(scaled));
-            view.setDynamicGridPosition(view.getCommitGridPosition());
+            view.setDynamicViewPosition(view.getCommitViewPosition());
 
             // if mouse is positioned inside the grid, move dynamicGridPosition away from the cursor if zooming in, towards if zooming out.
 
@@ -197,7 +197,7 @@ else
                         let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
 
                         view.setCommitGridPosition(mousePos.subtract( view.startDragScreenPosition ).add( view.getCommitGridPosition() ));
-                        view.setDynamicGridPosition(view.getCommitGridPosition());
+                        view.setDynamicViewPosition(view.getCommitViewPosition());
                         view.startDragScreenPosition = null;
                     }
                 }
