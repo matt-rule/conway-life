@@ -7,8 +7,8 @@ export class View
     public unzoomedCellWidth: number = 20;
     public cellWidth: number = 20;
     
-    public dynamicGridPosition: Vec = new Vec(0, 0);       // Changes all the time when panning the view
-    public commitGridPosition: Vec = new Vec(0, 0);        // Does not change until finished panning the view
+    private dynamicGridPosition: Vec = new Vec(0, 0);       // Changes all the time when panning the view
+    private commitGridPosition: Vec = new Vec(0, 0);        // Does not change until finished panning the view
     public startDragScreenPosition: Vec | null = null;
 
     public screenToCellCoords(screenXY: Vec): Vec
@@ -20,5 +20,21 @@ export class View
     {
         // perform transformation from cell to screen coordinates, considering panning and zoomed grid cell width
         return cellXY.multiply(this.cellWidth).add(this.dynamicGridPosition);
+    }
+    public getDynamicGridPosition(): Vec
+    {
+        return this.dynamicGridPosition.clone();
+    }
+    public setDynamicGridPosition(val: Vec): void
+    {
+        this.dynamicGridPosition = val.clone();
+    }
+    public getCommitGridPosition(): Vec
+    {
+        return this.dynamicGridPosition.clone();
+    }
+    public setCommitGridPosition(val: Vec): void
+    {
+        this.dynamicGridPosition = val.clone();
     }
 }
