@@ -17,6 +17,10 @@ export class Renderer {
     public squareIndices: number[];
     public borderVertices: number[];
     public borderIndices: number[];
+    public vertLineVertices: number[];
+    public vertLineIndices: number[];
+    public horizLineVertices: number[];
+    public horizLineIndices: number[];
     public projectionMatrix: glMatrix.mat4;
     public matrixLocation: WebGLUniformLocation | null;
     public colorLocation: WebGLUniformLocation | null;
@@ -25,6 +29,10 @@ export class Renderer {
     public squareVertexBuffer: WebGLBuffer | null;
     public squareIndexBuffer: WebGLBuffer | null;
     public borderVertexBuffer: WebGLBuffer | null;
+    public vertLineVertexBuffer: WebGLBuffer | null;
+    public vertLineIndexBuffer: WebGLBuffer | null;
+    public horizLineVertexBuffer: WebGLBuffer | null;
+    public horizLineIndexBuffer: WebGLBuffer | null;
     public cellWidth: number;
     public borderWidth: number;
     public showGrid: boolean;
@@ -43,6 +51,10 @@ export class Renderer {
         this.squareIndices = [];
         this.borderVertices = [];
         this.borderIndices = [];
+        this.vertLineVertices = [];
+        this.vertLineIndices = [];
+        this.horizLineVertices = [];
+        this.horizLineIndices = [];
 
         this.projectionMatrix = glMatrix.mat4.create();
         glMatrix.mat4.ortho(this.projectionMatrix, 0, this.gl.canvas.width, this.gl.canvas.height, 0, -1, 1);
@@ -54,6 +66,10 @@ export class Renderer {
         this.squareVertexBuffer = null;
         this.squareIndexBuffer = null;
         this.borderVertexBuffer = null;
+        this.vertLineVertexBuffer = null;
+        this.vertLineIndexBuffer = null;
+        this.horizLineVertexBuffer = null;
+        this.horizLineIndexBuffer = null;
 
         this.cellWidth = cellWidth;
         this.borderWidth = borderWidth;
@@ -62,7 +78,7 @@ export class Renderer {
         this.zoomLevel = zoomLevel;
     }
     
-    public drawGrid(viewPosition: Vec): void
+    public drawFiniteGrid(viewPosition: Vec): void
     {
         if (!this.shaderProgram || !this.showGrid)
             return;
@@ -79,6 +95,25 @@ export class Renderer {
 
         this.gl.uniform4f(this.colorLocation, 0.3, 0.3, 0.3, 1);
         this.gl.drawArrays(this.gl.LINES, 0, this.finiteGridVertices.length / 2);   
+    }
+
+    public drawSparseMatrixGrid(viewPosition: Vec): void
+    {
+        if (!this.shaderProgram || !this.showGrid)
+            return;
+
+        // if zoomed out too far, return
+
+        // --- draw vertical lines ---
+        // use the modulus of the horizontal translation
+        // determine how many points to draw based on the zoom level
+        // determine a set of points on a horizontal axis to start each vertical line at, in the range 0..canvas width
+        // create a scale matrix to scale by the zoom level and also consider screen size
+        // for each vertical line:
+            // apply translation and scaling in the right order
+            // draw the vertical line
+
+        // --- draw horizontal lines ---
     }
 
     public drawSquare(color: number[], pos: Vec) {
@@ -138,31 +173,56 @@ export class Renderer {
         }
         if (this.squareVertexBuffer) {
             this.gl.deleteBuffer(this.squareVertexBuffer);
+            this.squareVertexBuffer = null;
         }
         if (this.squareIndexBuffer) {
             this.gl.deleteBuffer(this.squareIndexBuffer);
+            this.squareIndexBuffer = null;
         }
         if (this.borderVertexBuffer) {
             this.gl.deleteBuffer(this.borderVertexBuffer);
+            this.borderVertexBuffer = null;
+        }
+        if (this.vertLineVertexBuffer) {
+            this.gl.deleteBuffer(this.vertLineVertexBuffer);
+            this.vertLineVertexBuffer = null;
+        }
+        if (this.vertLineIndexBuffer) {
+            this.gl.deleteBuffer(this.vertLineIndexBuffer);
+            this.vertLineIndexBuffer = null;
+        }
+        if (this.horizLineVertexBuffer) {
+            this.gl.deleteBuffer(this.horizLineIndexBuffer);
+            this.horizLineIndexBuffer = null;
+        }
+        if (this.horizLineIndexBuffer) {
+            this.gl.deleteBuffer(this.horizLineIndexBuffer);
+            this.horizLineIndexBuffer = null;
         }
 
         if (grid instanceof FiniteGrid)
         {
             // Vertical gridlines
-            for (let i = 0; i <= this.cellWidth*grid.size.x; i += this.cellWidth) {
-                this.finiteGridVertices.push(i, 0);
-                this.finiteGridVertices.push(i, this.cellWidth*grid.size.y);
+            for (let x = 0; x <= this.cellWidth*grid.size.x; x += this.cellWidth) {
+                this.finiteGridVertices.push(x, 0);
+                this.finiteGridVertices.push(x, this.cellWidth*grid.size.y);
             }
 
             // Horizontal gridlines
-            for (let j = 0; j <= this.cellWidth*grid.size.y; j += this.cellWidth) {
-                this.finiteGridVertices.push(0, j);
-                this.finiteGridVertices.push(this.cellWidth*grid.size.x, j);
+            for (let y = 0; y <= this.cellWidth*grid.size.y; y += this.cellWidth) {
+                this.finiteGridVertices.push(0, y);
+                this.finiteGridVertices.push(this.cellWidth*grid.size.x, y);
             }
         }
         else
         {
-            // TODO
+            this.vertLineVertices.push(0, 0);
+            this.vertLineVertices.push(0, 1);
+            this.vertLineIndices = [0, 1];
+
+            this.horizLineVertices.push(0, 0);
+            this.horizLineVertices.push(1, 0);
+            this.horizLineIndices = [0, 1];
         }
 
         this.squareVertices = [
@@ -209,7 +269,21 @@ export class Renderer {
         }
         else
         {
-            // TODO
+            this.vertLineVertexBuffer = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertLineVertexBuffer);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.vertLineVertices), this.gl.STATIC_DRAW);
+    
+            this.vertLineIndexBuffer = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.vertLineIndexBuffer);
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.vertLineIndices), this.gl.STATIC_DRAW);
+    
+            this.horizLineVertexBuffer = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.horizLineVertexBuffer);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.horizLineVertices), this.gl.STATIC_DRAW);
+    
+            this.horizLineIndexBuffer = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.horizLineIndexBuffer);
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.horizLineIndices), this.gl.STATIC_DRAW);
         }
 
         this.squareVertexBuffer = this.gl.createBuffer();
@@ -284,6 +358,10 @@ export class Renderer {
         this.squareIndices.length = 0;
         this.borderVertices.length = 0;
         this.borderIndices.length = 0;
+        this.vertLineVertices.length = 0;
+        this.vertLineIndices.length = 0;
+        this.horizLineVertices.length = 0;
+        this.horizLineIndices.length = 0;
     
         // Delete WebGL buffers
         if (this.finiteGridVertexBuffer) {
@@ -301,6 +379,22 @@ export class Renderer {
         if (this.borderVertexBuffer) {
             this.gl.deleteBuffer(this.borderVertexBuffer);
             this.borderVertexBuffer = null;
+        }
+        if (this.vertLineVertexBuffer) {
+            this.gl.deleteBuffer(this.vertLineVertexBuffer);
+            this.vertLineVertexBuffer = null;
+        }
+        if (this.vertLineIndexBuffer) {
+            this.gl.deleteBuffer(this.vertLineIndexBuffer);
+            this.vertLineIndexBuffer = null;
+        }
+        if (this.horizLineVertexBuffer) {
+            this.gl.deleteBuffer(this.horizLineVertexBuffer);
+            this.horizLineVertexBuffer = null;
+        }
+        if (this.horizLineIndexBuffer) {
+            this.gl.deleteBuffer(this.horizLineIndexBuffer);
+            this.horizLineIndexBuffer = null;
         }
     
         // Delete shader program if it exists
@@ -322,12 +416,12 @@ export class Renderer {
     public draw(grid: FiniteGrid | SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPosition: Vec): void
     {
         if (grid instanceof FiniteGrid)
-            this.drawFiniteGrid(grid, grid.frames[grid.currentFrame], cursorCellPos, brush, showOscillations, viewPosition);
+            this.drawGameWithFiniteGrid(grid, grid.frames[grid.currentFrame], cursorCellPos, brush, showOscillations, viewPosition);
         else if (grid instanceof SparseMatrixGrid)
-            this.drawSparse(grid, cursorCellPos, brush, viewPosition);
+            this.drawGameWithSparseMatrix(grid, cursorCellPos, brush, viewPosition);
     }
 
-    public drawFiniteGrid(grid: FiniteGrid, frame: LifeCell[][], cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPosition: Vec): void
+    public drawGameWithFiniteGrid(grid: FiniteGrid, frame: LifeCell[][], cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPosition: Vec): void
     {
         if (!this.initialised)
         {
@@ -379,10 +473,10 @@ export class Renderer {
             }
         }
 
-        this.drawGrid(viewPosition);
+        this.drawFiniteGrid(viewPosition);
     }
 
-    public drawSparse(grid: SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, viewPosition: Vec): void
+    public drawGameWithSparseMatrix(grid: SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, viewPosition: Vec): void
     {
         
     }
