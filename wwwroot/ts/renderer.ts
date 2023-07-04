@@ -73,9 +73,11 @@ export class Renderer {
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        let matrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(matrix, this.projectionMatrix, [-viewPosition.x, -viewPosition.y, 0]);
-        this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
+        let translatedMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [-viewPosition.x, -viewPosition.y, 0]);
+        let scaledMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [this.cellWidth, this.cellWidth, 0]);
+        this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
 
         this.gl.uniform4f(this.colorLocation, 0.3, 0.3, 0.3, 1);
         this.gl.drawArrays(this.gl.LINES, 0, this.finiteGridVertices.length / 2);   
@@ -92,9 +94,11 @@ export class Renderer {
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        let matrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(matrix, this.projectionMatrix, [pos.x, pos.y, 0]);
-        this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
+        let translatedMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y, 0]);
+        let scaledMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [this.cellWidth, this.cellWidth, 0]);
+        this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
 
         this.gl.uniform4f(this.colorLocation, color[0], color[1], color[2], 1);
 
@@ -111,9 +115,11 @@ export class Renderer {
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        let matrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(matrix, this.projectionMatrix, [pos.x, pos.y, 0]);
-        this.gl.uniformMatrix4fv(this.matrixLocation, false, matrix);
+        let translatedMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y, 0]);
+        let scaledMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [this.cellWidth, this.cellWidth, 0]);
+        this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
 
         if (selected) {
             this.gl.uniform4f(this.colorLocation, 0.6, 0.6, 0.6, 1);
@@ -149,15 +155,15 @@ export class Renderer {
         if (grid instanceof FiniteGrid)
         {
             // Vertical gridlines
-            for (let i = 0; i <= this.cellWidth*grid.size.x; i += this.cellWidth) {
+            for (let i = 0; i <= grid.size.x; i += 1) {
                 this.finiteGridVertices.push(i, 0);
-                this.finiteGridVertices.push(i, this.cellWidth*grid.size.y);
+                this.finiteGridVertices.push(i, grid.size.y);
             }
 
             // Horizontal gridlines
-            for (let j = 0; j <= this.cellWidth*grid.size.y; j += this.cellWidth) {
+            for (let j = 0; j <= grid.size.y; j += 1) {
                 this.finiteGridVertices.push(0, j);
-                this.finiteGridVertices.push(this.cellWidth*grid.size.x, j);
+                this.finiteGridVertices.push(grid.size.x, j);
             }
         }
         else
@@ -167,9 +173,9 @@ export class Renderer {
 
         this.squareVertices = [
             0, 0,
-            this.cellWidth, 0,
-            0, this.cellWidth,
-            this.cellWidth, this.cellWidth
+            1, 0,
+            0, 1,
+            1, 1
         ];
 
         this.squareIndices = [
@@ -178,28 +184,20 @@ export class Renderer {
         ];
 
         // Left vertical line
-        for (let i = 0; i < this.borderWidth; i++) {
-            this.borderVertices.push(i, 0);
-            this.borderVertices.push(i, this.cellWidth);
-        }
+        this.borderVertices.push(0, 0);
+        this.borderVertices.push(0, 1);
 
         // Right vertical line
-        for (let i = this.cellWidth - this.borderWidth; i < this.cellWidth; i++) {
-            this.borderVertices.push(i, 0);
-            this.borderVertices.push(i, this.cellWidth);
-        }
+        this.borderVertices.push(1, 0);
+        this.borderVertices.push(1, 1);
 
         // Top horizontal line
-        for (let i = 0; i < this.borderWidth; i++) {
-            this.borderVertices.push(0, i);
-            this.borderVertices.push(this.cellWidth, i);
-        }
+        this.borderVertices.push(0, 0);
+        this.borderVertices.push(1, 0);
 
         // Bottom horizontal line
-        for (let i = this.cellWidth - this.borderWidth; i < this.cellWidth; i++) {
-            this.borderVertices.push(0, i);
-            this.borderVertices.push(this.cellWidth, i);
-        }
+        this.borderVertices.push(0, 1);
+        this.borderVertices.push(1, 1);
 
         if (grid instanceof FiniteGrid)
         {
