@@ -12,7 +12,6 @@ export class Renderer {
     public gl: WebGL2RenderingContext;
     public initialised: boolean;
     public shaderProgram: WebGLProgram | null;
-    public finiteGridVertices: number[];
     public squareVertices: number[];
     public squareIndices: number[];
     public borderVertices: number[];
@@ -25,7 +24,6 @@ export class Renderer {
     public matrixLocation: WebGLUniformLocation | null;
     public colorLocation: WebGLUniformLocation | null;
     public positionLocation: number;
-    public finiteGridVertexBuffer: WebGLBuffer | null;
     public squareVertexBuffer: WebGLBuffer | null;
     public squareIndexBuffer: WebGLBuffer | null;
     public borderVertexBuffer: WebGLBuffer | null;
@@ -47,7 +45,6 @@ export class Renderer {
         this.gl = gl;
         this.initialised = false;
         this.shaderProgram = null;
-        this.finiteGridVertices = [];
         this.squareVertices = [];
         this.squareIndices = [];
         this.borderVertices = [];
@@ -63,7 +60,6 @@ export class Renderer {
         this.matrixLocation = null;
         this.colorLocation = null;
         this.positionLocation = -1;
-        this.finiteGridVertexBuffer = null;
         this.squareVertexBuffer = null;
         this.squareIndexBuffer = null;
         this.borderVertexBuffer = null;
@@ -80,25 +76,50 @@ export class Renderer {
         this.zoomLevel = zoomLevel;
     }
     
-    public drawFiniteGrid(viewPosition: Vec): void
+    public drawFiniteGrid(grid: FiniteGrid, viewPosition: Vec): void
     {
         if (!this.shaderProgram || !this.showGrid)
             return;
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.finiteGridVertexBuffer);
-
-        let positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
-        this.gl.enableVertexAttribArray(positionLocation);
-        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let translatedMatrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [-viewPosition.x, -viewPosition.y, 0]);
         let scaledMatrix = glMatrix.mat4.create();
         glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [this.cellWidth, this.cellWidth, 0]);
-        this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
 
+        let positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
+        this.gl.enableVertexAttribArray(positionLocation);
         this.gl.uniform4f(this.colorLocation, 0.3, 0.3, 0.3, 1);
-        this.gl.drawArrays(this.gl.LINES, 0, this.finiteGridVertices.length / 2);   
+
+        let gridPosMatrix = glMatrix.mat4.create();
+        let scaled2Matrix = glMatrix.mat4.create();
+
+        // --- Vertical lines ---
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertLineVertexBuffer);
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.vertLineIndexBuffer);
+
+        // Re-specify the attribute pointers because the buffer changed
+        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        for (let x = 0; x <= grid.size.x; x++) {
+            glMatrix.mat4.translate(gridPosMatrix, scaledMatrix, [x, 0, 0]);
+            glMatrix.mat4.scale(scaled2Matrix, gridPosMatrix, [grid.size.x, grid.size.y, 0]);
+            this.gl.uniformMatrix4fv(this.matrixLocation, false, scaled2Matrix);
+            this.gl.drawElements(this.gl.LINES, this.vertLineIndices.length, this.gl.UNSIGNED_SHORT, 0);
+        }
+        
+        // --- Horizontal lines ---
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.horizLineVertexBuffer);
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.horizLineIndexBuffer);
+        
+        // Re-specify the attribute pointers because the buffer changed
+        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        for (let y = 0; y <= grid.size.y; y++) {
+            glMatrix.mat4.translate(gridPosMatrix, scaledMatrix, [0, y, 0]);
+            glMatrix.mat4.scale(scaled2Matrix, gridPosMatrix, [grid.size.x, grid.size.y, 0]);
+            this.gl.uniformMatrix4fv(this.matrixLocation, false, scaled2Matrix);
+            this.gl.drawElements(this.gl.LINES, this.horizLineIndices.length, this.gl.UNSIGNED_SHORT, 0);
+        }
     }
 
     public drawSparseMatrixGrid(viewPosition: Vec): void
@@ -171,14 +192,8 @@ export class Renderer {
     public calcBufferData(grid: FiniteGrid | SparseMatrixGrid): void
     {
         // Clear the arrays
-        this.finiteGridVertices = [];
         this.borderVertices = [];
         
-        // Delete existing buffers
-        if (this.finiteGridVertexBuffer) {
-            this.gl.deleteBuffer(this.finiteGridVertexBuffer);
-            this.finiteGridVertexBuffer = null;
-        }
         if (this.squareVertexBuffer) {
             this.gl.deleteBuffer(this.squareVertexBuffer);
             this.squareVertexBuffer = null;
@@ -212,30 +227,13 @@ export class Renderer {
             this.horizLineIndexBuffer = null;
         }
 
-        if (grid instanceof FiniteGrid)
-        {
-            // Vertical gridlines
-            for (let x = 0; x <= grid.size.x; x += 1) {
-                this.finiteGridVertices.push(x, 0);
-                this.finiteGridVertices.push(x, grid.size.y);
-            }
+        this.vertLineVertices.push(0, 0);
+        this.vertLineVertices.push(0, 1);
+        this.vertLineIndices = [0, 1];
 
-            // Horizontal gridlines
-            for (let y = 0; y <= grid.size.y; y += 1) {
-                this.finiteGridVertices.push(0, y);
-                this.finiteGridVertices.push(grid.size.x, y);
-            }
-        }
-        else
-        {
-            this.vertLineVertices.push(0, 0);
-            this.vertLineVertices.push(0, 1);
-            this.vertLineIndices = [0, 1];
-
-            this.horizLineVertices.push(0, 0);
-            this.horizLineVertices.push(1, 0);
-            this.horizLineIndices = [0, 1];
-        }
+        this.horizLineVertices.push(0, 0);
+        this.horizLineVertices.push(1, 0);
+        this.horizLineIndices = [0, 1];
 
         this.squareVertices = [
             0, 0,
@@ -285,31 +283,22 @@ export class Renderer {
             12, 13, 14,
             12, 14, 15
         ];
+        
+        this.vertLineVertexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertLineVertexBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.vertLineVertices), this.gl.STATIC_DRAW);
 
-        if (grid instanceof FiniteGrid)
-        {
-            this.finiteGridVertexBuffer = this.gl.createBuffer();
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.finiteGridVertexBuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.finiteGridVertices), this.gl.STATIC_DRAW);
-        }
-        else
-        {
-            this.vertLineVertexBuffer = this.gl.createBuffer();
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertLineVertexBuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.vertLineVertices), this.gl.STATIC_DRAW);
-    
-            this.vertLineIndexBuffer = this.gl.createBuffer();
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.vertLineIndexBuffer);
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.vertLineIndices), this.gl.STATIC_DRAW);
-    
-            this.horizLineVertexBuffer = this.gl.createBuffer();
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.horizLineVertexBuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.horizLineVertices), this.gl.STATIC_DRAW);
-    
-            this.horizLineIndexBuffer = this.gl.createBuffer();
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.horizLineIndexBuffer);
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.horizLineIndices), this.gl.STATIC_DRAW);
-        }
+        this.vertLineIndexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.vertLineIndexBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.vertLineIndices), this.gl.STATIC_DRAW);
+
+        this.horizLineVertexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.horizLineVertexBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.horizLineVertices), this.gl.STATIC_DRAW);
+
+        this.horizLineIndexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.horizLineIndexBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.horizLineIndices), this.gl.STATIC_DRAW);
 
         this.squareVertexBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareVertexBuffer);
@@ -381,7 +370,6 @@ export class Renderer {
     }
 
     public cleanup(): void {
-        this.finiteGridVertices = [];
         this.squareVertices = [];
         this.squareIndices = [];
         this.borderVertices = [];
@@ -392,10 +380,6 @@ export class Renderer {
         this.horizLineIndices = [];
     
         // Delete WebGL buffers
-        if (this.finiteGridVertexBuffer) {
-            this.gl.deleteBuffer(this.finiteGridVertexBuffer);
-            this.finiteGridVertexBuffer = null;
-        }
         if (this.squareVertexBuffer) {
             this.gl.deleteBuffer(this.squareVertexBuffer);
             this.squareVertexBuffer = null;
@@ -509,7 +493,7 @@ export class Renderer {
             }
         }
 
-        this.drawFiniteGrid(viewPosition);
+        this.drawFiniteGrid(grid, viewPosition);
     }
 
     public drawGameWithSparseMatrix(grid: SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, viewPosition: Vec): void
