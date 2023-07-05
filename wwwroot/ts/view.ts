@@ -1,20 +1,16 @@
 import { Vec } from "./vec";
 import * as glMatrix from 'gl-matrix';
 
-// dynamic: Changes all the time when panning the view
-// committed: Does not change until finished panning the view
 export class View
 {
     public static readonly MIN_ZOOM: number = 2;
     public static readonly MAX_ZOOM: number = 200;
     public static readonly DEFAULT_ZOOM: number = 20;
 
-    public _commitViewPositionScreenCoords: Vec;
     public viewMatrix: glMatrix.mat4;
 
     constructor()
-    {        
-        this._commitViewPositionScreenCoords = new Vec(0, 0);            
+    {
         this.viewMatrix = glMatrix.mat4.create();
         glMatrix.mat4.identity(this.viewMatrix);
         glMatrix.mat4.scale(this.viewMatrix, this.viewMatrix, [View.DEFAULT_ZOOM, View.DEFAULT_ZOOM, 1]);
@@ -31,23 +27,15 @@ export class View
         return this.viewMatrix[0];
     }
 
-    public set dynamicViewPositionScreenCoords(value: Vec) {
+    public set positionInScreenCoords(value: Vec) {
         let zoomLevel = this.viewMatrix[0];
         glMatrix.mat4.identity(this.viewMatrix);
         glMatrix.mat4.translate(this.viewMatrix, this.viewMatrix, [-value.x, -value.y, 0]);
         glMatrix.mat4.scale(this.viewMatrix, this.viewMatrix, [zoomLevel, zoomLevel, 1]);
     }
 
-    public get dynamicViewPositionScreenCoords(): Vec {
+    public get positionInScreenCoords(): Vec {
         return new Vec(-this.viewMatrix[12], -this.viewMatrix[13]);
-    }
-
-    public set commitViewPositionScreenCoords(value: Vec) {
-        this._commitViewPositionScreenCoords = value;
-    }
-
-    public get commitViewPositionScreenCoords(): Vec {
-        return this._commitViewPositionScreenCoords;
     }
 
     public screenToCellCoords(screenXY: Vec): Vec
