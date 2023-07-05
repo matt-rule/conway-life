@@ -1,5 +1,4 @@
-import * as glMatrix from 'gl-matrix';
-
+import { vec2, mat3 } from "gl-matrix";
 import { LifeCell } from './lifecell';
 import { FiniteGrid } from './finitegrid';
 import { SparseMatrixGrid } from './sparsematrix';
@@ -21,7 +20,7 @@ export class Renderer {
     public vertLineIndices: number[];
     public horizLineVertices: number[];
     public horizLineIndices: number[];
-    public projectionMatrix: glMatrix.mat4;
+    public projectionMatrix: mat3;
     public matrixLocation: WebGLUniformLocation | null;
     public colorLocation: WebGLUniformLocation | null;
     public positionLocation: number;
@@ -53,8 +52,7 @@ export class Renderer {
         this.horizLineVertices = [];
         this.horizLineIndices = [];
 
-        this.projectionMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.ortho(this.projectionMatrix, 0, this.gl.canvas.width, this.gl.canvas.height, 0, -1, 1);
+        this.projectionMatrix = this.ortho2D(0, this.gl.canvas.width, this.gl.canvas.height, 0);
 
         this.matrixLocation = null;
         this.colorLocation = null;
@@ -71,24 +69,37 @@ export class Renderer {
         this.borderWidth = borderWidth;
         this.showGrid = showGrid;
     }
+
+
+    public ortho2D(left: number, right: number, bottom: number, top: number): mat3 {
+        const mat = mat3.create();
     
+        mat[0] = 2 / (right - left);
+        mat[4] = 2 / (top - bottom);
+        mat[6] = -(right + left) / (right - left);
+        mat[7] = -(top + bottom) / (top - bottom);
+        mat[8] = 1;
+    
+        return mat;
+    }
+
     public drawFiniteGrid(grid: FiniteGrid, view: View, viewPositionScreenCoords: Vec): void
     {
         if (!this.shaderProgram || !this.showGrid)
             return;
 
-        let translatedMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [-viewPositionScreenCoords.x, -viewPositionScreenCoords.y, 0]);
-        let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel, 0]);
+        let translatedMatrix = mat3.create();
+        mat3.translate(translatedMatrix, this.projectionMatrix, [-viewPositionScreenCoords.x, -viewPositionScreenCoords.y]);
+        let scaledMatrix = mat3.create();
+        mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
         // Using these matrices, things are now in world space (grid coordinates)
 
         let positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.uniform4f(this.colorLocation, 0.3, 0.3, 0.3, 1);
 
-        let gridPosMatrix = glMatrix.mat4.create();
-        let scaled2Matrix = glMatrix.mat4.create();
+        let gridPosMatrix = mat3.create();
+        let scaled2Matrix = mat3.create();
 
         // --- Vertical lines ---
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertLineVertexBuffer);
@@ -98,9 +109,9 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         for (let x = 0; x <= grid.size.x; x++) {
-            glMatrix.mat4.translate(gridPosMatrix, scaledMatrix, [x, 0, 0]);
-            glMatrix.mat4.scale(scaled2Matrix, gridPosMatrix, [grid.size.x, grid.size.y, 0]);
-            this.gl.uniformMatrix4fv(this.matrixLocation, false, scaled2Matrix);
+            mat3.translate(gridPosMatrix, scaledMatrix, [x, 0]);
+            mat3.scale(scaled2Matrix, gridPosMatrix, [grid.size.x, grid.size.y]);
+            this.gl.uniformMatrix3fv(this.matrixLocation, false, scaled2Matrix);
             this.gl.drawElements(this.gl.LINES, this.vertLineIndices.length, this.gl.UNSIGNED_SHORT, 0);
         }
         
@@ -112,9 +123,9 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         for (let y = 0; y <= grid.size.y; y++) {
-            glMatrix.mat4.translate(gridPosMatrix, scaledMatrix, [0, y, 0]);
-            glMatrix.mat4.scale(scaled2Matrix, gridPosMatrix, [grid.size.x, grid.size.y, 0]);
-            this.gl.uniformMatrix4fv(this.matrixLocation, false, scaled2Matrix);
+            mat3.translate(gridPosMatrix, scaledMatrix, [0, y]);
+            mat3.scale(scaled2Matrix, gridPosMatrix, [grid.size.x, grid.size.y]);
+            this.gl.uniformMatrix3fv(this.matrixLocation, false, scaled2Matrix);
             this.gl.drawElements(this.gl.LINES, this.horizLineIndices.length, this.gl.UNSIGNED_SHORT, 0);
         }
     }
@@ -149,11 +160,11 @@ export class Renderer {
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        let translatedMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y, 0]);
-        let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel, 0]);
-        this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
+        let translatedMatrix = mat3.create();
+        mat3.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y]);
+        let scaledMatrix = mat3.create();
+        mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
+        this.gl.uniformMatrix3fv(this.matrixLocation, false, scaledMatrix);
         this.gl.uniform4f(this.colorLocation, color[0], color[1], color[2], 1);
 
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -170,11 +181,11 @@ export class Renderer {
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        let translatedMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y, 0]);
-        let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel, 0]);
-        this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
+        let translatedMatrix = mat3.create();
+        mat3.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y]);
+        let scaledMatrix = mat3.create();
+        mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
+        this.gl.uniformMatrix3fv(this.matrixLocation, false, scaledMatrix);
 
         if (selected) {
             this.gl.uniform4f(this.colorLocation, 0.6, 0.6, 0.6, 1);
@@ -323,10 +334,10 @@ export class Renderer {
 
         let vertexShaderSource: string = `
             attribute vec2 position;
-            uniform mat4 u_matrix;
+            uniform mat3 u_matrix;
             
             void main() {
-                gl_Position = u_matrix * vec4(position, 0.0, 1.0);
+                gl_Position = vec4(u_matrix * vec3(position, 1.0), 1.0);
             }
         `;
         
@@ -423,7 +434,7 @@ export class Renderer {
         this.positionLocation = 0;
     
         // Optionally, you could also reset the projection matrix to identity
-        glMatrix.mat4.identity(this.projectionMatrix);
+        mat3.identity(this.projectionMatrix);
     }
 
     public draw(grid: FiniteGrid | SparseMatrixGrid, view: View, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPositionScreenCoords: Vec): void
