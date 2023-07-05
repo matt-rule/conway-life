@@ -56,7 +56,7 @@ export class FiniteGrid {
             for (let y = 0; y < gridHeight; y++) {
                 result[x][y] = {
                     active: false,
-                    color: [0,0,0]
+                    color: null
                 };
             }
         }

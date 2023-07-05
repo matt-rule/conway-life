@@ -102,7 +102,10 @@ export class GameRules {
                         b = val_6;
                     }
     
-                    nextFrame[x][y].color = [r,g,b];
+                    if (r === 0 && g === 0 && b === 0)
+                        nextFrame[x][y].color = null;
+                    else
+                        nextFrame[x][y].color = [r,g,b];
                 }
             }
         }
