@@ -7,7 +7,7 @@ import { Vec } from './vec';
 import { Brush } from './brush';
 import { View } from './view';
 
-const borderWidth: number = 3;
+const borderWidth: number = 0.1;
 const historyLength: number = 15;
 
 let timestepMs: number = 125;

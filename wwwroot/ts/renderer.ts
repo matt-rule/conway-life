@@ -25,6 +25,7 @@ export class Renderer {
     public squareVertexBuffer: WebGLBuffer | null;
     public squareIndexBuffer: WebGLBuffer | null;
     public borderVertexBuffer: WebGLBuffer | null;
+    public borderIndexBuffer: WebGLBuffer | null;
     public cellWidth: number;
     public borderWidth: number;
     public showGrid: boolean;
@@ -54,6 +55,7 @@ export class Renderer {
         this.squareVertexBuffer = null;
         this.squareIndexBuffer = null;
         this.borderVertexBuffer = null;
+        this.borderIndexBuffer = null;
 
         this.cellWidth = cellWidth;
         this.borderWidth = borderWidth;
@@ -99,7 +101,6 @@ export class Renderer {
         let scaledMatrix = glMatrix.mat4.create();
         glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [this.cellWidth, this.cellWidth, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
-
         this.gl.uniform4f(this.colorLocation, color[0], color[1], color[2], 1);
 
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -110,6 +111,7 @@ export class Renderer {
             return;
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.borderVertexBuffer);
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.borderIndexBuffer);
 
         let positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
         this.gl.enableVertexAttribArray(positionLocation);
@@ -128,14 +130,14 @@ export class Renderer {
             this.gl.uniform4f(this.colorLocation, 0.4, 0.4, 0.4, 1);
         }
 
-        this.gl.drawArrays(this.gl.LINES, 0, this.borderVertices.length / 2);   
+        this.gl.drawElements(this.gl.TRIANGLES, this.borderIndices.length, this.gl.UNSIGNED_SHORT, 0);
     }
 
     public calcBufferData(grid: FiniteGrid | SparseMatrixGrid): void
     {
         // Clear the arrays
-        this.finiteGridVertices.length = 0;
-        this.borderVertices.length = 0;
+        this.finiteGridVertices = [];
+        this.borderVertices = [];
         
         // Delete existing buffers
         if (this.finiteGridVertexBuffer) {
@@ -144,12 +146,19 @@ export class Renderer {
         }
         if (this.squareVertexBuffer) {
             this.gl.deleteBuffer(this.squareVertexBuffer);
+            this.squareVertexBuffer = null;
         }
         if (this.squareIndexBuffer) {
             this.gl.deleteBuffer(this.squareIndexBuffer);
+            this.squareIndexBuffer = null;
         }
         if (this.borderVertexBuffer) {
             this.gl.deleteBuffer(this.borderVertexBuffer);
+            this.borderVertexBuffer = null;
+        }
+        if (this.borderIndexBuffer) {
+            this.gl.deleteBuffer(this.borderVertexBuffer);
+            this.borderIndexBuffer = null;
         }
 
         if (grid instanceof FiniteGrid)
@@ -183,21 +192,42 @@ export class Renderer {
             2, 1, 3
         ];
 
+        let halfWidth = this.borderWidth/2;
+
         // Left vertical line
-        this.borderVertices.push(0, 0);
-        this.borderVertices.push(0, 1);
+        this.borderVertices.push(-halfWidth, 0);
+        this.borderVertices.push(+halfWidth, 0);
+        this.borderVertices.push(+halfWidth, 1);
+        this.borderVertices.push(-halfWidth, 1);
 
         // Right vertical line
-        this.borderVertices.push(1, 0);
-        this.borderVertices.push(1, 1);
+        this.borderVertices.push(1-halfWidth, 0);
+        this.borderVertices.push(1+halfWidth, 0);
+        this.borderVertices.push(1+halfWidth, 1);
+        this.borderVertices.push(1-halfWidth, 1);
 
         // Top horizontal line
-        this.borderVertices.push(0, 0);
-        this.borderVertices.push(1, 0);
+        this.borderVertices.push(0, -halfWidth);
+        this.borderVertices.push(0, +halfWidth);
+        this.borderVertices.push(1, +halfWidth);
+        this.borderVertices.push(1, -halfWidth);
 
         // Bottom horizontal line
-        this.borderVertices.push(0, 1);
-        this.borderVertices.push(1, 1);
+        this.borderVertices.push(0, 1-halfWidth);
+        this.borderVertices.push(0, 1+halfWidth);
+        this.borderVertices.push(1, 1+halfWidth);
+        this.borderVertices.push(1, 1-halfWidth);
+
+        this.borderIndices = [
+            0, 1, 2,
+            0, 2, 3,
+            4, 5, 6,
+            4, 6, 7,
+            8, 9, 10,
+            8, 10, 11,
+            12, 13, 14,
+            12, 14, 15
+        ];
 
         if (grid instanceof FiniteGrid)
         {
@@ -221,6 +251,10 @@ export class Renderer {
         this.borderVertexBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.borderVertexBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.borderVertices), this.gl.STATIC_DRAW);
+        
+        this.borderIndexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.borderIndexBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.borderIndices), this.gl.STATIC_DRAW);
     }
 
     public init(grid: FiniteGrid | SparseMatrixGrid): void
@@ -299,6 +333,10 @@ export class Renderer {
         if (this.borderVertexBuffer) {
             this.gl.deleteBuffer(this.borderVertexBuffer);
             this.borderVertexBuffer = null;
+        }
+        if (this.borderIndexBuffer) {
+            this.gl.deleteBuffer(this.borderIndexBuffer);
+            this.borderIndexBuffer = null;
         }
     
         // Delete shader program if it exists
