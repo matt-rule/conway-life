@@ -15,6 +15,7 @@ let cursorCellPos: Vec | null;
 let defaultGridWidth = 24;
 let defaultGridHeight = 24;
 let sparseMatrixSize = new Vec(5000,5000);
+let startDragScreenPosition: Vec | null = null;
 
 // brush
 let brush: Brush | null = null;
@@ -117,7 +118,7 @@ else
         document.addEventListener('wheel', function(event) {
             if (!canvas || !gl)
                 return;
-            if (view.startDragScreenPosition)
+            if (startDragScreenPosition)
                 return;
 
             let oldZoomLevel = view.zoomLevel;
@@ -149,8 +150,8 @@ else
                 let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
                 cursorCellPos = view.screenToCellCoords(mousePos).floor();
 
-                if ( view.startDragScreenPosition )
-                    view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords.add( view.startDragScreenPosition ).subtract( mousePos );
+                if ( startDragScreenPosition )
+                    view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords.add( startDragScreenPosition ).subtract( mousePos );
 
                 renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
@@ -178,7 +179,7 @@ else
                 }
                 else if (event.button === 2)    // Right mouse button
                 {
-                    view.startDragScreenPosition = mousePos.clone();
+                    startDragScreenPosition = mousePos.clone();
                 }
 
                 renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
@@ -189,14 +190,14 @@ else
 
                 if (event.button === 2)         // Right mouse button
                 {
-                    if (view.startDragScreenPosition)
+                    if (startDragScreenPosition)
                     {
                         let rect = canvas.getBoundingClientRect();
                         let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
 
-                        view.commitViewPositionScreenCoords = view.commitViewPositionScreenCoords.add(view.startDragScreenPosition).subtract(mousePos);
+                        view.commitViewPositionScreenCoords = view.commitViewPositionScreenCoords.add(startDragScreenPosition).subtract(mousePos);
                         view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords;
-                        view.startDragScreenPosition = null;
+                        startDragScreenPosition = null;
                     }
                 }
             });
