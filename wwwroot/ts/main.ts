@@ -140,8 +140,7 @@ else
             committedView.positionInScreenCoords = scaled.add(mousePos).negative();
             dynamicView.positionInScreenCoords = committedView.positionInScreenCoords;
 
-            // if mouse is positioned inside the grid, move dynamicGridPosition away from the cursor if zooming in, towards if zooming out.
-
+            // if mouse is positioned inside the grid, move dynamicViewPosition towards the cursor if zooming in, away from cursor if zooming out.
             renderer = new Renderer(canvas, gl, dynamicView.zoomLevel, borderWidth, showGrid, dynamicView.zoomLevel);
             renderer.draw(grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations, dynamicView.positionInScreenCoords);
         });
