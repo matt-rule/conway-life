@@ -310,12 +310,11 @@ export class Renderer {
     }
 
     public cleanup(): void {
-        // Clear the arrays
-        this.finiteGridVertices.length = 0;
-        this.squareVertices.length = 0;
-        this.squareIndices.length = 0;
-        this.borderVertices.length = 0;
-        this.borderIndices.length = 0;
+        this.finiteGridVertices = [];
+        this.squareVertices = [];
+        this.squareIndices = [];
+        this.borderVertices = [];
+        this.borderIndices = [];
     
         // Delete WebGL buffers
         if (this.finiteGridVertexBuffer) {

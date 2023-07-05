@@ -195,7 +195,8 @@ else
                         let rect = canvas.getBoundingClientRect();
                         let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
 
-                        view.dynamicViewPosition = view.commitViewPosition.add(view.startDragScreenPosition).subtract(mousePos);
+                        view.commitViewPosition = view.commitViewPosition.add(view.startDragScreenPosition).subtract(mousePos);
+                        view.dynamicViewPosition = view.commitViewPosition;
                         view.startDragScreenPosition = null;
                     }
                 }
