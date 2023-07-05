@@ -44,11 +44,11 @@ else
     let canvasSize = new Vec(canvas.width, canvas.height);
     if (grid instanceof FiniteGrid)
     {
-        view.dynamicViewPosition = view.commitViewPosition = grid.size.multiply(view.cellWidth).subtract(canvasSize).divide(2);
+        view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords = grid.size.multiply(view.cellWidth).subtract(canvasSize).divide(2);
     }
     else
     {
-        view.dynamicViewPosition = view.commitViewPosition = sparseMatrixSize.multiply(view.cellWidth).subtract(canvasSize).divide(2);
+        view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords = sparseMatrixSize.multiply(view.cellWidth).subtract(canvasSize).divide(2);
     }
 
     if (!gl) {
@@ -73,14 +73,14 @@ else
             if (!gl) {
                 return;
             }
-            renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, renderer.zoomLevel);
-            renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+            renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, view.zoomLevel);
+            renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
         }
 
         function animate(timestamp: any): void {
             if (pause)
             {
-                renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
                 return;
             }
             let elapsedTime: number = timestamp - lastUpdateTime;
@@ -89,7 +89,7 @@ else
                 GameRules.update(grid);
             }
     
-            renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+            renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             requestAnimationFrame(animate);
         }
         
@@ -110,7 +110,7 @@ else
                 else if (grid instanceof SparseMatrixGrid)
                     grid = new SparseMatrixGrid;
             
-                renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             }
         });
 
@@ -120,25 +120,25 @@ else
             if (view.startDragScreenPosition)
                 return;
 
-            let oldZoomLevel = renderer.zoomLevel;
-            let uncropped = renderer.zoomLevel * (event.deltaY < 0 ? 1.25 : 0.8);
-            renderer.zoomLevel = Math.min(Math.max(uncropped, view.minZoom), view.maxZoom);
-            let scaleFactor = renderer.zoomLevel / oldZoomLevel;
+            let oldZoomLevel = view.zoomLevel;
+            let uncropped = view.zoomLevel * (event.deltaY < 0 ? 1.25 : 0.8);
+            view.zoomLevel = Math.min(Math.max(uncropped, view.minZoom), view.maxZoom);
+            let scaleFactor = view.zoomLevel / oldZoomLevel;
 
             let rect = canvas.getBoundingClientRect();
             let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
 
             // This originally used a grid position, and subtracted the mousePos, applied a transformation, and then re-added it.
             // To turn grid pos into view pos, things are negated while applying the mouse translations.
-            let viewPosRelativeToMouse = view.dynamicViewPosition.negative().subtract(mousePos);
+            let viewPosRelativeToMouse = view.dynamicViewPositionScreenCoords.negative().subtract(mousePos);
             let scaled = viewPosRelativeToMouse.multiply(scaleFactor);
-            view.dynamicViewPosition = view.commitViewPosition = scaled.add(mousePos).negative();
+            view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords = scaled.add(mousePos).negative();
 
             // if mouse is positioned inside the grid, move dynamicGridPosition away from the cursor if zooming in, towards if zooming out.
 
-            view.cellWidth = view.unzoomedCellWidth * renderer.zoomLevel;
-            renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, renderer.zoomLevel);
-            renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+            view.cellWidth = view.unzoomedCellWidth * view.zoomLevel;
+            renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, view.zoomLevel);
+            renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
         });
 
         if (canvas) {
@@ -148,12 +148,12 @@ else
                 
                 let rect = canvas.getBoundingClientRect();
                 let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
-                cursorCellPos = view.screenToCellCoords(mousePos);
+                cursorCellPos = view.screenToCellCoords(mousePos).floor();
 
                 if ( view.startDragScreenPosition )
-                    view.dynamicViewPosition = view.commitViewPosition.add( view.startDragScreenPosition ).subtract( mousePos );
+                    view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords.add( view.startDragScreenPosition ).subtract( mousePos );
 
-                renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
         }
 
@@ -167,7 +167,7 @@ else
 
                 if (event.button === 0)         // Left mouse button
                 {
-                    let cellCoords = view.screenToCellCoords(mousePos);
+                    let cellCoords = view.screenToCellCoords(mousePos).floor();
                     if (grid instanceof FiniteGrid)
                     {
                         grid.userClickCell(cellCoords, grid.size, brush);
@@ -182,7 +182,7 @@ else
                     view.startDragScreenPosition = mousePos.clone();
                 }
 
-                renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
             canvas.addEventListener('mouseup', function(event) {
                 if (!canvas)
@@ -195,8 +195,8 @@ else
                         let rect = canvas.getBoundingClientRect();
                         let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
 
-                        view.commitViewPosition = view.commitViewPosition.add(view.startDragScreenPosition).subtract(mousePos);
-                        view.dynamicViewPosition = view.commitViewPosition;
+                        view.commitViewPositionScreenCoords = view.commitViewPositionScreenCoords.add(view.startDragScreenPosition).subtract(mousePos);
+                        view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords;
                         view.startDragScreenPosition = null;
                     }
                 }
@@ -258,7 +258,7 @@ else
 
             showGridCheckBox.addEventListener('click', () => {
                 showGrid = showGridCheckBox.checked;
-                 renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                 renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
 
             addTooltipToElements([timestepLabel, timestepEdit], 'Timestep in milliseconds (1-1000)');
@@ -303,8 +303,8 @@ else
 
                 grid = new FiniteGrid(newSize, historyLength);
                 if (canvas && gl)
-                    renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, renderer.zoomLevel);
-                renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                    renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, view.zoomLevel);
+                renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
 
             addTooltipToElements([gridHeightLabel, gridHeightEdit], 'Grid height measured in cells (1-1000)');
@@ -330,15 +330,15 @@ else
 
                 grid = new FiniteGrid(newSize, historyLength);
                 if (canvas && gl)
-                    renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, renderer.zoomLevel);
-                renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                    renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, view.zoomLevel);
+                renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
 
             addTooltipToElements([detectOscillationsLabel, detectOscillationsCheckBox], 'Detect and highlight oscillations. Period 2 = red, 3 = blue, 5 = green, 6 = purple');
 
             detectOscillationsCheckBox.addEventListener('click', () => {
                 GameRules.detectOscillations = detectOscillationsCheckBox.checked;
-                 renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                 renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
 
             addTooltipToElements([survivalRulesLabel, survivalRulesEdit],
@@ -385,7 +385,7 @@ else
                 else if (grid instanceof SparseMatrixGrid)
                     grid = new SparseMatrixGrid;
             
-                renderer.draw(grid, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPosition);
+                renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
         
             addTooltipToElements([pauseButton], 'Play/pause (spacebar on non-mobile devices)');

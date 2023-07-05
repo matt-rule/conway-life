@@ -5,6 +5,7 @@ import { FiniteGrid } from './finitegrid';
 import { SparseMatrixGrid } from './sparsematrix';
 import { Vec } from './vec';
 import { Brush } from './brush';
+import { View } from './view';
 
 export class Renderer {
     // Define members (properties)
@@ -32,10 +33,8 @@ export class Renderer {
     public vertLineIndexBuffer: WebGLBuffer | null;
     public horizLineVertexBuffer: WebGLBuffer | null;
     public horizLineIndexBuffer: WebGLBuffer | null;
-    public cellWidth: number;
     public borderWidth: number;
     public showGrid: boolean;
-    public zoomLevel: number;   // 1.0 is unzoomed, larger values are more zoomed-in.
     
     // Define a constructor
     constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, cellWidth: number, borderWidth: number, 
@@ -69,22 +68,20 @@ export class Renderer {
         this.horizLineVertexBuffer = null;
         this.horizLineIndexBuffer = null;
 
-        this.cellWidth = cellWidth;
         this.borderWidth = borderWidth;
         this.showGrid = showGrid;
-
-        this.zoomLevel = zoomLevel;
     }
     
-    public drawFiniteGrid(grid: FiniteGrid, viewPosition: Vec): void
+    public drawFiniteGrid(grid: FiniteGrid, view: View, viewPositionScreenCoords: Vec): void
     {
         if (!this.shaderProgram || !this.showGrid)
             return;
 
         let translatedMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [-viewPosition.x, -viewPosition.y, 0]);
+        glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [-viewPositionScreenCoords.x, -viewPositionScreenCoords.y, 0]);
         let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [this.cellWidth, this.cellWidth, 0]);
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.cellWidth, view.cellWidth, 0]);
+        // Using these matrices, things are now in world space (grid coordinates)
 
         let positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
         this.gl.enableVertexAttribArray(positionLocation);
@@ -122,7 +119,7 @@ export class Renderer {
         }
     }
 
-    public drawSparseMatrixGrid(viewPosition: Vec): void
+    public drawSparseMatrixGrid(viewPositionScreenCoords: Vec): void
     {
         if (!this.shaderProgram || !this.showGrid)
             return;
@@ -141,7 +138,7 @@ export class Renderer {
         // --- draw horizontal lines ---
     }
 
-    public drawSquare(color: number[], pos: Vec) {
+    public drawSquare(view: View, color: number[], pos: Vec) {
         if (!this.shaderProgram)
             return;
 
@@ -155,14 +152,14 @@ export class Renderer {
         let translatedMatrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y, 0]);
         let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [this.cellWidth, this.cellWidth, 0]);
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.cellWidth, view.cellWidth, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
         this.gl.uniform4f(this.colorLocation, color[0], color[1], color[2], 1);
 
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
     }
 
-    public drawBorder(pos: Vec, selected: boolean) {
+    public drawBorder(view: View, pos: Vec, selected: boolean) {
         if (!this.shaderProgram)
             return;
 
@@ -176,7 +173,7 @@ export class Renderer {
         let translatedMatrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y, 0]);
         let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [this.cellWidth, this.cellWidth, 0]);
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.cellWidth, view.cellWidth, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
 
         if (selected) {
@@ -429,15 +426,15 @@ export class Renderer {
         glMatrix.mat4.identity(this.projectionMatrix);
     }
 
-    public draw(grid: FiniteGrid | SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPosition: Vec): void
+    public draw(grid: FiniteGrid | SparseMatrixGrid, view: View, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPositionScreenCoords: Vec): void
     {
         if (grid instanceof FiniteGrid)
-            this.drawGameWithFiniteGrid(grid, grid.frames[grid.currentFrame], cursorCellPos, brush, showOscillations, viewPosition);
+            this.drawGameWithFiniteGrid(grid, grid.frames[grid.currentFrame], view, cursorCellPos, brush, showOscillations, viewPositionScreenCoords);
         else if (grid instanceof SparseMatrixGrid)
-            this.drawGameWithSparseMatrix(grid, cursorCellPos, brush, viewPosition);
+            this.drawGameWithSparseMatrix(grid, view, cursorCellPos, brush, viewPositionScreenCoords);
     }
 
-    public drawGameWithFiniteGrid(grid: FiniteGrid, frame: LifeCell[][], cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPosition: Vec): void
+    public drawGameWithFiniteGrid(grid: FiniteGrid, frame: LifeCell[][], view: View, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean, viewPositionScreenCoords: Vec): void
     {
         if (!this.initialised)
         {
@@ -453,16 +450,16 @@ export class Renderer {
         for (let x = 0; x < grid.size.x; x += 1) {
             for (let y = 0; y < grid.size.y; y += 1)
             {
-                let pos: Vec = new Vec(x, y).multiply(this.cellWidth).subtract(viewPosition);
+                let pos: Vec = new Vec(x, y).multiply(view.cellWidth).subtract(viewPositionScreenCoords);
                 if (showOscillations)
                 {
                     const color = frame[x][y].color;
                     if (color)
-                        this.drawSquare(color, pos);
+                        this.drawSquare(view, color, pos);
                 }
 
                 if (frame[x][y].active)
-                    this.drawBorder(pos, false);
+                    this.drawBorder(view, pos, false);
             }
         }
 
@@ -470,7 +467,7 @@ export class Renderer {
         {
             if (!brush)
             {
-                this.drawBorder(cursorCellPos.multiply(this.cellWidth).subtract(viewPosition), true);
+                this.drawBorder(view, cursorCellPos.multiply(view.cellWidth).subtract(viewPositionScreenCoords), true);
             }
             else
             {
@@ -486,17 +483,17 @@ export class Renderer {
         
                         // Check if the position is within the grid boundaries
                         if (gridXY.x >= 0 && gridXY.x < grid.size.x && gridXY.y >= 0 && gridXY.y < grid.size.y) {
-                            this.drawBorder(gridXY.multiply(this.cellWidth).subtract(viewPosition), brush.pattern[brushX][brushY]);
+                            this.drawBorder(view, gridXY.multiply(view.cellWidth).subtract(viewPositionScreenCoords), brush.pattern[brushX][brushY]);
                         }
                     }
                 }
             }
         }
 
-        this.drawFiniteGrid(grid, viewPosition);
+        this.drawFiniteGrid(grid, view, viewPositionScreenCoords);
     }
 
-    public drawGameWithSparseMatrix(grid: SparseMatrixGrid, cursorCellPos: Vec | null, brush: Brush | null, viewPosition: Vec): void
+    public drawGameWithSparseMatrix(grid: SparseMatrixGrid, view: View, cursorCellPos: Vec | null, brush: Brush | null, viewPositionScreenCoords: Vec): void
     {
         
     }
