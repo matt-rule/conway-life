@@ -1,24 +1,23 @@
 import { Vec } from "./vec";
 import * as glMatrix from 'gl-matrix';
 
+// dynamic: Changes all the time when panning the view
+// committed: Does not change until finished panning the view
 export class View
 {
     public static readonly MIN_ZOOM: number = 2;
     public static readonly MAX_ZOOM: number = 200;
     public static readonly DEFAULT_ZOOM: number = 20;
 
-    public _dynamicViewPositionScreenCoords: Vec;
     public _commitViewPositionScreenCoords: Vec;
     public viewMatrix: glMatrix.mat4;
 
     constructor()
-    {
-        this._dynamicViewPositionScreenCoords = new Vec(0, 0);           // Changes all the time when panning the view
-        this._commitViewPositionScreenCoords = new Vec(0, 0);            // Does not change until finished panning the view
+    {        
+        this._commitViewPositionScreenCoords = new Vec(0, 0);            
         this.viewMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.identity(this.viewMatrix);
         glMatrix.mat4.scale(this.viewMatrix, this.viewMatrix, [View.DEFAULT_ZOOM, View.DEFAULT_ZOOM, 1]);
-
-        this.updateViewMatrix();
     }
 
     public set zoomLevel(value: number) {
@@ -33,28 +32,22 @@ export class View
     }
 
     public set dynamicViewPositionScreenCoords(value: Vec) {
-        this._dynamicViewPositionScreenCoords = value;
-        this.updateViewMatrix();
+        let zoomLevel = this.viewMatrix[0];
+        glMatrix.mat4.identity(this.viewMatrix);
+        glMatrix.mat4.translate(this.viewMatrix, this.viewMatrix, [-value.x, -value.y, 0]);
+        glMatrix.mat4.scale(this.viewMatrix, this.viewMatrix, [zoomLevel, zoomLevel, 1]);
     }
 
     public get dynamicViewPositionScreenCoords(): Vec {
-        return this._dynamicViewPositionScreenCoords;
+        return new Vec(-this.viewMatrix[12], -this.viewMatrix[13]);
     }
 
     public set commitViewPositionScreenCoords(value: Vec) {
         this._commitViewPositionScreenCoords = value;
-        this.updateViewMatrix();
     }
 
     public get commitViewPositionScreenCoords(): Vec {
         return this._commitViewPositionScreenCoords;
-    }
-
-    private updateViewMatrix() {
-        let zoomLevel = this.viewMatrix[0];
-        glMatrix.mat4.identity(this.viewMatrix);
-        glMatrix.mat4.translate(this.viewMatrix, this.viewMatrix, [-this._dynamicViewPositionScreenCoords.x, -this._dynamicViewPositionScreenCoords.y, 0]);
-        glMatrix.mat4.scale(this.viewMatrix, this.viewMatrix, [zoomLevel, zoomLevel, 1]);
     }
 
     public screenToCellCoords(screenXY: Vec): Vec
