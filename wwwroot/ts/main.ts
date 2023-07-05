@@ -44,11 +44,11 @@ else
     let canvasSize = new Vec(canvas.width, canvas.height);
     if (grid instanceof FiniteGrid)
     {
-        view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords = grid.size.multiply(view.cellWidth).subtract(canvasSize).divide(2);
+        view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords = grid.size.multiply(view.zoomLevel).subtract(canvasSize).divide(2);
     }
     else
     {
-        view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords = sparseMatrixSize.multiply(view.cellWidth).subtract(canvasSize).divide(2);
+        view.dynamicViewPositionScreenCoords = view.commitViewPositionScreenCoords = sparseMatrixSize.multiply(view.zoomLevel).subtract(canvasSize).divide(2);
     }
 
     if (!gl) {
@@ -56,7 +56,7 @@ else
     }
     else
     {
-        let renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, 1.0);
+        let renderer = new Renderer(canvas, gl, view.zoomLevel, borderWidth, showGrid, 1.0);
 
         function resizeCanvas(width: number, height: number): void {
             if (!canvas)
@@ -73,7 +73,7 @@ else
             if (!gl) {
                 return;
             }
-            renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, view.zoomLevel);
+            renderer = new Renderer(canvas, gl, view.zoomLevel, borderWidth, showGrid, view.zoomLevel);
             renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
         }
 
@@ -122,7 +122,7 @@ else
 
             let oldZoomLevel = view.zoomLevel;
             let uncropped = view.zoomLevel * (event.deltaY < 0 ? 1.25 : 0.8);
-            view.zoomLevel = Math.min(Math.max(uncropped, view.minZoom), view.maxZoom);
+            view.zoomLevel = Math.min(Math.max(uncropped, View.MIN_ZOOM), View.MAX_ZOOM);
             let scaleFactor = view.zoomLevel / oldZoomLevel;
 
             let rect = canvas.getBoundingClientRect();
@@ -136,8 +136,7 @@ else
 
             // if mouse is positioned inside the grid, move dynamicGridPosition away from the cursor if zooming in, towards if zooming out.
 
-            view.cellWidth = view.unzoomedCellWidth * view.zoomLevel;
-            renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, view.zoomLevel);
+            renderer = new Renderer(canvas, gl, view.zoomLevel, borderWidth, showGrid, view.zoomLevel);
             renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
         });
 
@@ -303,7 +302,7 @@ else
 
                 grid = new FiniteGrid(newSize, historyLength);
                 if (canvas && gl)
-                    renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, view.zoomLevel);
+                    renderer = new Renderer(canvas, gl, view.zoomLevel, borderWidth, showGrid, view.zoomLevel);
                 renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
 
@@ -330,7 +329,7 @@ else
 
                 grid = new FiniteGrid(newSize, historyLength);
                 if (canvas && gl)
-                    renderer = new Renderer(canvas, gl, view.cellWidth, borderWidth, showGrid, view.zoomLevel);
+                    renderer = new Renderer(canvas, gl, view.zoomLevel, borderWidth, showGrid, view.zoomLevel);
                 renderer.draw(grid, view, cursorCellPos, brush, GameRules.detectOscillations, view.dynamicViewPositionScreenCoords);
             });
 

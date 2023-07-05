@@ -80,7 +80,7 @@ export class Renderer {
         let translatedMatrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [-viewPositionScreenCoords.x, -viewPositionScreenCoords.y, 0]);
         let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.cellWidth, view.cellWidth, 0]);
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel, 0]);
         // Using these matrices, things are now in world space (grid coordinates)
 
         let positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
@@ -152,7 +152,7 @@ export class Renderer {
         let translatedMatrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y, 0]);
         let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.cellWidth, view.cellWidth, 0]);
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
         this.gl.uniform4f(this.colorLocation, color[0], color[1], color[2], 1);
 
@@ -173,7 +173,7 @@ export class Renderer {
         let translatedMatrix = glMatrix.mat4.create();
         glMatrix.mat4.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y, 0]);
         let scaledMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.cellWidth, view.cellWidth, 0]);
+        glMatrix.mat4.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel, 0]);
         this.gl.uniformMatrix4fv(this.matrixLocation, false, scaledMatrix);
 
         if (selected) {
@@ -450,7 +450,7 @@ export class Renderer {
         for (let x = 0; x < grid.size.x; x += 1) {
             for (let y = 0; y < grid.size.y; y += 1)
             {
-                let pos: Vec = new Vec(x, y).multiply(view.cellWidth).subtract(viewPositionScreenCoords);
+                let pos: Vec = new Vec(x, y).multiply(view.zoomLevel).subtract(viewPositionScreenCoords);
                 if (showOscillations)
                 {
                     const color = frame[x][y].color;
@@ -467,7 +467,7 @@ export class Renderer {
         {
             if (!brush)
             {
-                this.drawBorder(view, cursorCellPos.multiply(view.cellWidth).subtract(viewPositionScreenCoords), true);
+                this.drawBorder(view, cursorCellPos.multiply(view.zoomLevel).subtract(viewPositionScreenCoords), true);
             }
             else
             {
@@ -483,7 +483,7 @@ export class Renderer {
         
                         // Check if the position is within the grid boundaries
                         if (gridXY.x >= 0 && gridXY.x < grid.size.x && gridXY.y >= 0 && gridXY.y < grid.size.y) {
-                            this.drawBorder(view, gridXY.multiply(view.cellWidth).subtract(viewPositionScreenCoords), brush.pattern[brushX][brushY]);
+                            this.drawBorder(view, gridXY.multiply(view.zoomLevel).subtract(viewPositionScreenCoords), brush.pattern[brushX][brushY]);
                         }
                     }
                 }
