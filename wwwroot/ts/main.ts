@@ -15,7 +15,7 @@ let cursorCellPos: Vec | null;
 let defaultGridWidth = 24;
 let defaultGridHeight = 24;
 let sparseMatrixSize = new Vec(5000,5000);
-let startDragScreenPosition: Vec | null = null;
+let startDragMousePosScreen: Vec | null = null;
 
 // brush
 let brush: Brush | null = null;
@@ -47,12 +47,12 @@ else
     if (grid instanceof FiniteGrid)
     {
         committedView.positionInScreenCoords = grid.size.multiply(dynamicView.zoomLevel).subtract(canvasSize).divide(2);
-        dynamicView.positionInScreenCoords = committedView.positionInScreenCoords;
+        dynamicView = committedView.clone();
     }
     else
     {
         committedView.positionInScreenCoords = sparseMatrixSize.multiply(dynamicView.zoomLevel).subtract(canvasSize).divide(2);
-        dynamicView.positionInScreenCoords = committedView.positionInScreenCoords;
+        dynamicView = committedView.clone();
     }
 
     if (!gl) {
@@ -121,7 +121,7 @@ else
         document.addEventListener('wheel', function(event) {
             if (!canvas || !gl)
                 return;
-            if (startDragScreenPosition)
+            if (startDragMousePosScreen)
                 return;
 
             let oldZoomLevel = dynamicView.zoomLevel;
@@ -138,7 +138,7 @@ else
             let scaled = viewPosRelativeToMouse.multiply(scaleFactor);
             
             committedView.positionInScreenCoords = scaled.add(mousePos).negative();
-            dynamicView.positionInScreenCoords = committedView.positionInScreenCoords;
+            dynamicView = committedView.clone();
 
             // if mouse is positioned inside the grid, move dynamicViewPosition towards the cursor if zooming in, away from cursor if zooming out.
             renderer = new Renderer(canvas, gl, borderWidth, showGrid);
@@ -151,11 +151,11 @@ else
                     return;
                 
                 let rect = canvas.getBoundingClientRect();
-                let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
-                cursorCellPos = dynamicView.screenToCellCoords(mousePos).floor();
+                let mousePosScreen = new Vec(event.clientX - rect.left, event.clientY - rect.top);
+                cursorCellPos = dynamicView.screenToCellCoords(mousePosScreen).floor();
 
-                if ( startDragScreenPosition )
-                    dynamicView.positionInScreenCoords = committedView.positionInScreenCoords.add( startDragScreenPosition ).subtract( mousePos );
+                if ( startDragMousePosScreen )
+                    dynamicView.positionInScreenCoords = committedView.positionInScreenCoords.add( startDragMousePosScreen ).subtract( mousePosScreen );
 
                 renderer.draw(grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
             });
@@ -183,7 +183,7 @@ else
                 }
                 else if (event.button === 2)    // Right mouse button
                 {
-                    startDragScreenPosition = mousePos.clone();
+                    startDragMousePosScreen = mousePos.clone();
                 }
 
                 renderer.draw(grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
@@ -194,14 +194,14 @@ else
 
                 if (event.button === 2)         // Right mouse button
                 {
-                    if (startDragScreenPosition)
+                    if (startDragMousePosScreen)
                     {
                         let rect = canvas.getBoundingClientRect();
                         let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
 
-                        committedView.positionInScreenCoords = committedView.positionInScreenCoords.add(startDragScreenPosition).subtract(mousePos);
-                        dynamicView.positionInScreenCoords = committedView.positionInScreenCoords;
-                        startDragScreenPosition = null;
+                        committedView.positionInScreenCoords = committedView.positionInScreenCoords.add(startDragMousePosScreen).subtract(mousePos);
+                        dynamicView = committedView.clone();
+                        startDragMousePosScreen = null;
                     }
                 }
             });

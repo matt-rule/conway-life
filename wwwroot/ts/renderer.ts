@@ -87,10 +87,8 @@ export class Renderer {
         if (!this.shaderProgram || !this.showGrid)
             return;
 
-        let translatedMatrix = mat3.create();
-        mat3.translate(translatedMatrix, this.projectionMatrix, [-view.positionInScreenCoords.x, -view.positionInScreenCoords.y]);
-        let scaledMatrix = mat3.create();
-        mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
+        let viewMatrix = mat3.create();
+        mat3.multiply(viewMatrix, this.projectionMatrix, view.viewMatrix);
         // Using these matrices, things are now in world space (grid coordinates)
 
         let positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
@@ -108,7 +106,7 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         for (let x = 0; x <= grid.size.x; x++) {
-            mat3.translate(gridPosMatrix, scaledMatrix, [x, 0]);
+            mat3.translate(gridPosMatrix, viewMatrix, [x, 0]);
             mat3.scale(scaled2Matrix, gridPosMatrix, [grid.size.x, grid.size.y]);
             this.gl.uniformMatrix3fv(this.matrixLocation, false, scaled2Matrix);
             this.gl.drawElements(this.gl.LINES, this.vertLineIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -122,7 +120,7 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         for (let y = 0; y <= grid.size.y; y++) {
-            mat3.translate(gridPosMatrix, scaledMatrix, [0, y]);
+            mat3.translate(gridPosMatrix, viewMatrix, [0, y]);
             mat3.scale(scaled2Matrix, gridPosMatrix, [grid.size.x, grid.size.y]);
             this.gl.uniformMatrix3fv(this.matrixLocation, false, scaled2Matrix);
             this.gl.drawElements(this.gl.LINES, this.horizLineIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -170,13 +168,11 @@ export class Renderer {
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        let translatedMatrix = mat3.create();
-        mat3.translate(translatedMatrix, this.projectionMatrix, [-view.positionInScreenCoords.x, -view.positionInScreenCoords.y]);
-        let scaledMatrix = mat3.create();
-        mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
-        let translatedMatrix2 = mat3.create();
-        mat3.translate(translatedMatrix2, scaledMatrix, [pos.x, pos.y]);
-        this.gl.uniformMatrix3fv(this.matrixLocation, false, translatedMatrix2);
+        let viewMatrix = mat3.create();
+        mat3.multiply(viewMatrix, this.projectionMatrix, view.viewMatrix);
+        let matrixForShader = mat3.create();
+        mat3.translate(matrixForShader, viewMatrix, [pos.x, pos.y]);
+        this.gl.uniformMatrix3fv(this.matrixLocation, false, matrixForShader);
         this.gl.uniform4f(this.colorLocation, color[0], color[1], color[2], 1);
 
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -193,13 +189,11 @@ export class Renderer {
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        let translatedMatrix = mat3.create();
-        mat3.translate(translatedMatrix, this.projectionMatrix, [-view.positionInScreenCoords.x, -view.positionInScreenCoords.y]);
-        let scaledMatrix = mat3.create();
-        mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
-        let translatedMatrix2 = mat3.create();
-        mat3.translate(translatedMatrix2, scaledMatrix, [pos.x, pos.y]);
-        this.gl.uniformMatrix3fv(this.matrixLocation, false, translatedMatrix2);
+        let viewMatrix = mat3.create();
+        mat3.multiply(viewMatrix, this.projectionMatrix, view.viewMatrix);
+        let matrixForShader = mat3.create();
+        mat3.translate(matrixForShader, viewMatrix, [pos.x, pos.y]);
+        this.gl.uniformMatrix3fv(this.matrixLocation, false, matrixForShader);
 
         if (selected) {
             this.gl.uniform4f(this.colorLocation, 0.6, 0.6, 0.6, 1);

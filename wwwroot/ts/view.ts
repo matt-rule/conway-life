@@ -16,6 +16,12 @@ export class View
         mat3.scale(this.viewMatrix, this.viewMatrix, [View.DEFAULT_ZOOM, View.DEFAULT_ZOOM]);
     }
 
+    public clone(): View {
+        let clonedView = new View();
+        clonedView.viewMatrix = mat3.clone(this.viewMatrix);
+        return clonedView;
+    }
+
     public set zoomLevel(value: number) {
         let viewPosition = new Vec(this.viewMatrix[6], this.viewMatrix[7]);
         mat3.identity(this.viewMatrix);
