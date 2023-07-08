@@ -163,6 +163,8 @@ export class Renderer {
         if (!this.shaderProgram)
             return;
 
+        let transformed = pos.multiply(view.zoomLevel).subtract(view.positionInScreenCoords);
+
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareVertexBuffer);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.squareIndexBuffer);
 
@@ -171,7 +173,7 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let translatedMatrix = mat3.create();
-        mat3.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y]);
+        mat3.translate(translatedMatrix, this.projectionMatrix, [transformed.x, transformed.y]);
         let scaledMatrix = mat3.create();
         mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
         this.gl.uniformMatrix3fv(this.matrixLocation, false, scaledMatrix);
@@ -184,6 +186,8 @@ export class Renderer {
         if (!this.shaderProgram)
             return;
 
+        let transformed = pos.multiply(view.zoomLevel).subtract(view.positionInScreenCoords);
+
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.borderVertexBuffer);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.borderIndexBuffer);
 
@@ -192,7 +196,7 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let translatedMatrix = mat3.create();
-        mat3.translate(translatedMatrix, this.projectionMatrix, [pos.x, pos.y]);
+        mat3.translate(translatedMatrix, this.projectionMatrix, [transformed.x, transformed.y]);
         let scaledMatrix = mat3.create();
         mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
         this.gl.uniformMatrix3fv(this.matrixLocation, false, scaledMatrix);
@@ -471,16 +475,15 @@ export class Renderer {
         for (let x = 0; x < grid.size.x; x += 1) {
             for (let y = 0; y < grid.size.y; y += 1)
             {
-                let pos: Vec = new Vec(x, y).multiply(view.zoomLevel).subtract(view.positionInScreenCoords);
                 if (showOscillations)
                 {
                     const color = frame[x][y].color;
                     if (color)
-                        this.drawSquare(view, color, pos);
+                        this.drawSquare(view, color, new Vec(x, y));
                 }
 
                 if (frame[x][y].active)
-                    this.drawBorder(view, pos, false);
+                    this.drawBorder(view, new Vec(x, y), false);
             }
         }
 
@@ -488,7 +491,7 @@ export class Renderer {
         {
             if (!brush)
             {
-                this.drawBorder(view, cursorCellPos.multiply(view.zoomLevel).subtract(view.positionInScreenCoords), true);
+                this.drawBorder(view, cursorCellPos, true);
             }
             else
             {
@@ -504,7 +507,7 @@ export class Renderer {
         
                         // Check if the position is within the grid boundaries
                         if (gridXY.x >= 0 && gridXY.x < grid.size.x && gridXY.y >= 0 && gridXY.y < grid.size.y) {
-                            this.drawBorder(view, gridXY.multiply(view.zoomLevel).subtract(view.positionInScreenCoords), brush.pattern[brushX][brushY]);
+                            this.drawBorder(view, gridXY, brush.pattern[brushX][brushY]);
                         }
                     }
                 }
