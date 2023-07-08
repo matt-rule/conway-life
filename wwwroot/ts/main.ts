@@ -124,17 +124,17 @@ else
             if (startDragMousePosScreen)
                 return;
 
-            let oldZoomLevel = dynamicView.zoomLevel;
-            let uncropped = dynamicView.zoomLevel * (event.deltaY < 0 ? 1.25 : 0.8);
-            dynamicView.zoomLevel = Math.min(Math.max(uncropped, View.MIN_ZOOM), View.MAX_ZOOM);
-            let scaleFactor = dynamicView.zoomLevel / oldZoomLevel;
+            let oldZoomLevel = committedView.zoomLevel;
+            let uncropped = committedView.zoomLevel * (event.deltaY < 0 ? 1.25 : 0.8);
+            committedView.zoomLevel = Math.min(Math.max(uncropped, View.MIN_ZOOM), View.MAX_ZOOM);
+            let scaleFactor = committedView.zoomLevel / oldZoomLevel;
 
             let rect = canvas.getBoundingClientRect();
             let mousePos = new Vec(event.clientX - rect.left, event.clientY - rect.top);
 
             // This originally used a grid position, and subtracted the mousePos, applied a transformation, and then re-added it.
             // To turn grid pos into view pos, things are negated while applying the mouse translations.
-            let viewPosRelativeToMouse = dynamicView.positionInScreenCoords.negative().subtract(mousePos);
+            let viewPosRelativeToMouse = committedView.positionInScreenCoords.negative().subtract(mousePos);
             let scaled = viewPosRelativeToMouse.multiply(scaleFactor);
             
             committedView.positionInScreenCoords = scaled.add(mousePos).negative();
