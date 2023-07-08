@@ -127,13 +127,16 @@ export class Renderer {
         }
     }
 
-    public drawSparseMatrixGrid(viewPositionScreenCoords: Vec): void
+    public drawSparseMatrixGrid(canvas: HTMLCanvasElement, view: View): void
     {
         if (!this.shaderProgram || !this.showGrid)
             return;
 
-        // let screen_width = canvas.width;
-        //let screen_width_world = 
+        let num_vertical_lines = canvas.width / view.zoomLevel;
+        let num_horizontal_lines = canvas.height / view.zoomLevel;
+
+        console.log("num_vertical_lines", num_vertical_lines);
+        console.log("num_horizontal_lines", num_horizontal_lines);
         // num_vertical_lines = screen width in world coordinates / cell width in world coordinates
         // num_horizontal_lines = screen height wc / cw wc
         // if num_vertical_lines > 40 || num_horizontal_lines > 40
@@ -445,12 +448,15 @@ export class Renderer {
         mat3.identity(this.projectionMatrix);
     }
 
-    public draw(grid: FiniteGrid | SparseMatrixGrid, view: View, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean): void
+    public draw(canvas: HTMLCanvasElement | null, grid: FiniteGrid | SparseMatrixGrid, view: View, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean): void
     {
+        if (!canvas)
+            return;
+
         if (grid instanceof FiniteGrid)
             this.drawGameWithFiniteGrid(grid, grid.frames[grid.currentFrame], view, cursorCellPos, brush, showOscillations);
         else if (grid instanceof SparseMatrixGrid)
-            this.drawGameWithSparseMatrix(grid, view, cursorCellPos, brush);
+            this.drawGameWithSparseMatrix(canvas, grid, view, cursorCellPos, brush);
     }
 
     public drawGameWithFiniteGrid(grid: FiniteGrid, frame: LifeCell[][], view: View, cursorCellPos: Vec | null, brush: Brush | null, showOscillations: boolean): void
@@ -511,8 +517,8 @@ export class Renderer {
         this.drawFiniteGrid(grid, view);
     }
 
-    public drawGameWithSparseMatrix(grid: SparseMatrixGrid, view: View, cursorCellPos: Vec | null, brush: Brush | null): void
+    public drawGameWithSparseMatrix(canvas: HTMLCanvasElement, grid: SparseMatrixGrid, view: View, cursorCellPos: Vec | null, brush: Brush | null): void
     {
-        
+        this.drawSparseMatrixGrid(canvas, view);
     }
 }
