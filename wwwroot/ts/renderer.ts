@@ -163,8 +163,6 @@ export class Renderer {
         if (!this.shaderProgram)
             return;
 
-        let transformed = pos.multiply(view.zoomLevel).subtract(view.positionInScreenCoords);
-
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareVertexBuffer);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.squareIndexBuffer);
 
@@ -173,10 +171,12 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let translatedMatrix = mat3.create();
-        mat3.translate(translatedMatrix, this.projectionMatrix, [transformed.x, transformed.y]);
+        mat3.translate(translatedMatrix, this.projectionMatrix, [-view.positionInScreenCoords.x, -view.positionInScreenCoords.y]);
         let scaledMatrix = mat3.create();
         mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
-        this.gl.uniformMatrix3fv(this.matrixLocation, false, scaledMatrix);
+        let translatedMatrix2 = mat3.create();
+        mat3.translate(translatedMatrix2, scaledMatrix, [pos.x, pos.y]);
+        this.gl.uniformMatrix3fv(this.matrixLocation, false, translatedMatrix2);
         this.gl.uniform4f(this.colorLocation, color[0], color[1], color[2], 1);
 
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -186,8 +186,6 @@ export class Renderer {
         if (!this.shaderProgram)
             return;
 
-        let transformed = pos.multiply(view.zoomLevel).subtract(view.positionInScreenCoords);
-
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.borderVertexBuffer);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.borderIndexBuffer);
 
@@ -196,10 +194,12 @@ export class Renderer {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         let translatedMatrix = mat3.create();
-        mat3.translate(translatedMatrix, this.projectionMatrix, [transformed.x, transformed.y]);
+        mat3.translate(translatedMatrix, this.projectionMatrix, [-view.positionInScreenCoords.x, -view.positionInScreenCoords.y]);
         let scaledMatrix = mat3.create();
         mat3.scale(scaledMatrix, translatedMatrix, [view.zoomLevel, view.zoomLevel]);
-        this.gl.uniformMatrix3fv(this.matrixLocation, false, scaledMatrix);
+        let translatedMatrix2 = mat3.create();
+        mat3.translate(translatedMatrix2, scaledMatrix, [pos.x, pos.y]);
+        this.gl.uniformMatrix3fv(this.matrixLocation, false, translatedMatrix2);
 
         if (selected) {
             this.gl.uniform4f(this.colorLocation, 0.6, 0.6, 0.6, 1);
