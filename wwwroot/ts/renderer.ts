@@ -135,12 +135,23 @@ export class Renderer {
         if (!this.shaderProgram || !this.showGrid)
             return;
 
-        // if zoomed out too far, return
+        // let screen_width = canvas.width;
+        //let screen_width_world = 
+        // num_vertical_lines = screen width in world coordinates / cell width in world coordinates
+        // num_horizontal_lines = screen height wc / cw wc
+        // if num_vertical_lines > 40 || num_horizontal_lines > 40
+            // return
 
         // --- draw vertical lines ---
-        // use the modulus of the horizontal translation
-        // determine how many points to draw based on the zoom level
-        // determine a set of points on a horizontal axis to start each vertical line at, in the range 0..canvas width
+        // for each vertical line up to num_vertical_lines
+        //      left offset = (possibly using the modulus of the horizontal translation)
+        //      x = line number * cell width + left offset
+        //      y1 = top of screen in world coords
+        //      y2 = bottom of screen in world coords
+
+        // create matrix using the above values to draw elements
+
+
         // create a scale matrix to scale by the zoom level and also consider screen size
         // for each vertical line:
             // apply translation and scaling in the right order
