@@ -76,6 +76,7 @@ var generation: number = 0;
 var list_selected: boolean[] = [];
 var number_selected: number = 0;
 var branches: Branch3D[][] = [];
+var fitness: number[] = [];
 var errorVisible: boolean = false;
 var initialised: boolean = false;
 
@@ -172,28 +173,28 @@ function replicate_btn_click(): void
 {
 	if (initialised)
 	{
-		// if (!errorVisible)
-		// {
-		// 	// doesn't process if the wrong number of organisms are selected
-		// 	if (number_selected == MAX_PARENTS)
-		// 	{	
-		// 		replicate_new_generation(event);
-		// 		clear(event);
-		// 		mutate_new_generation();
-		// 		generation++;
-		// 		create_trees();
-		// 		show_phenotype();
-		// 		update_selection_display();
-		// 	}
-		// 	else
-		// 	{
-		// 		errorVisible = true;
-		// 		error_dialog.visible = true;
-		// 		clos_btn.visible = true;
-		// 		error_text.visible = true;
-		// 		error_text.text_box.text = "FIRST SELECT 4 ORGANISMS FOR REPLICATION.";
-		// 	}
-		// }
+		if (!errorVisible)
+		{
+			// doesn't process if the wrong number of organisms are selected
+			if (number_selected == MAX_PARENTS)
+			{	
+				replicate_new_generation();
+				clear();
+				mutate_new_generation();
+				generation++;
+				create_trees();
+				show_phenotype();
+				update_selection_display();
+			}
+			else
+			{
+				// errorVisible = true;
+				// error_dialog.visible = true;
+				// clos_btn.visible = true;
+				// error_text.visible = true;
+				// error_text.text_box.text = "FIRST SELECT 4 ORGANISMS FOR REPLICATION.";
+			}
+		}
 	}
 	else
 	{		
@@ -207,12 +208,61 @@ function replicate_btn_click(): void
 
 function elitism_select_reproduce(): void
 {
-    
+	if (initialised)
+	{
+		if (!errorVisible)
+		{
+			deselect_all();
+			calculate_fitnesses();
+			var bestFitness: number;
+			var selectedOne: boolean;
+			
+			for (var i: number = 0; i < MAX_PARENTS; ++i)
+			{
+				selectedOne = false;
+				bestFitness = 0;
+				
+				for (var org: number = 0; org < MAX_ORGANISMS; org++)
+				{
+					if (!list_selected[org] && !selectedOne)
+					{
+						bestFitness = org;
+						selectedOne = true;
+					}
+					if (fitness[org] >= fitness[bestFitness] && !list_selected[org])		// find the best that hasn't been listed
+					{
+						bestFitness = org;
+						selectedOne = true;
+					}
+				}
+				list_selected[bestFitness] = true;
+			}
+			
+			replicate_new_generation();
+			clear();
+			mutate_new_generation();
+			generation++;
+			create_trees();
+			show_phenotype();
+			update_selection_display();
+		}
+	}
+	else
+	{		
+		// errorVisible = true;
+		// error_dialog.visible = true;
+		// clos_btn.visible = true;
+		// error_text.visible = true;
+		// error_text.text_box.text = "PLEASE BEGIN BY INITIALISING THE GENOTYPE.";
+	}
 }
 
 function close_btn_click(): void
 {
-    
+    // errorVisible = false;
+	// error_dialog.visible = false;
+	// clos_btn.visible = false;
+	// error_text.visible = false;
 }
 
 // deselect all organisms
@@ -298,31 +348,133 @@ function update_selection_display():void
                 ctx.lineTo(10, PANEL_WIDTH - 30);
                 ctx.stroke();
 
-                // TODO
-                // let info_box = document.getElementById("info_box") as HTMLElement; // Change "info_box" to the ID of your actual info box div
-                // info_box.textContent += `- ORGANISM ${org}\n`;
-                // info_box.textContent += `Subdivisions: ${Math.round(genotype[org][1])}, `;
-                // info_box.textContent += `Mean Branch Angle: ${Math.round(genotype[org][2])}, `;
-                // info_box.textContent += `Mean Branch Length: ${Math.round(genotype[org][3])}, `;
-                // info_box.textContent += `Thickness at base of trunk: ${Math.round(genotype[org][3])}\n`;
+                var info_box: HTMLDivElement = document.getElementById("info_panel") as HTMLDivElement;
+                if (!info_box)
+                    return;
+
+                info_box.innerHTML = "";
+                info_box.innerHTML += `- ORGANISM ${org}\n`;
+                info_box.innerHTML += `Subdivisions: ${Math.round(genotype[org][1])}, `;
+                info_box.innerHTML += `Mean Branch Angle: ${Math.round(genotype[org][2])}, `;
+                info_box.innerHTML += `Mean Branch Length: ${Math.round(genotype[org][3])}, `;
+                info_box.innerHTML += `Thickness at base of trunk: ${Math.round(genotype[org][3])}\n`;
             }
         }
 	}
 }
 
-function replicate_new_generation(event:MouseEvent): void
+function replicate_new_generation(): void
 {
-
+	var parentGenotype : any[] = [];
+	// temporary list for parents' genotype
+	// let's copy the genotypes of the selected parents
+	
+	var numParents: number=0;
+	var org: number;
+	var newChild: number;
+	
+	for (org = 0; org < MAX_ORGANISMS; org++)
+	{
+		if (list_selected[org] == true)
+		{
+			parentGenotype[numParents]=genotype[org].slice();
+			// copy organism_num’s genes into parents' list
+			list_selected[org] = false;
+			numParents++;
+		}
+	}
+	
+	// let's copy parents' genes into the new children's genotype list
+	for (var parent: number = 0; parent < MAX_PARENTS; parent++)
+	{
+		for (var child: number = 0; child < MAX_CHILDREN; child++)
+		{
+			newChild = (parent * MAX_CHILDREN) + child;
+			genotype[newChild] = parentGenotype[parent].slice();
+			// make clone of parent's genes
+		}
+	}
+	
+	number_selected = 0;
 }
 
 function calculate_fitnesses(): void
 {
-
+    let fitnessValue: number;
+    for (let org: number = 0; org < MAX_ORGANISMS; org++) {
+        // fitnessValue is <= 0. The closer to 0 it is, the better the organism.
+        fitnessValue = 0;
+        
+        // each gene has a different range of typical values,
+        // and for an effective fitness algorithm these need to be given multipiers before they are used
+        // to determine the final score.
+        // this requires some fine tuning.
+        
+        // the ideal is a well-developed, complex trees with a mean branch angle of 45 degrees,
+        // average length with no straggly branches, and a thick enough trunk for support, with green-yellow foliage.
+        // variation in branch angles/lengths has no effect on the fitness of the tree.
+        // (this has resulted in some oddly long branches, should be changed)
+        fitnessValue -= Math.abs(genotype[org][0] - LEAF_COLOUR_OPTIMAL) * 30;
+        fitnessValue -= Math.abs(genotype[org][1] - SUBDIVISIONS_OPTIMAL) * 15;
+        fitnessValue -= Math.abs(genotype[org][2] - BRANCH_ANGLE_DEGREES_MEAN_OPTIMAL) * 1;
+        fitnessValue -= Math.abs(genotype[org][3] - BRANCH_LENGTH_MEAN_OPTIMAL) * 2;
+        fitnessValue -= Math.abs(genotype[org][4] - TRUNK_BASE_THICKNESS_OPTIMAL) * 5;
+        fitnessValue -= Math.abs(genotype[org][5] - BRANCH_ANGLE_DEGREES_VARIATION_OPTIMAL) * 0;
+        fitnessValue -= Math.abs(genotype[org][6] - BRANCH_LENGTH_VARIATION_OPTIMAL) * 0;
+        
+        fitness[org] = fitnessValue;
+	}
 }
 
 function mutate_new_generation(): void
 {
+	let newOrg: number;
+    let mutatedValue: number;
+	for (newOrg = 0; newOrg < MAX_ORGANISMS; newOrg++)
+	{
+		
+        // gene [0]: leaf colour
+        mutatedValue = genotype[newOrg][0] - LEAF_COLOUR_MUTATION + Math.random() * LEAF_COLOUR_MUTATION * 2;
+        if ((mutatedValue >= 0) && (mutatedValue <= 1)) {
+            genotype[newOrg][0] = mutatedValue;
+        }
 
+        // gene [1]: number of divisons
+        mutatedValue = genotype[newOrg][1] + random_range_integer(-SUBDIVISIONS_MUTATION, SUBDIVISIONS_MUTATION);
+        if ((mutatedValue >= SUBDIVISIONS_MEAN - SUBDIVISIONS_VARIATION) && (mutatedValue <= SUBDIVISIONS_MEAN + SUBDIVISIONS_VARIATION)) {
+            genotype[newOrg][1] = mutatedValue;
+        }
+		
+        // gene [2]: mean branch angle
+        mutatedValue = genotype[newOrg][2] - BRANCH_ANGLE_DEGREES_MEAN_MUTATION + Math.random() * BRANCH_ANGLE_DEGREES_MEAN_MUTATION * 2;
+        if ((mutatedValue >= BRANCH_ANGLE_DEGREES_MEAN_MEAN - BRANCH_ANGLE_DEGREES_MEAN_VARIATION) && (mutatedValue <= BRANCH_ANGLE_DEGREES_MEAN_MEAN + BRANCH_ANGLE_DEGREES_MEAN_VARIATION)) {
+            genotype[newOrg][2] = mutatedValue;
+        }
+
+        // gene [3]: mean branch length
+        mutatedValue = genotype[newOrg][3] - BRANCH_LENGTH_MEAN_MUTATION + Math.random() * BRANCH_LENGTH_MEAN_MUTATION * 2;
+        if ((mutatedValue >= BRANCH_LENGTH_MEAN_MEAN - BRANCH_LENGTH_MEAN_VARIATION) && (mutatedValue <= BRANCH_LENGTH_MEAN_MEAN + BRANCH_LENGTH_MEAN_VARIATION)) {
+            genotype[newOrg][3] = mutatedValue;
+        }
+
+        // gene [4]: mean trunk base thickness
+        mutatedValue = genotype[newOrg][4] - TRUNK_BASE_THICKNESS_MUTATION + Math.random() * TRUNK_BASE_THICKNESS_MUTATION * 2;
+        if ((mutatedValue >= TRUNK_BASE_THICKNESS_MEAN - TRUNK_BASE_THICKNESS_VARIATION) && (mutatedValue <= TRUNK_BASE_THICKNESS_MEAN + TRUNK_BASE_THICKNESS_VARIATION)) {
+            genotype[newOrg][4] = mutatedValue;
+        }
+
+        // gene [5]: branch angle variation
+        mutatedValue = genotype[newOrg][5] - BRANCH_ANGLE_DEGREES_VARIATION_MUTATION + Math.random() * BRANCH_ANGLE_DEGREES_VARIATION_MUTATION * 2;
+        if ((mutatedValue >= BRANCH_ANGLE_DEGREES_VARIATION_MEAN - BRANCH_ANGLE_DEGREES_VARIATION_VARIATION) && (mutatedValue <= BRANCH_ANGLE_DEGREES_VARIATION_MEAN + BRANCH_ANGLE_DEGREES_VARIATION_VARIATION)) {
+            genotype[newOrg][5] = mutatedValue;
+        }
+
+        // gene [6]: branch length variation
+        mutatedValue = genotype[newOrg][6] - BRANCH_LENGTH_VARIATION_MUTATION + Math.random() * BRANCH_LENGTH_VARIATION_MUTATION * 2;
+        if ((mutatedValue >= BRANCH_LENGTH_VARIATION_MEAN - BRANCH_LENGTH_VARIATION_VARIATION) && (mutatedValue <= BRANCH_LENGTH_VARIATION_MEAN + BRANCH_LENGTH_VARIATION_VARIATION)) {
+            genotype[newOrg][6] = mutatedValue;
+        }
+	}
 }
 
 function recursive_add_branch(org: number, level: number, beginPos: vec3, orient: mat4, len: number, trunkThickness: number): void
@@ -331,23 +483,11 @@ function recursive_add_branch(org: number, level: number, beginPos: vec3, orient
 	let newVec: vec3 = vec3.fromValues(0, currLen, 0);
     
     vec3.transformMat4(newVec, newVec, orient);
-    // if (level === 0)
-    // {
-    //     console.log("beginPos", beginPos);
-    //     console.log("newVec", newVec);
-    // }
     
     let endPos: vec3 = vec3.create();
     vec3.add(endPos, beginPos, newVec);
-    // if (level === 0)
-    //     console.log("endPos", endPos);
-    
+
     branches[org].push(new Branch3D(level, beginPos, endPos, trunkThickness, trunkThickness * SCALE_THICKNESS));
-    // if (level === 0)
-    // {
-    //     console.log('branches[org].length()', branches[org].length);
-    //     console.log('branches[org][0]', branches[org][0]);
-    // }
 
     let initMatY: mat4 = mat4.create();
     let finalMat: mat4 = mat4.clone(orient);
@@ -376,11 +516,6 @@ function recursive_add_branch(org: number, level: number, beginPos: vec3, orient
             mat4.rotateY(finalMat, finalMat, angleY);
             mat4.rotateZ(finalMat, finalMat, degreesToRadians(genotype[org][2]) * Math.random());
             recursive_add_branch(org, level + 1, midPos, finalMat, len * SCALE_LEN_BASE, trunkThickness * SCALE_THICKNESS);
-
-            // debug only; TODO: remove
-            // var v: vec3 = vec3.fromValues(0,1,0);
-            // var v2: vec3 = vec3.fromValues(0,1,0);
-            // vec3.transformMat4(v2, v, finalMat);
         }
     }
 }
@@ -496,16 +631,6 @@ function show_phenotype(): void
             else {
                 // specify branch colour (always black)
                 context.fillStyle = "#000000";
-
-                if (i === 0)
-                {
-                    console.log("vecA", vecA);
-                    console.log("vecB", vecB);
-                    console.log("perpendicularVecA", perpendicularVecA);
-                    console.log("negPerpendicularVecA", negPerpendicularVecA);
-                    console.log("negPerpendicularVecB", negPerpendicularVecB);
-                    console.log("perpendicularVecB", perpendicularVecB);
-                }
 
                 // draw branch rectangle. 4 vertices, first one = last
                 context.beginPath();
