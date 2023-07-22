@@ -26,60 +26,20 @@
             <input type="button" id="fitness_based_selection_button" value="Elitism Select"></input>
         </div>
         <div class="flex-item-inner-simple">
-            <div id="info_panel"></div>
+            <div id="info_panel" class="light-text"></div>
         </div>
     </div>
     </div>
     <div class="flex-item flex-item-80">
         <div class="flex-container-inner-right">
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
-        <div class="flex-item-inner-25">
-            <div class="organism-square"></div>
-        </div>
+            @for (int i = 0; i < 16; i++)
+            {
+                <div class="flex-item-inner-25">
+                    <div class="organism-panel">
+                        <canvas class="canvas-fill-parent" id="@("canvas_" + i)"></canvas>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
