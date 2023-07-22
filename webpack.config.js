@@ -1,7 +1,10 @@
 const path = require('path');
 
 module.exports = {
-    entry: './wwwroot/ts/main.ts',
+    entry: {
+        cellular_automata: ['./wwwroot/ts/cellular_automata/main.ts', './wwwroot/ts/project_menu.ts'],
+        tree_genotypes: ['./wwwroot/ts/tree_genotypes/main.ts', './wwwroot/ts/project_menu.ts']
+    },
     mode: 'development',
     module: {
         rules: [
@@ -16,7 +19,7 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        filename: 'bundle.js',
+        filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'wwwroot/js'),
     },
 };
