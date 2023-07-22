@@ -18,7 +18,7 @@
             "serverReadyAction": {
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
-                "uriFormat": "%s/cellularautomata"
+                "uriFormat": "%s/treegenotypes"
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
