@@ -23,12 +23,24 @@ let brush: Brush | null = null;
 let canvas: HTMLCanvasElement | null = document.getElementById("my_canvas") as HTMLCanvasElement;
 let lastUpdateTime: number = 0;
 let pause: boolean = true;
-let showGrid: boolean = true;
 let dynamicView: View = new View();     // Changes all the time when panning
 let committedView: View = new View();   // Does not change until finished panning
 
 let grid: FiniteGrid | SparseMatrixGrid = new FiniteGrid(new Vec(defaultGridWidth, defaultGridHeight), historyLength);
 //let grid: FiniteGrid | SparseMatrixGrid = new SparseMatrixGrid();
+
+function gameMenuMouseDown() {
+    let menuContainer = document.getElementById("hideable-menu-content-container");
+    if (!menuContainer)
+        return;
+
+    menuContainer.classList.toggle('hidden');
+}
+
+let gameMenuButton = document.getElementById("game-menu-div");
+if (gameMenuButton) {
+    gameMenuButton.addEventListener('mousedown', gameMenuMouseDown);
+}
 
 if (!canvas) {
     alert('Canvas element not found');
@@ -60,7 +72,7 @@ else
     }
     else
     {
-        let renderer = new Renderer(canvas, gl, borderWidth, showGrid);
+        let renderer = new Renderer(canvas, gl, borderWidth, true);
 
         function resizeCanvas(width: number, height: number): void {
             if (!canvas)
@@ -77,7 +89,7 @@ else
             if (!gl) {
                 return;
             }
-            renderer = new Renderer(canvas, gl, borderWidth, showGrid);
+            renderer = new Renderer(canvas, gl, borderWidth, renderer.showGrid);
             renderer.draw(canvas, grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
         }
 
@@ -141,7 +153,7 @@ else
             dynamicView = committedView.clone();
 
             // if mouse is positioned inside the grid, move dynamicViewPosition towards the cursor if zooming in, away from cursor if zooming out.
-            renderer = new Renderer(canvas, gl, borderWidth, showGrid);
+            renderer = new Renderer(canvas, gl, borderWidth, renderer.showGrid);
             renderer.draw(canvas, grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
         });
 
@@ -181,7 +193,7 @@ else
                         // TODO
                     }
                 }
-                else if (event.button === 2)    // Right mouse button
+                else if (event.button === 1 || event.button === 2)    // Middle or right mouse button
                 {
                     startDragMousePosScreen = mousePos.clone();
                 }
@@ -192,7 +204,7 @@ else
                 if (!canvas)
                     return;
 
-                if (event.button === 2)         // Right mouse button
+                if (event.button === 1 || event.button === 2)         // Middle or right mouse button
                 {
                     if (startDragMousePosScreen)
                     {
@@ -215,6 +227,7 @@ else
 
         document.addEventListener('DOMContentLoaded', () => {
             const resetButton = document.getElementById('reset-button');
+            const playButton = document.getElementById('play-button');
             const pauseButton = document.getElementById('pause-button');
             const timestepLabel = document.getElementById('timestep-label') as HTMLSpanElement;
             const gridWidthLabel = document.getElementById('grid-width-label') as HTMLSpanElement;
@@ -234,7 +247,7 @@ else
             const lexiconTextArea = document.getElementById('lexicon-input-textarea') as HTMLTextAreaElement;
             const tooltip = document.getElementById('tooltip');
         
-            if (resetButton == null || pauseButton == null || timestepEdit == null || showGridCheckBox == null || tooltip == null)
+            if (resetButton == null || playButton == null || pauseButton == null || timestepEdit == null || showGridCheckBox == null || tooltip == null)
                 return;
 
             function addTooltipToElements(elements: HTMLElement[], tooltipText: string) {
@@ -261,8 +274,8 @@ else
             addTooltipToElements([showGridLabel, showGridCheckBox], 'Show gridlines');
 
             showGridCheckBox.addEventListener('click', () => {
-                showGrid = showGridCheckBox.checked;
-                 renderer.draw(canvas, grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
+                renderer.showGrid = showGridCheckBox.checked;
+                renderer.draw(canvas, grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
             });
 
             addTooltipToElements([timestepLabel, timestepEdit], 'Timestep in milliseconds (1-1000)');
@@ -307,7 +320,7 @@ else
 
                 grid = new FiniteGrid(newSize, historyLength);
                 if (canvas && gl)
-                    renderer = new Renderer(canvas, gl, borderWidth, showGrid);
+                    renderer = new Renderer(canvas, gl, borderWidth, renderer.showGrid);
                 renderer.draw(canvas, grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
             });
 
@@ -334,7 +347,7 @@ else
 
                 grid = new FiniteGrid(newSize, historyLength);
                 if (canvas && gl)
-                    renderer = new Renderer(canvas, gl, borderWidth, showGrid);
+                    renderer = new Renderer(canvas, gl, borderWidth, renderer.showGrid);
                 renderer.draw(canvas, grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
             });
 
@@ -392,13 +405,20 @@ else
                 renderer.draw(canvas, grid, dynamicView, cursorCellPos, brush, GameRules.detectOscillations);
             });
         
-            addTooltipToElements([pauseButton], 'Play/pause (spacebar on non-mobile devices)');
+            addTooltipToElements([playButton], 'Play (spacebar on non-mobile devices)');
+            addTooltipToElements([pauseButton], 'Pause (spacebar on non-mobile devices)');
         
+            playButton.addEventListener('click', () => {
+                pause = false;
+                playButton.classList.add('hidden');
+                pauseButton.classList.remove('hidden');
+                requestAnimationFrame(animate);
+            });
+
             pauseButton.addEventListener('click', () => {
-                pause = !pause;
-                pauseButton.textContent = pause ? '▶️' : '⏸️';
-                if (!pause)
-                    requestAnimationFrame(animate);
+                pause = true;
+                pauseButton.classList.add('hidden');
+                playButton.classList.remove('hidden');
             });
 
             addTooltipToElements([lexiconLabel, lexiconTextArea], 'Warning: Overwrites grid contents; requires grid dimensions to be sufficient for input. Copy-paste patterns from https://conwaylife.com/ref/lexicon/lex.htm');

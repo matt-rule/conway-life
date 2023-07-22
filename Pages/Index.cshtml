@@ -4,23 +4,87 @@
     ViewData["Title"] = "Home page";
 }
 
-<div class="div-container">
-    <div class="rounded-border">
-        <span class="white-span">
-            <span class="left-pad" id="timestep-label">Timestep:</span> <input class="numeric-edit" id="timestep-edit" value="125" />
-            <span class="left-pad" id="grid-width-label">Width:</span> <input class="numeric-edit" id="grid-width-edit" value="25" />
-            <span class="left-pad" id="grid-height-label">Height:</span> <input class="numeric-edit" id="grid-height-edit" value="25" />
-            <span class="left-pad" id="show-grid-label">Show Grid:</span> <input type="checkbox" id="show-grid-checkbox" checked="true" />
-            <span class="left-pad" id="detect-oscillations-label">Oscillations:</span> <input type="checkbox" id="detect-oscillations-checkbox" checked="true" />
-            <span class="left-pad" id="survival-rules-label">Survival Rules:</span> <input class="rule-edit" id="survival-rules-edit" value="2,3" />
-            <span class="left-pad" id="birth-rules-label">Birth Rules:</span> <input class="rule-edit" id="birth-rules-edit" value="3" />
-            <button id="pause-button" class="toolbar-button" style="display: inline-block">▶️</button>
-            <button id="reset-button" class="toolbar-button" style="display: inline-block">🔄</button>
-            <span class="left-pad" id="lexicon-input-label">Lexicon Input:</span> <textarea id="lexicon-input-textarea"></textarea>
-        </span>
+<canvas id="my_canvas"></canvas>
+
+<div class="bottom-left transparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only light-text">
+    <div class="hidden" id="hideable-menu-content-container">
+        <div class="flex-container">
+            <div class="flex-row">
+                <img id="play-button" class="menu-icon" src="assets/play-icon.png">
+                <img id="pause-button" class="menu-icon hidden" src="assets/pause-icon.png">
+                <img id="reset-button" class="menu-icon" src="assets/reset-icon.png">
+                @* <button id="pause-button" class="toolbar-button" style="display: inline-block">▶️</button>
+                <button id="reset-button" class="toolbar-button" style="display: inline-block">🔄</button> *@
+            </div>
+            <div class="flex-row">
+                <div class="flex-item-left">
+                    <span id="timestep-label">Timestep:</span>
+                </div>
+                <div class="flex-item-right">
+                    <input class="numeric-edit" id="timestep-edit" value="125" />
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-item-left">
+                    <span id="grid-width-label">Width:</span>
+                </div>
+                <div class="flex-item-right">
+                    <input class="numeric-edit" id="grid-width-edit" value="25" />
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-item-left">
+                    <span id="grid-height-label">Height:</span>
+                </div>
+                <div class="flex-item-right">
+                    <input class="numeric-edit" id="grid-height-edit" value="25" />
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-item-left">
+                    <span id="show-grid-label">Show Grid:</span>
+                </div>
+                <div class="flex-item-right">
+                    <input type="checkbox" id="show-grid-checkbox" checked="true" />
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-item-left">
+                    <span id="detect-oscillations-label">Oscillations:</span>
+                </div>
+                <div class="flex-item-right">
+                    <input type="checkbox" id="detect-oscillations-checkbox" checked="true" />
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-item-left">
+                    <span id="survival-rules-label">Survival Rules:</span>
+                </div>
+                <div class="flex-item-right">
+                    <input class="rule-edit" id="survival-rules-edit" value="2,3" />
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="flex-item-left">
+                    <span id="birth-rules-label">Birth Rules:</span>
+                </div>
+                <div class="flex-item-right">
+                    <input class="rule-edit" id="birth-rules-edit" value="3" />
+                </div>
+            </div>
+            <div class="flex-row">
+                <span id="lexicon-input-label">Lexicon Input:</span>
+            </div>
+            <div class="flex-row">
+                <textarea id="lexicon-input-textarea" class="expand-width non-resizeable textarea-height"></textarea>
+            </div>
+        </div>
+        <div class="vertical-spacer"></div>
+    </div>
+    <div id="game-menu-div">
+        <img id="game-menu-button" class="menu-icon" src="assets/menu-icon.png">
+        <span>Settings</span>
     </div>
 </div>
-
-<canvas id="my_canvas"></canvas>
 
 <div id="tooltip" style="display: none; position: absolute;"></div>
