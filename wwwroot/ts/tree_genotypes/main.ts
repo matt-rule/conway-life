@@ -352,7 +352,6 @@ function update_selection_display():void
                 if (!info_box)
                     return;
 
-                info_box.innerHTML = "";
                 info_box.innerHTML += `- ORGANISM ${org}\n`;
                 info_box.innerHTML += `Subdivisions: ${Math.round(genotype[org][1])}, `;
                 info_box.innerHTML += `Mean Branch Angle: ${Math.round(genotype[org][2])}, `;

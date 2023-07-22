@@ -1,0 +1,13 @@
+JavaScript
+TypeScript
+C#
+ASP.Net
+Razor Pages
+HTML5 Canvas
+WebGL
+GLSL
+Docker
+Digital Ocean
+Webpack
+Flexbox
+MVC
