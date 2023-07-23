@@ -1,13 +1,21 @@
-JavaScript
 TypeScript
 C#
 ASP.Net
 Razor Pages
+MVC
+
+Webpack
+Digital Ocean
+Docker
+Github
+Open source
+
+JavaScript
+Flexbox
 HTML5 Canvas
 WebGL
 GLSL
-Docker
-Digital Ocean
-Webpack
-Flexbox
-MVC
+
+To add:
+F#
+Entity Framework

@@ -6,8 +6,8 @@ const MAX_PARENTS: number = 4;				// number of parent organisms to select
 const MAX_CHILDREN: number = 4;				// number offspring per selected parent
 
 // gene [0]: leaf colour
-const LEAF_COLOUR_MUTATION: number = 0.1;
-const LEAF_COLOUR_OPTIMAL: number = 0.6;
+const LEAF_COLOUR_MUTATION: number = 0.03;
+const LEAF_COLOUR_OPTIMAL: number = 0.8;
 
 // gene [1]: number of divisons
 const SUBDIVISIONS_MEAN: number = 7;
@@ -45,7 +45,7 @@ const BRANCH_LENGTH_VARIATION_VARIATION: number = 0.4;
 const BRANCH_LENGTH_VARIATION_MUTATION: number = 0.02;
 const BRANCH_LENGTH_VARIATION_OPTIMAL: number = 1.5;
 
-const PANEL_WIDTH: number = 142;
+const PANEL_WIDTH: number = 200;
 
 const SCALE_LEN_BASE: number = 0.65;
 const SCALE_LEN_MAIN: number = 0.8;
@@ -91,11 +91,11 @@ function initialise_canvases(): void
 		var elem: HTMLCanvasElement = document.getElementById(str_canvas_ID) as HTMLCanvasElement;
         if (elem)
         {
-            elem.style.width = '142px';
-            elem.style.height = '142px';
+            elem.style.width = PANEL_WIDTH + 'px';
+            elem.style.height = PANEL_WIDTH + 'px';
 
-            elem.width = 142;
-            elem.height = 142;
+            elem.width = PANEL_WIDTH;
+            elem.height = PANEL_WIDTH;
         }
 	}
 }
@@ -133,6 +133,8 @@ function organism_click(event: any): void
 			var str_button_ID: string = "canvas_" + (org);
 
             let elem: HTMLCanvasElement = event.target as HTMLCanvasElement;
+            if (!elem)
+                continue;
 
 			if (str_button_ID == elem.id)
 			{
@@ -353,10 +355,13 @@ function update_selection_display():void
                     return;
 
                 info_box.innerHTML += `- ORGANISM ${org}\n`;
-                info_box.innerHTML += `Subdivisions: ${Math.round(genotype[org][1])}, `;
-                info_box.innerHTML += `Mean Branch Angle: ${Math.round(genotype[org][2])}, `;
-                info_box.innerHTML += `Mean Branch Length: ${Math.round(genotype[org][3])}, `;
-                info_box.innerHTML += `Thickness at base of trunk: ${Math.round(genotype[org][3])}\n`;
+                info_box.innerHTML += `Leaf colour: ${genotype[org][0].toFixed(2)}, `;
+                info_box.innerHTML += `Subdivisions: ${genotype[org][1].toFixed(2)}, `;
+                info_box.innerHTML += `Mean Branch Angle: ${genotype[org][2].toFixed(2)}, `;
+                info_box.innerHTML += `Mean Branch Length: ${genotype[org][3].toFixed(2)}, `;
+                info_box.innerHTML += `Thickness at base of trunk: ${genotype[org][4].toFixed(2)}, `;
+                info_box.innerHTML += `Branch angle variation: ${genotype[org][5].toFixed(2)}, `;
+                info_box.innerHTML += `Branch length variation: ${genotype[org][6].toFixed(2)}\n`;
             }
         }
 	}
@@ -559,6 +564,15 @@ function random_genotype_initialisation(): void
 	}
 }
 
+function bound(min: number, max: number, value: number): number
+{
+    if (value < min)
+        return min;
+    if (value > max)
+        return max;
+    return value;
+}
+
 function show_phenotype(): void
 {
 	let org: number;
@@ -607,15 +621,30 @@ function show_phenotype(): void
                 let midPoint = vec3.add(vec3.create(), vecA, vecB);
                 vec3.scale(midPoint, midPoint, 0.5);
 
-                // determine leaf colours
-                let lineRed = Math.floor(0x3F * genotype[org][0]) * 0x10000;
-                let lineGreen = 0x3F * 0x100;
-                let fillRed = Math.floor(0x7F * genotype[org][0]) * 0x10000;
-                let fillGreen = 0x7F * 0x100;
-
-                // specify colours according to genotype (varies between yellow/green)
-                context.strokeStyle = `#${(lineRed + lineGreen).toString(16)}`; // convert to hex
-                context.fillStyle = `#${(fillRed + fillGreen).toString(16)}`; // convert to hex
+                // determine leaf colours according to genotype
+                let geneValue = genotype[org][0];
+            
+                let redComponent = geneValue < 0.5 ? 0.5 : bound(0, 0.5, 1 - geneValue);
+                let greenComponent = geneValue > 0.5 ? 0.5 : bound(0, 0.5, geneValue);
+            
+                let lineRed = Math.floor(0x7F * redComponent);
+                let lineGreen = Math.floor(0x7F * greenComponent);
+                let fillRed = Math.floor(0xFF * redComponent);
+                let fillGreen = Math.floor(0xFF * greenComponent);
+            
+                // Convert to hexadecimal and pad with zero if necessary
+                let redComponentLineHex = lineRed.toString(16).padStart(2, '0');
+                let redComponentFillHex = fillRed.toString(16).padStart(2, '0');
+                let greenComponentLineHex = lineGreen.toString(16).padStart(2, '0');
+                let greenComponentFillHex = fillGreen.toString(16).padStart(2, '0');
+            
+                // Combine the components to form color codes
+                let lineColor = `#${redComponentLineHex}${greenComponentLineHex}00`;
+                let fillColor = `#${redComponentFillHex}${greenComponentFillHex}00`;
+            
+                // Set strokeStyle and fillStyle
+                context.strokeStyle = lineColor;
+                context.fillStyle = fillColor;
 
                 // draw leaf rectangle. 4 vertices, first one = last
                 context.beginPath();
