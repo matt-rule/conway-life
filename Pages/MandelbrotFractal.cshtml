@@ -1,0 +1,15 @@
+@page
+@model MandelbrotFractalModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+@section Scripts {
+    <script src="~/js/mandelbrot_fractal.bundle.js" type="text/javascript"></script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/mandelbrot_fractal.css" asp-append-version="true" />
+}
+
+<partial name="_ProjectMenuPartial" />
