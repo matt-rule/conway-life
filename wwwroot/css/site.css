@@ -39,6 +39,7 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;   /* Hide scrollbars */
+  background-color: #333;
 }
 
 body, div, main {
@@ -46,7 +47,6 @@ body, div, main {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  /* background-color: #333; */
 }
 
 canvas {

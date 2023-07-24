@@ -2,6 +2,7 @@ const path = require('path');
 
 module.exports = {
     entry: {
+        index: ['./wwwroot/ts/project_menu.ts'],
         cellular_automata: ['./wwwroot/ts/cellular_automata/main.ts', './wwwroot/ts/project_menu.ts'],
         tree_genotypes: ['./wwwroot/ts/tree_genotypes/main.ts', './wwwroot/ts/project_menu.ts'],
         mandelbrot_fractal: ['./wwwroot/ts/mandelbrot_fractal/main.ts', './wwwroot/ts/project_menu.ts']
