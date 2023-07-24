@@ -78,10 +78,15 @@ var number_selected: number = 0;
 var branches: Branch3D[][] = [];
 var fitness: number[] = [];
 var errorVisible: boolean = false;
-var initialised: boolean = false;
 
 initialise_canvases();
 add_event_listeners();
+
+clear();
+random_genotype_initialisation();
+create_trees();
+show_phenotype();
+update_selection_display();
 
 function initialise_canvases(): void
 {
@@ -162,7 +167,6 @@ function initialise_btn_click(): void
 {
 	if (!errorVisible)
 	{
-		initialised = true;
 		clear();
 		random_genotype_initialisation();
 		create_trees();
@@ -173,90 +177,68 @@ function initialise_btn_click(): void
 
 function replicate_btn_click(): void
 {
-	if (initialised)
-	{
-		if (!errorVisible)
-		{
-			// doesn't process if the wrong number of organisms are selected
-			if (number_selected == MAX_PARENTS)
-			{	
-				replicate_new_generation();
-				clear();
-				mutate_new_generation();
-				generation++;
-				create_trees();
-				show_phenotype();
-				update_selection_display();
-			}
-			else
-			{
-				// errorVisible = true;
-				// error_dialog.visible = true;
-				// clos_btn.visible = true;
-				// error_text.visible = true;
-				// error_text.text_box.text = "FIRST SELECT 4 ORGANISMS FOR REPLICATION.";
-			}
-		}
-	}
-	else
-	{		
-		// errorVisible = true;
-		// error_dialog.visible = true;
-		// clos_btn.visible = true;
-		// error_text.visible = true;
-		// error_text.text_box.text = "PLEASE BEGIN BY INITIALISING THE GENOTYPE.";
-	}
+    if (!errorVisible)
+    {
+        // doesn't process if the wrong number of organisms are selected
+        if (number_selected == MAX_PARENTS)
+        {	
+            replicate_new_generation();
+            clear();
+            mutate_new_generation();
+            generation++;
+            create_trees();
+            show_phenotype();
+            update_selection_display();
+        }
+        else
+        {
+            // errorVisible = true;
+            // error_dialog.visible = true;
+            // clos_btn.visible = true;
+            // error_text.visible = true;
+            // error_text.text_box.text = "FIRST SELECT 4 ORGANISMS FOR REPLICATION.";
+        }
+    }
 }
 
 function elitism_select_reproduce(): void
 {
-	if (initialised)
-	{
-		if (!errorVisible)
-		{
-			deselect_all();
-			calculate_fitnesses();
-			var bestFitness: number;
-			var selectedOne: boolean;
-			
-			for (var i: number = 0; i < MAX_PARENTS; ++i)
-			{
-				selectedOne = false;
-				bestFitness = 0;
-				
-				for (var org: number = 0; org < MAX_ORGANISMS; org++)
-				{
-					if (!list_selected[org] && !selectedOne)
-					{
-						bestFitness = org;
-						selectedOne = true;
-					}
-					if (fitness[org] >= fitness[bestFitness] && !list_selected[org])		// find the best that hasn't been listed
-					{
-						bestFitness = org;
-						selectedOne = true;
-					}
-				}
-				list_selected[bestFitness] = true;
-			}
-			
-			replicate_new_generation();
-			clear();
-			mutate_new_generation();
-			generation++;
-			create_trees();
-			show_phenotype();
-			update_selection_display();
-		}
-	}
-	else
-	{		
-		// errorVisible = true;
-		// error_dialog.visible = true;
-		// clos_btn.visible = true;
-		// error_text.visible = true;
-		// error_text.text_box.text = "PLEASE BEGIN BY INITIALISING THE GENOTYPE.";
-	}
+    if (!errorVisible)
+    {
+        deselect_all();
+        calculate_fitnesses();
+        var bestFitness: number;
+        var selectedOne: boolean;
+        
+        for (var i: number = 0; i < MAX_PARENTS; ++i)
+        {
+            selectedOne = false;
+            bestFitness = 0;
+            
+            for (var org: number = 0; org < MAX_ORGANISMS; org++)
+            {
+                if (!list_selected[org] && !selectedOne)
+                {
+                    bestFitness = org;
+                    selectedOne = true;
+                }
+                if (fitness[org] >= fitness[bestFitness] && !list_selected[org])		// find the best that hasn't been listed
+                {
+                    bestFitness = org;
+                    selectedOne = true;
+                }
+            }
+            list_selected[bestFitness] = true;
+        }
+        
+        replicate_new_generation();
+        clear();
+        mutate_new_generation();
+        generation++;
+        create_trees();
+        show_phenotype();
+        update_selection_display();
+    }
 }
 
 function close_btn_click(): void
