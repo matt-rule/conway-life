@@ -27,7 +27,7 @@ export class Renderer {
     public MandelbrotZoomFactor: number = 2.5;
     private ViewMatrix: mat4 = mat4.create();
     private ScreenCentre : vec2 = vec2.fromValues(-0.5, -0.5);
-    private MandelbrotPosition : vec3 = vec3.fromValues(-0.5, 0.0, 0.0);
+    private MandelbrotPosition : vec3 = vec3.fromValues(0.0, 0.0, 0.0);
     
     // Define a constructor
     constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, borderWidth: number, showGrid: boolean)
@@ -49,21 +49,22 @@ export class Renderer {
 
     private updateViewMatrix(): void
     {
-        let ratio: number = this.canvas.width / this.canvas.height;
+        let screenWidthHeightRatio: number = this.canvas.width / this.canvas.height;
         let identity: mat4 = mat4.create();
 
-        let translated: mat4 = mat4.create();
-        mat4.translate(translated, identity, vec3.fromValues(this.ScreenCentre[0], this.ScreenCentre[1], 0.0));
+        let translated2: mat4 = mat4.create();
+        mat4.translate(translated2, identity, vec3.fromValues(this.MandelbrotPosition[0], this.MandelbrotPosition[1], 0.0));
 
         let scaled1: mat4 = mat4.create();
-        mat4.scale(scaled1, translated, vec3.fromValues(ratio, 1.0, 1.0));
+        mat4.scale(scaled1, translated2, vec3.fromValues(screenWidthHeightRatio, 1.0, 1.0));
 
         let scaled2: mat4 = mat4.create();
         mat4.scale(scaled2, scaled1, vec3.fromValues(this.MandelbrotZoomFactor, this.MandelbrotZoomFactor, 1.0));
 
-        let translated2: mat4 = mat4.create();
-        mat4.translate(translated2, scaled2, vec3.fromValues(this.MandelbrotPosition[0], this.MandelbrotPosition[1], 0.0));
-        this.ViewMatrix = translated2;
+        let translated: mat4 = mat4.create();
+        mat4.translate(translated, scaled2, vec3.fromValues(this.ScreenCentre[0], this.ScreenCentre[1], 0.0));
+
+        this.ViewMatrix = translated;
     }
 
     public drawSquare() {
@@ -99,9 +100,9 @@ export class Renderer {
         }
 
         this.squareVertices = [
-            0, 0,
-            1, 0,
-            0, 1,
+            -1, -1,
+            1, -1,
+            -1, 1,
             1, 1
         ];
 
@@ -135,12 +136,7 @@ export class Renderer {
         attribute vec4 position;
         
         void main(void) {
-            mat4 newMatrix = mat4(
-                2.0, 0.0, 0.0, 0.0,
-                0.0, 2.0, 0.0, 0.0,
-                0.0, 0.0, -1.0, 0.0,
-                -1.0, -1.0, 0.0, 1.0);
-            gl_Position = newMatrix * position;
+            gl_Position = position;
         }
         `;
         

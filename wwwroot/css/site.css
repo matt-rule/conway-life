@@ -163,6 +163,10 @@ button {
   background-color: transparent;
 }
 
+.semitransparent-bg-only {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
 .thick-white-border-only {
   border: 2px solid white;
 }
