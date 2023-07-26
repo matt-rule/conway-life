@@ -24,11 +24,11 @@ export class Renderer {
     public borderWidth: number;
     public showGrid: boolean;
 
-    public MandelbrotZoomFactor: number = 2.5;
+    public MandelbrotZoomFactor: number = 0.4;
     private ViewMatrix: mat3 = mat3.create();
     private ProjectionMatrix: mat3 = mat3.create();
     private ScreenCentre : vec2 = vec2.fromValues(-0.5, -0.5);
-    private MandelbrotPosition : vec3 = vec3.fromValues(0.0, 0.0, 0.0);
+    private MandelbrotViewPositionWorld : vec2 = vec2.fromValues(0.0, 0.0);
     
     // Define a constructor
     constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, borderWidth: number, showGrid: boolean)
@@ -53,8 +53,8 @@ export class Renderer {
         let screenWidthHeightRatio: number = this.canvas.width / this.canvas.height;
         this.ViewMatrix = mat3.create();
 
-        mat3.translate(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(this.MandelbrotPosition[0], this.MandelbrotPosition[1]));
-        mat3.scale(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(this.MandelbrotZoomFactor, this.MandelbrotZoomFactor));
+        mat3.translate(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(this.MandelbrotViewPositionWorld[0], this.MandelbrotViewPositionWorld[1]));
+        mat3.scale(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(1/this.MandelbrotZoomFactor, 1/this.MandelbrotZoomFactor));
         
         this.ProjectionMatrix = mat3.create();
         mat3.scale(this.ProjectionMatrix, this.ProjectionMatrix, vec2.fromValues(screenWidthHeightRatio, 1.0));
@@ -309,18 +309,17 @@ export class Renderer {
 
     public processZoom(clientX : number, clientY : number, direction : MouseWheelMovement): void {
         if (direction === MouseWheelMovement.Up) {
-            let clickPos: vec2 = vec2.fromValues(
-                clientX / this.canvas.width,
-                1.0 - clientY / this.canvas.height
-            );
-            console.log('clickpos: ', clickPos);
-            this.updateMatrices();
-            vec3.transformMat3(this.MandelbrotPosition, vec3.fromValues(clickPos[0], clickPos[1], 0.0), this.ViewMatrix);
-            this.MandelbrotZoomFactor *= 0.5;
+            this.MandelbrotZoomFactor *= 1.25;
         }
         else if (direction === MouseWheelMovement.Down) {
-            this.MandelbrotZoomFactor *= 2.0;
+            this.MandelbrotZoomFactor *= 0.8;
         }
+        let mousePosScreenNormalised: vec2 = vec2.fromValues(
+            clientX / this.canvas.width,
+            1.0 - clientY / this.canvas.height
+        );
+        console.log('mousePosScreenNormalised: ', mousePosScreenNormalised);
+        vec2.transformMat3(this.MandelbrotViewPositionWorld, mousePosScreenNormalised, this.ViewMatrix);
         this.updateMatrices();
     }
 }
