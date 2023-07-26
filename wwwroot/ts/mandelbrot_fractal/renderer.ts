@@ -25,7 +25,7 @@ export class Renderer {
     public showGrid: boolean;
 
     public MandelbrotZoomFactor: number = 2.5;
-    private ViewMatrix: mat4 = mat4.create();
+    private ViewMatrix: mat3 = mat3.create();
     private ScreenCentre : vec2 = vec2.fromValues(-0.5, -0.5);
     private MandelbrotPosition : vec3 = vec3.fromValues(0.0, 0.0, 0.0);
     
@@ -50,19 +50,19 @@ export class Renderer {
     private updateViewMatrix(): void
     {
         let screenWidthHeightRatio: number = this.canvas.width / this.canvas.height;
-        let identity: mat4 = mat4.create();
+        let identity: mat3 = mat3.create();
 
-        let translated2: mat4 = mat4.create();
-        mat4.translate(translated2, identity, vec3.fromValues(this.MandelbrotPosition[0], this.MandelbrotPosition[1], 0.0));
+        let translated2: mat3 = mat3.create();
+        mat3.translate(translated2, identity, vec2.fromValues(this.MandelbrotPosition[0], this.MandelbrotPosition[1]));
 
-        let scaled1: mat4 = mat4.create();
-        mat4.scale(scaled1, translated2, vec3.fromValues(screenWidthHeightRatio, 1.0, 1.0));
+        let scaled1: mat3 = mat3.create();
+        mat3.scale(scaled1, translated2, vec2.fromValues(screenWidthHeightRatio, 1.0));
 
-        let scaled2: mat4 = mat4.create();
-        mat4.scale(scaled2, scaled1, vec3.fromValues(this.MandelbrotZoomFactor, this.MandelbrotZoomFactor, 1.0));
+        let scaled2: mat3 = mat3.create();
+        mat3.scale(scaled2, scaled1, vec2.fromValues(this.MandelbrotZoomFactor, this.MandelbrotZoomFactor));
 
-        let translated: mat4 = mat4.create();
-        mat4.translate(translated, scaled2, vec3.fromValues(this.ScreenCentre[0], this.ScreenCentre[1], 0.0));
+        let translated: mat3 = mat3.create();
+        mat3.translate(translated, scaled2, vec2.fromValues(this.ScreenCentre[0], this.ScreenCentre[1]));
 
         this.ViewMatrix = translated;
     }
@@ -80,7 +80,7 @@ export class Renderer {
 
         this.updateViewMatrix();
         this.gl.uniform2f(this.UniformWindowCoordsLocation, this.canvas.width, this.canvas.height);
-        this.gl.uniformMatrix4fv(this.MatrixShaderLocation, false, this.ViewMatrix);
+        this.gl.uniformMatrix3fv(this.MatrixShaderLocation, false, this.ViewMatrix);
         this.gl.uniform1f(this.UniformIterationsLocation, ITERATION_COUNT);
 
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -152,7 +152,7 @@ export class Renderer {
             const int MAX_ITERATIONS = 500;
 
             uniform vec2 window_coords;
-            uniform mat4 mandelbrot_view_matrix;
+            uniform mat3 mandelbrot_view_matrix;
             uniform float mandelbrot_iterations;
             
             vec4 colour_from_iteration(float iteration)
@@ -212,13 +212,12 @@ export class Renderer {
             
             void main(void)
             {
-                vec4 normalised_window_coords = vec4(
+                vec3 normalised_window_coords = vec3(
                     gl_FragCoord.x / window_coords.x,
                     gl_FragCoord.y / window_coords.y,
-                    0.0,
                     1.0);
             
-                vec4 interp_mandelbrot_pos = mandelbrot_view_matrix * normalised_window_coords;
+                vec3 interp_mandelbrot_pos = mandelbrot_view_matrix * normalised_window_coords;
             
                 float iteration = 0.0;
                 float x = 0.0;
@@ -319,7 +318,7 @@ export class Renderer {
             );
             console.log('clickpos: ', clickPos);
             this.updateViewMatrix();
-            vec3.transformMat4(this.MandelbrotPosition, vec3.fromValues(clickPos[0], clickPos[1], 0.0), this.ViewMatrix);
+            vec3.transformMat3(this.MandelbrotPosition, vec3.fromValues(clickPos[0], clickPos[1], 0.0), this.ViewMatrix);
             this.MandelbrotZoomFactor *= 0.5;
         }
         else if (direction === MouseWheelMovement.Down) {
