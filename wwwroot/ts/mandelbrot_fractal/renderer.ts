@@ -26,6 +26,7 @@ export class Renderer {
 
     public MandelbrotZoomFactor: number = 2.5;
     private ViewMatrix: mat3 = mat3.create();
+    private ProjectionMatrix: mat3 = mat3.create();
     private ScreenCentre : vec2 = vec2.fromValues(-0.5, -0.5);
     private MandelbrotPosition : vec3 = vec3.fromValues(0.0, 0.0, 0.0);
     
@@ -47,24 +48,17 @@ export class Renderer {
         this.showGrid = showGrid;
     }
 
-    private updateViewMatrix(): void
+    private updateMatrices(): void
     {
         let screenWidthHeightRatio: number = this.canvas.width / this.canvas.height;
-        let identity: mat3 = mat3.create();
+        this.ViewMatrix = mat3.create();
 
-        let translated2: mat3 = mat3.create();
-        mat3.translate(translated2, identity, vec2.fromValues(this.MandelbrotPosition[0], this.MandelbrotPosition[1]));
-
-        let scaled1: mat3 = mat3.create();
-        mat3.scale(scaled1, translated2, vec2.fromValues(screenWidthHeightRatio, 1.0));
-
-        let scaled2: mat3 = mat3.create();
-        mat3.scale(scaled2, scaled1, vec2.fromValues(this.MandelbrotZoomFactor, this.MandelbrotZoomFactor));
-
-        let translated: mat3 = mat3.create();
-        mat3.translate(translated, scaled2, vec2.fromValues(this.ScreenCentre[0], this.ScreenCentre[1]));
-
-        this.ViewMatrix = translated;
+        mat3.translate(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(this.MandelbrotPosition[0], this.MandelbrotPosition[1]));
+        mat3.scale(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(this.MandelbrotZoomFactor, this.MandelbrotZoomFactor));
+        
+        this.ProjectionMatrix = mat3.create();
+        mat3.scale(this.ProjectionMatrix, this.ProjectionMatrix, vec2.fromValues(screenWidthHeightRatio, 1.0));
+        mat3.translate(this.ProjectionMatrix, this.ProjectionMatrix, vec2.fromValues(this.ScreenCentre[0], this.ScreenCentre[1]));
     }
 
     public drawSquare() {
@@ -78,9 +72,12 @@ export class Renderer {
         this.gl.enableVertexAttribArray(positionLocation);
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        this.updateViewMatrix();
+        this.updateMatrices();
         this.gl.uniform2f(this.UniformWindowCoordsLocation, this.canvas.width, this.canvas.height);
-        this.gl.uniformMatrix3fv(this.MatrixShaderLocation, false, this.ViewMatrix);
+
+        let mvp: mat3 = mat3.create();
+        mat3.multiply(mvp, this.ViewMatrix, this.ProjectionMatrix);
+        this.gl.uniformMatrix3fv(this.MatrixShaderLocation, false, mvp);
         this.gl.uniform1f(this.UniformIterationsLocation, ITERATION_COUNT);
 
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -317,13 +314,13 @@ export class Renderer {
                 1.0 - clientY / this.canvas.height
             );
             console.log('clickpos: ', clickPos);
-            this.updateViewMatrix();
+            this.updateMatrices();
             vec3.transformMat3(this.MandelbrotPosition, vec3.fromValues(clickPos[0], clickPos[1], 0.0), this.ViewMatrix);
             this.MandelbrotZoomFactor *= 0.5;
         }
         else if (direction === MouseWheelMovement.Down) {
             this.MandelbrotZoomFactor *= 2.0;
         }
-        this.updateViewMatrix();
+        this.updateMatrices();
     }
 }
