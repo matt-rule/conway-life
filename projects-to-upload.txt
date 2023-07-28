@@ -1,3 +1,4 @@
+spinning 3D globe (no spaceship)
 3D space game (obj file loading)
 2D space game (entity system and quadtrees)
 3D tic tac toe (playable)
@@ -10,5 +11,6 @@ a d3.js project
 map tiles - https://github.com/matt-rule/fsharp-perlin-noise-maps
 euler problems - https://github.com/matt-rule/euler-fsharp
 hot rocks cold feet
+3D tetris on a torus
 
 todo: add an info icon for tutorials, explanations and stuff! Using this, Compare tree project with L systems and explain why it's different

@@ -50,10 +50,7 @@ else
 
         document.addEventListener('wheel', function(event) {
             let direction : MouseWheelMovement = event.deltaY < 0 ? MouseWheelMovement.Up : MouseWheelMovement.Down;
-            console.log(direction);
-
             renderer.processZoom(event.clientX, event.clientY, direction);
-
             renderer.draw(canvas);
         });
 

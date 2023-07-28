@@ -75,9 +75,10 @@ export class Renderer {
         this.updateMatrices();
         this.gl.uniform2f(this.UniformWindowCoordsLocation, this.canvas.width, this.canvas.height);
 
-        let mvp: mat3 = mat3.create();
-        mat3.multiply(mvp, this.ViewMatrix, this.ProjectionMatrix);
-        this.gl.uniformMatrix3fv(this.MatrixShaderLocation, false, mvp);
+        // A non-standard matrix used for positioning Mandelbrot within the drawn rect.
+        let frag_shader_matrix: mat3 = mat3.create();
+        mat3.multiply(frag_shader_matrix, this.ViewMatrix, this.ProjectionMatrix);
+        this.gl.uniformMatrix3fv(this.MatrixShaderLocation, false, frag_shader_matrix);
         this.gl.uniform1f(this.UniformIterationsLocation, ITERATION_COUNT);
 
         this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -308,18 +309,33 @@ export class Renderer {
     }
 
     public processZoom(clientX : number, clientY : number, direction : MouseWheelMovement): void {
+        let mousePosScreenNormalised: vec2 = vec2.fromValues(
+            clientX / this.canvas.width,
+            1.0 - clientY / this.canvas.height
+        );
+
+        let mvp: mat3 = mat3.create();
+        mat3.multiply(mvp, this.ViewMatrix, this.ProjectionMatrix);
+
+        let mousePosWorldCoords: vec2 = vec2.create();
+        vec2.transformMat3(mousePosWorldCoords, mousePosScreenNormalised, mvp);
+
+        let oldZoomFactor = this.MandelbrotZoomFactor;
         if (direction === MouseWheelMovement.Up) {
             this.MandelbrotZoomFactor *= 1.25;
         }
         else if (direction === MouseWheelMovement.Down) {
             this.MandelbrotZoomFactor *= 0.8;
         }
-        let mousePosScreenNormalised: vec2 = vec2.fromValues(
-            clientX / this.canvas.width,
-            1.0 - clientY / this.canvas.height
-        );
-        console.log('mousePosScreenNormalised: ', mousePosScreenNormalised);
-        vec2.transformMat3(this.MandelbrotViewPositionWorld, mousePosScreenNormalised, this.ViewMatrix);
-        this.updateMatrices();
+
+        let zoomFactorChange = this.MandelbrotZoomFactor / oldZoomFactor;
+
+        let viewRelativeToCursor: vec2 = vec2.create();
+        vec2.subtract(viewRelativeToCursor, this.MandelbrotViewPositionWorld, mousePosWorldCoords);
+
+        // If zooming in and zoom factor is bigger, view is going to move TOWARDS the mouse cursor
+        let viewRelativeToCursorScaled: vec2 = vec2.create();
+        vec2.scale(viewRelativeToCursorScaled, viewRelativeToCursor, 1/zoomFactorChange);
+        vec2.add(this.MandelbrotViewPositionWorld, mousePosWorldCoords, viewRelativeToCursorScaled);
     }
 }
