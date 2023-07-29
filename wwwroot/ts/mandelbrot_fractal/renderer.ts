@@ -28,7 +28,10 @@ export class Renderer {
     private ViewMatrix: mat3 = mat3.create();
     private ProjectionMatrix: mat3 = mat3.create();
     private ScreenCentre : vec2 = vec2.fromValues(-0.5, -0.5);
-    private MandelbrotViewPositionWorld : vec2 = vec2.fromValues(0.0, 0.0);
+    private DynamicMandelbrotViewPositionWorld : vec2 = vec2.fromValues(0.0, 0.0);
+    private CommitMandelbrotViewPositionWorld : vec2 = vec2.fromValues(0.0, 0.0);
+    // store screen position not world, to avoid a translated view disrupting mouse move calculations
+    private startDragMousePosScreen: vec2 | null = null;
     
     // Define a constructor
     constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, borderWidth: number, showGrid: boolean)
@@ -53,7 +56,7 @@ export class Renderer {
         let screenWidthHeightRatio: number = this.canvas.width / this.canvas.height;
         this.ViewMatrix = mat3.create();
 
-        mat3.translate(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(this.MandelbrotViewPositionWorld[0], this.MandelbrotViewPositionWorld[1]));
+        mat3.translate(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(this.DynamicMandelbrotViewPositionWorld[0], this.DynamicMandelbrotViewPositionWorld[1]));
         mat3.scale(this.ViewMatrix, this.ViewMatrix, vec2.fromValues(1/this.MandelbrotZoomFactor, 1/this.MandelbrotZoomFactor));
         
         this.ProjectionMatrix = mat3.create();
@@ -309,6 +312,9 @@ export class Renderer {
     }
 
     public processZoom(clientX : number, clientY : number, direction : MouseWheelMovement): void {
+        if (this.startDragMousePosScreen)
+            return;
+
         let mousePosScreenNormalised: vec2 = vec2.fromValues(
             clientX / this.canvas.width,
             1.0 - clientY / this.canvas.height
@@ -331,11 +337,52 @@ export class Renderer {
         let zoomFactorChange = this.MandelbrotZoomFactor / oldZoomFactor;
 
         let viewRelativeToCursor: vec2 = vec2.create();
-        vec2.subtract(viewRelativeToCursor, this.MandelbrotViewPositionWorld, mousePosWorldCoords);
+        vec2.subtract(viewRelativeToCursor, this.DynamicMandelbrotViewPositionWorld, mousePosWorldCoords);
 
         // If zooming in and zoom factor is bigger, view is going to move TOWARDS the mouse cursor
         let viewRelativeToCursorScaled: vec2 = vec2.create();
         vec2.scale(viewRelativeToCursorScaled, viewRelativeToCursor, 1/zoomFactorChange);
-        vec2.add(this.MandelbrotViewPositionWorld, mousePosWorldCoords, viewRelativeToCursorScaled);
+        vec2.add(this.DynamicMandelbrotViewPositionWorld, mousePosWorldCoords, viewRelativeToCursorScaled);
+        vec2.copy(this.CommitMandelbrotViewPositionWorld, this.DynamicMandelbrotViewPositionWorld);
+    }
+
+    public processMouseDown(clientX : number, clientY : number): void {
+        if ( this.startDragMousePosScreen )
+            return;
+
+        this.startDragMousePosScreen = vec2.fromValues(
+            clientX, 1.0 - clientY
+        );
+    }
+
+    public processMouseMove(clientX : number, clientY : number): void {
+        if ( !this.startDragMousePosScreen )
+            return;
+
+        let dragMousePosScreen = vec2.fromValues(
+            clientX, 1.0 - clientY
+        );
+        let dragVectorScreen: vec2 = vec2.create();
+        vec2.subtract(dragVectorScreen, dragMousePosScreen, this.startDragMousePosScreen);
+
+        let dragVectorScaledDown: vec2 = vec2.fromValues(
+            dragVectorScreen[0] / this.canvas.height,   // both height; intentional
+            dragVectorScreen[1] / this.canvas.height
+        );
+
+        let dragVectorScaledUp: vec2 = vec2.create();
+        vec2.scale(dragVectorScaledUp, dragVectorScaledDown, 1/this.MandelbrotZoomFactor);
+
+        // TODO: work out why this is subtract not add.
+        vec2.subtract(this.DynamicMandelbrotViewPositionWorld, this.CommitMandelbrotViewPositionWorld, dragVectorScaledUp);
+    }
+
+    public processMouseUp(clientX : number, clientY : number): void {
+        if ( !this.startDragMousePosScreen )
+            return;
+            
+        this.processMouseMove(clientX, clientY);
+        vec2.copy(this.CommitMandelbrotViewPositionWorld, this.DynamicMandelbrotViewPositionWorld);
+        this.startDragMousePosScreen = null;
     }
 }

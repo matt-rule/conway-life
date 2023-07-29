@@ -28,25 +28,35 @@ else
     {
         let renderer = new Renderer(canvas, gl, borderWidth, true);
 
-        // canvas.addEventListener('mousedown', function(event) {
-        //     if (!canvas)
-        //         return;
+        canvas.addEventListener('mousedown', function(event) {
+            if (!canvas)
+                return;
 
-        //     if (event.button === 0)         // Left mouse button
-        //     {
-        //         renderer.processMouseClick(event);
-        //     }
-        //     else if (event.button === 1)    // Middle mouse button
-        //     {
-                
-        //     }
-        //     else if (event.button === 2)    // Right mouse button
-        //     {
+            if (event.button === 0 || event.button === 1)         // Left or middle mouse button
+            {
+                renderer.processMouseDown(event.clientX, event.clientY);
+                renderer.draw(canvas);
+            }
+        });
 
-        //     }
+        canvas.addEventListener('mouseup', function(event) {
+            if (!canvas)
+                return;
 
-        //     renderer.draw(canvas, dynamicView);
-        // });
+            if (event.button === 0 || event.button === 1)         // Left or middle mouse button
+            {
+                renderer.processMouseUp(event.clientX, event.clientY);
+                renderer.draw(canvas);
+            }
+        });
+
+        canvas.addEventListener('mousemove', function(event) {
+            if (!canvas)
+                return;
+
+            renderer.processMouseMove(event.clientX, event.clientY);
+            renderer.draw(canvas);
+        });
 
         document.addEventListener('wheel', function(event) {
             let direction : MouseWheelMovement = event.deltaY < 0 ? MouseWheelMovement.Up : MouseWheelMovement.Down;
