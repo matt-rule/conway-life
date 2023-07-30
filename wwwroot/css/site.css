@@ -83,7 +83,6 @@ h4, p {
   min-width: 20px;
   min-height: 10px;
   max-width: 300px;
-  max-height: 120px;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -178,6 +177,10 @@ button {
   background-color: rgba(0, 0, 0, 0.75);
 }
 
+.semitransparent-bg-warning {
+  background-color: rgba(128, 0, 0, 0.75);
+}
+
 .thick-white-border-only {
   border: 2px solid white;
 }
@@ -235,6 +238,12 @@ button {
 
 .text-align-centre {
   text-align: center;
+}
+
+/*To centre text inside a flex item, this needs to be set on the flex item*/
+.flex-text-align-centre {
+  justify-content: center;
+  align-items: center;
 }
 
 input[type="checkbox"] {

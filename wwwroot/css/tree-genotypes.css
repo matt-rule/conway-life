@@ -2,34 +2,6 @@ body {
     background-color: #333;
 }
 
-/* .flex-container {
-    display: flex;
-    width: 100%;
-    border: 1px solid #000;
-}
-
-.flex-item {
-    display: flex;
-    flex-direction: row;
-    border: 1px solid #000;
-    padding: 10px;
-    box-sizing: border-box;
-}
-
-.flex-container-inner {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    flex-wrap: wrap;
-}
-
-.flex-item-inner {
-    border: 1px solid #000;
-    padding: 10px;
-    box-sizing: border-box;
-    text-align: center;
-} */
-
 .vertical-spacer {
     height: 24px;
 }
@@ -43,7 +15,6 @@ body {
 
 .flex-item {
     display: flex;
-    border: 1px solid #000;
 }
 
 .flex-item-20 {
@@ -54,39 +25,50 @@ body {
     flex: 3;
 }
 
-.flex-container-inner-left {
-    border: 1px solid #000;
+.flex-container-column {
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
-    width: 100%;
 }
 
-.flex-container-inner-right {
-    border: 1px solid #000;
+.flex-container-row {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    width: 100%;
+}
+
+.flex-container-inner-left {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+.flex-container-inner-right {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
 }
 
 .flex-item-inner-simple {
     flex: 1;
-    border: 1px solid #000;
     box-sizing: border-box;
 }
 
 .flex-item-inner-25 {
-    flex: 1 1 25%;
-    border: 1px solid #000;
+    flex: 1;
     box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin: 0;
+    padding: 2px
 }
 
 .organism-panel {
     background-color: #99ccff;
+}
+
+.panel-margin {
+    margin: 2%;
 }
 
 .canvas-fill-parent {
@@ -94,7 +76,6 @@ body {
     height: 100%;
 }
 
-.light-text {
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    color: #ddd;
+.flex-basis {
+    flex-basis: 20%;
 }

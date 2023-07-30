@@ -64,6 +64,74 @@ if (infoMenuButton) {
     infoMenuButton.addEventListener('mousedown', infoMenuMouseDown);
 }
 
+var tooltip = document.getElementById('tooltip');
+
+function addTooltipToElements(elements: HTMLElement[], tooltipText: string) {
+    if (!tooltip)
+        return;
+
+    elements.forEach(element => {
+        if (element)
+        {
+            element.addEventListener('mousemove', (event) => {
+                if (!tooltip)
+                    return;
+        
+                tooltip.style.display = 'block';
+                tooltip.innerHTML = tooltipText;
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY + 10) + 'px';
+            });
+    
+            element.addEventListener('mouseleave', () => {
+                if (!tooltip)
+                    return;
+        
+                tooltip.style.display = 'none';
+            });
+        }
+    });
+}
+
+const replicate_button = document.getElementById('replicate_button');
+if (replicate_button)
+    addTooltipToElements([replicate_button], 'Four trees must be selected');
+
+for (var org: number = 0; org < MAX_ORGANISMS; org++)
+{
+    var str_select_ID: string = "canvas_" + (org);
+    var elem: HTMLCanvasElement = document.getElementById(str_select_ID) as HTMLCanvasElement;
+    
+    if (!elem)
+        continue;
+
+    elem.addEventListener('mousemove', (event) => {
+        if (!tooltip || !event.target)
+            return;
+
+        let canvas_element = event.target as HTMLCanvasElement;
+        if (!canvas_element)
+            return;
+
+        let tooltip_text = canvas_element.dataset.tooltipText as string;
+        if (!tooltip_text)
+            return;
+
+        tooltip.style.display = 'block';
+        tooltip.innerHTML = tooltip_text;
+        tooltip.style.left = (event.pageX + 10) + 'px';
+        tooltip.style.top = (event.pageY + 10) + 'px';
+    });
+
+    elem.addEventListener('mouseleave', () => {
+        if (!tooltip)
+            return;
+
+        tooltip.style.display = 'none';
+    });
+    // add event listener that sets the tooltip text to some custom property of the tree
+}
+
 function degreesToRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
 }
@@ -90,7 +158,6 @@ var list_selected: boolean[] = [];
 var number_selected: number = 0;
 var branches: Branch3D[][] = [];
 var fitness: number[] = [];
-var errorVisible: boolean = false;
 
 initialise_canvases();
 add_event_listeners();
@@ -129,121 +196,60 @@ function add_event_listeners(): void
             elem.addEventListener('mousedown', organism_click);
 	}
 	
-    var init_btn = document.getElementById("initialise_button");
+    var reset_btn = document.getElementById("reset_button");
     var repl_btn = document.getElementById("replicate_button");
-    var elitism_btn = document.getElementById("fitness_based_selection_button");
-    // var clos_btn = document.getElementById("close_button");
 
-    if (init_btn)
-        init_btn.addEventListener('mouseup', initialise_btn_click);
+    if (reset_btn)
+        reset_btn.addEventListener('mouseup', reset_btn_click);
     if (repl_btn)
         repl_btn.addEventListener('mouseup', replicate_btn_click);
-    if (elitism_btn)
-        elitism_btn.addEventListener('mouseup', elitism_select_reproduce);
 }
 
 function organism_click(event: any): void
-{
-	if (!errorVisible)
-	{		
-		for (var org: number = 0; org < MAX_ORGANISMS; org++)
-		{
-			var str_button_ID: string = "canvas_" + (org);
-
-            let elem: HTMLCanvasElement = event.target as HTMLCanvasElement;
-            if (!elem)
-                continue;
-
-			if (str_button_ID == elem.id)
-			{
-				if (list_selected[org])
-				{
-					list_selected[org] = false;
-				}
-				else
-				{
-					if (number_selected < 4)
-					{
-						list_selected[org] = true;
-					}
-				}
-				
-				update_number_selected();
-                show_phenotype();
-				update_selection_display();
-			}
-		}
-	}
-}
-
-function initialise_btn_click(): void
-{
-	if (!errorVisible)
-	{
-		clear();
-		random_genotype_initialisation();
-		create_trees();
-		show_phenotype();
-		update_selection_display();
-	}
-}
-
-function replicate_btn_click(): void
-{
-    if (!errorVisible)
+{	
+    for (var org: number = 0; org < MAX_ORGANISMS; org++)
     {
-        // doesn't process if the wrong number of organisms are selected
-        if (number_selected == MAX_PARENTS)
-        {	
-            replicate_new_generation();
-            clear();
-            mutate_new_generation();
-            generation++;
-            create_trees();
+        var str_button_ID: string = "canvas_" + (org);
+
+        let elem: HTMLCanvasElement = event.target as HTMLCanvasElement;
+        if (!elem)
+            continue;
+
+        if (str_button_ID == elem.id)
+        {
+            if (list_selected[org])
+            {
+                list_selected[org] = false;
+            }
+            else
+            {
+                if (number_selected < 4)
+                {
+                    list_selected[org] = true;
+                }
+            }
+            
+            update_number_selected();
             show_phenotype();
             update_selection_display();
-        }
-        else
-        {
-            // errorVisible = true;
-            // error_dialog.visible = true;
-            // clos_btn.visible = true;
-            // error_text.visible = true;
-            // error_text.text_box.text = "FIRST SELECT 4 ORGANISMS FOR REPLICATION.";
         }
     }
 }
 
-function elitism_select_reproduce(): void
+function reset_btn_click(): void
 {
-    if (!errorVisible)
-    {
-        deselect_all();
-        calculate_fitnesses();
-        var bestFitness: number;
-        var selectedOne: boolean;
-        
-        for (var i: number = 0; i < MAX_PARENTS; ++i)
-        {
-            selectedOne = false;
-            bestFitness = 0;
-            
-            for (var org: number = 0; org < MAX_ORGANISMS; org++)
-            {
-                if (!list_selected[org] && !selectedOne)
-                {
-                    bestFitness = org;
-                    selectedOne = true;
-                }
-                if (fitness[org] >= fitness[bestFitness] && !list_selected[org])		// find the best that hasn't been listed
-                {
-                    bestFitness = org;
-                    selectedOne = true;
-                }
-            }
-            list_selected[bestFitness] = true;
-        }
-        
+    clear();
+    random_genotype_initialisation();
+    create_trees();
+    show_phenotype();
+    update_selection_display();
+}
+
+function replicate_btn_click(): void
+{
+    // doesn't process if the wrong number of organisms are selected
+    if (number_selected == MAX_PARENTS)
+    {	
         replicate_new_generation();
         clear();
         mutate_new_generation();
@@ -252,14 +258,6 @@ function elitism_select_reproduce(): void
         show_phenotype();
         update_selection_display();
     }
-}
-
-function close_btn_click(): void
-{
-    // errorVisible = false;
-	// error_dialog.visible = false;
-	// clos_btn.visible = false;
-	// error_text.visible = false;
 }
 
 // deselect all organisms
@@ -299,8 +297,7 @@ function update_selection_display():void
         return;
 
     info_box.innerHTML = "";
-    info_box.innerHTML += "GENERATION " + generation + "<br>";
-    info_box.innerHTML += number_selected + " ORGANISM(S) SELECTED<br><br>";
+    info_box.innerHTML += "Generation " + generation;
 		
 	for (var org: number = 0; org < MAX_ORGANISMS; org++)
 	{
@@ -308,8 +305,19 @@ function update_selection_display():void
 		var elem: HTMLCanvasElement = document.getElementById(str_select_ID) as HTMLCanvasElement;
         if (!elem)
             continue;
-        const ctx = elem.getContext('2d');
 
+        let tooltip_text = "";
+        tooltip_text += `- Tree ${org}<br>`;
+        tooltip_text += `Leaf colour: ${genotype[org][0].toFixed(2)},<br>`;
+        tooltip_text += `Subdivisions: ${genotype[org][1].toFixed(2)},<br>`;
+        tooltip_text += `Mean Branch Angle: ${genotype[org][2].toFixed(2)},<br>`;
+        tooltip_text += `Mean Branch Length: ${genotype[org][3].toFixed(2)},<br>`;
+        tooltip_text += `Thickness at base of trunk: ${genotype[org][4].toFixed(2)},<br>`;
+        tooltip_text += `Branch angle variation: ${genotype[org][5].toFixed(2)},<br>`;
+        tooltip_text += `Branch length variation: ${genotype[org][6].toFixed(2)}`;
+        elem.dataset.tooltipText = tooltip_text;
+
+        const ctx = elem.getContext('2d');
         if(ctx) {
             //ctx.clearRect(0, 0, elem.width, elem.height);
             
@@ -344,19 +352,6 @@ function update_selection_display():void
                 ctx.lineTo(10, PANEL_WIDTH - 10);
                 ctx.lineTo(10, PANEL_WIDTH - 30);
                 ctx.stroke();
-
-                var info_box: HTMLDivElement = document.getElementById("info_panel") as HTMLDivElement;
-                if (!info_box)
-                    return;
-
-                info_box.innerHTML += `- ORGANISM ${org}\n`;
-                info_box.innerHTML += `Leaf colour: ${genotype[org][0].toFixed(2)}, `;
-                info_box.innerHTML += `Subdivisions: ${genotype[org][1].toFixed(2)}, `;
-                info_box.innerHTML += `Mean Branch Angle: ${genotype[org][2].toFixed(2)}, `;
-                info_box.innerHTML += `Mean Branch Length: ${genotype[org][3].toFixed(2)}, `;
-                info_box.innerHTML += `Thickness at base of trunk: ${genotype[org][4].toFixed(2)}, `;
-                info_box.innerHTML += `Branch angle variation: ${genotype[org][5].toFixed(2)}, `;
-                info_box.innerHTML += `Branch length variation: ${genotype[org][6].toFixed(2)}\n`;
             }
         }
 	}

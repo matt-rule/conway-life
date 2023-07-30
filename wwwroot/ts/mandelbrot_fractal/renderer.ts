@@ -31,7 +31,7 @@ export class Renderer {
     private DynamicMandelbrotViewPositionWorld : vec2 = vec2.fromValues(0.0, 0.0);
     private CommitMandelbrotViewPositionWorld : vec2 = vec2.fromValues(0.0, 0.0);
     // store screen position not world, to avoid a translated view disrupting mouse move calculations
-    private startDragMousePosScreen: vec2 | null = null;
+    public startDragMousePosScreen: vec2 | null = null;
     
     // Define a constructor
     constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, borderWidth: number, showGrid: boolean)

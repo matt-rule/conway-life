@@ -67,8 +67,11 @@ else
             if (!canvas)
                 return;
 
-            renderer.processMouseMove(event.clientX, event.clientY);
-            renderer.draw(canvas);
+            if (renderer.startDragMousePosScreen)
+            {
+                renderer.processMouseMove(event.clientX, event.clientY);
+                renderer.draw(canvas);
+            }
         });
 
         document.addEventListener('wheel', function(event) {

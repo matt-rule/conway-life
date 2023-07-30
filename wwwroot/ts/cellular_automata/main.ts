@@ -42,17 +42,17 @@ if (infoMenuButton) {
     infoMenuButton.addEventListener('mousedown', infoMenuMouseDown);
 }
 
-function gameMenuMouseDown() {
-    let menuContainer = document.getElementById("hideable-menu-content-container");
-    if (!menuContainer)
+function paramsMenuMouseDown() {
+    let paramsMenuContainer = document.getElementById("hideable-menu-content-container");
+    if (!paramsMenuContainer)
         return;
 
-    menuContainer.classList.toggle('hidden');
+    paramsMenuContainer.classList.toggle('hidden');
 }
 
-let gameMenuButton = document.getElementById("game-menu-div");
-if (gameMenuButton) {
-    gameMenuButton.addEventListener('mousedown', gameMenuMouseDown);
+let paramsMenuButton = document.getElementById("params-menu-div");
+if (paramsMenuButton) {
+    paramsMenuButton.addEventListener('mousedown', paramsMenuMouseDown);
 }
 
 if (!canvas) {
@@ -123,14 +123,27 @@ else
         }
         
         document.addEventListener('keydown', function(event) {
+
             if (event.code === 'Space') {
                 event.preventDefault();
-                pause = !pause;
+
+                const playButton = document.getElementById('play-button');
                 const pauseButton = document.getElementById('pause-button');
-                if (pauseButton)
-                    pauseButton.textContent = pause ? '▶️' : '⏸️';
-                if (!pause)
+                if (!playButton || !pauseButton)
+                    return;
+
+                if (pause)
+                {
+                    playButton.classList.add('hidden');
+                    pauseButton.classList.remove('hidden');
                     requestAnimationFrame(animate);
+                }
+                else
+                {
+                    pauseButton.classList.add('hidden');
+                    playButton.classList.remove('hidden');
+                }
+                pause = !pause;
             }
 
             if (event.code === 'KeyR') {
@@ -434,7 +447,7 @@ else
                 playButton.classList.remove('hidden');
             });
 
-            addTooltipToElements([lexiconLabel, lexiconTextArea], 'Warning: Overwrites grid contents; requires grid dimensions to be sufficient for input. Copy-paste patterns from https://conwaylife.com/ref/lexicon/lex.htm');
+            addTooltipToElements([lexiconLabel, lexiconTextArea], 'Warning: Overwrites grid contents; requires grid dimensions to be sufficient for input. More info in \'Info\' menu');
 
             lexiconTextArea.addEventListener('input', (event) => {
                 let inputText = lexiconTextArea.value;

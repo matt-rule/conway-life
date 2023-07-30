@@ -15,15 +15,16 @@
 <div class="bottom-left padding-0px">
     <div class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
         <div class="hidden limit-text-container-width text-container-padding" id="hideable-info-menu-content-container">
-            <p><b>Cellular Automata</b></p>
-            <p>This allows you to play with grid-based cellular automata including Conway's Game of Life.</p>
+            <p>Here, you can play with grid-based cellular automata including Conway's Game of Life.</p>
             <p><b>Controls</b><br>
             Left mouse: Toggle a cell's active state (only useful when unpaused)<br>
             Middle mouse button: Click and drag to pan<br>
             Scroll wheel: Zoom<br>
             Space bar: Pause/unpause<br>
             R: Reset<br>
-            Other: See "Controls" menu and hover over a control to see further explanations
+            </p>
+            <p><b>Lexicon Input</b><br>
+            This is a special input located in the params menu, into which you can copy-paste patterns from <a href="https://conwaylife.com/ref/lexicon/lex.htm">Life Lexicon</a>
             </p>
             <p><b>Explanation</b><br>
             Each timestep, each cell in the grid updates according to some rules. These rules operate on the active states of the cell's neighbours. As a result, interesting and complex patterns emerge.<br>
@@ -32,21 +33,21 @@
             <div class="vertical-spacer"></div>
         </div>
         <div id="info-menu-div" class="hand-cursor unselectable">
-            <img id="info-menu-button" class="menu-icon" src="assets/info-icon.png">
+            <img class="menu-icon" src="assets/info-icon.png">
             <span>Info</span>
+        </div>
+    </div>
+
+    <div id="reset-button" class="semitransparent-bg-warning rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/reset-icon.png">
+            <span>Reset</span>
         </div>
     </div>
 
     <div class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
         <div class="hidden" id="hideable-menu-content-container">
             <div class="flex-container">
-                <div class="flex-row">
-                    @* <img id="play-button" class="menu-icon" src="assets/play-icon.png">
-                    <img id="pause-button" class="menu-icon hidden" src="assets/pause-icon.png">
-                    <img id="reset-button" class="menu-icon" src="assets/reset-icon.png"> *@
-                    @* <button id="pause-button" class="toolbar-button" style="display: inline-block">▶️</button>
-                    <button id="reset-button" class="toolbar-button" style="display: inline-block">🔄</button> *@
-                </div>
                 <div class="flex-row">
                     <div class="flex-item-left">
                         <span id="timestep-label">Timestep:</span>
@@ -112,9 +113,9 @@
             </div>
             <div class="vertical-spacer"></div>
         </div>
-        <div id="game-menu-div" class="hand-cursor unselectable">
-            <img id="game-menu-button" class="menu-icon" src="assets/options-icon.png">
-            <span>Controls</span>
+        <div id="params-menu-div" class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/options-icon.png">
+            <span>Parameters</span>
         </div>
     </div>
     <div id="play-button" class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
@@ -127,12 +128,6 @@
         <div class="hand-cursor unselectable">
             <img class="menu-icon" src="assets/pause-icon.png">
             <span>Pause</span>
-        </div>
-    </div>
-    <div id="reset-button" class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
-        <div class="hand-cursor unselectable">
-            <img class="menu-icon" src="assets/reset-icon.png">
-            <span>Reset</span>
         </div>
     </div>
 </div>

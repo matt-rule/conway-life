@@ -14,61 +14,64 @@
 
 <partial name="_ProjectMenuPartial" />
 
-<div class="bottom-left padding-20px semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only light-text">
-    <div class="hidden limit-text-container-width text-container-padding" id="hideable-info-menu-content-container">
-        <p><b>Tree Genotypes</b></p>
-        <p>This simulation allows you to control the evolution of a tree population.</p>
-        <p><b>Controls</b><br>
-        Click "Initialise" to begin, and then click trees to select them.<br>
-        When four trees are selected, click "Replicate" to produce four offspring each, using asexual reproduction.<br>
-        Click "Elitism Select" to have offspring automatically selected according to some hidden criteria.
-        </p>
-        <p><b>Explanation</b><br>
-        Each tree has a genome-like structure consisting of several traits including leaf colour, trunk thickness, number of subdivisions of the trunk, branch angle average/variation, branch length average/variation.<br>
-        Each offspring has one parent only. Its genetics are a clone of the parent's, with some small mutations.<br>
-        This simulation does not use L-systems.
-        </p>
-        <div class="vertical-spacer"></div>
+<div class="bottom-left padding-0px">
+    <div class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hidden limit-text-container-width text-container-padding" id="hideable-info-menu-content-container">
+            <p>Here, you can control the evolution of a tree population.</p>
+            <p><b>Controls</b><br>
+            Click "Reset" to begin, and then click trees to select them.<br>
+            When four trees are selected, click "Replicate" to produce four offspring each, using asexual reproduction.<br>
+            Click "Elitism Select" to have offspring automatically selected according to some hidden criteria.
+            </p>
+            <p><b>Explanation</b><br>
+            Each tree has a genome-like structure consisting of several traits including leaf colour, trunk thickness, number of subdivisions of the trunk, branch angle average/variation, branch length average/variation.<br>
+            Each offspring has one parent only. Its genetics are a clone of the parent's, with some small mutations.<br>
+            This simulation does not use L-systems.
+            </p>
+            <div class="vertical-spacer"></div>
+        </div>
+        <div id="info-menu-div" class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/info-icon.png">
+            <span>Info</span>
+        </div>
     </div>
-    <div id="info-menu-div" class="hand-cursor unselectable">
-        <img id="info-menu-button" class="menu-icon" src="assets/info-icon.png">
-        <span>Info</span>
+    <div id="reset_button" class="semitransparent-bg-warning rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/reset-icon.png">
+            <span>Reset</span>
+        </div>
+    </div>
+    <div id="replicate_button" class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/leaf-icon.png">
+            <span>Replicate</span>
+        </div>
     </div>
 </div>
 
-<div class="page-flex-container">
-  <div class="flex-item flex-item-20">
-    <div class="flex-container-inner-left">
-        <div class="flex-item-inner-simple">
-        </div>
-        <div class="flex-item-inner-simple">
-            <input type="button" id="initialise_button" value="Initialise"></input>
-            <input type="button" id="replicate_button" value="Replicate"></input>
-            @* todo: rename to elitism_select_button *@
-            <input type="button" id="fitness_based_selection_button" value="Elitism Select"></input>
-        </div>
-        <div class="flex-item-inner-simple">
-            <div id="info_panel" class="light-text"></div>
-        </div>
-    </div>
-    </div>
-    <div class="flex-item flex-item-80">
-        <div class="flex-container-inner-right">
-            @for (int i = 0; i < 16; i++)
+<div class="flex-container-column">
+    <div class="flex-item flex-text-align-centre">
+        <div class="flex-container-column">
+            @for (int row = 0; row < 4; ++row)
             {
-                <div class="flex-item-inner-25">
-                    <div class="organism-panel">
-                        <canvas class="canvas-fill-parent" id="@("canvas_" + i)"></canvas>
+                <div class="flex-item">
+                    <div class="flex-container-row">
+                        @for (int i = row*4; i < row*4+4; i++)
+                        {
+                            <div class="flex-item-inner-25">
+                                <div class="organism-panel">
+                                    <canvas class="canvas-fill-parent" id="@("canvas_" + i)"></canvas>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
             }
         </div>
     </div>
+    <div class="flex-item flex-text-align-centre flex-basis">
+        <div id="info_panel" class="light-text"></div>
+    </div>
 </div>
 
-@* 
-<div class="flex-container">
-  <div class="flex-item">
-  <div class="flex-item">
-  </div>
-</div> *@
+<div id="tooltip" style="display: none; position: absolute;"></div>
