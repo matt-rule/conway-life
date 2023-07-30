@@ -1,17 +1,5 @@
-# conway-life
-Conway's Game of Life emulator written in TypeScript and WebGL served by an ASP.NET 7 web server
-
-### Periodic Oscillations
-Colours are used to highlight periodic oscillations<br>
-Red = period of 2<br>
-Blue = period of 3<br>
-Green = period of 5<br>
-Purple = period of 6<br>
-
-### Controls
-Left click: Toggle cell on/off<br>
-Space: Toggle pause<br>
-R: Reset (all cells set to off state)<br>
+# demo-website
+Collection of personal projects ported to JS; written in TypeScript and WebGL, served by an ASP.NET 7 web server
 
 ### Docker
 docker build -t conwaylife .
