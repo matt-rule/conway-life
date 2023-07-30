@@ -12,84 +12,128 @@
 
 <canvas id="my_canvas"></canvas>
 
-<div class="bottom-left transparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only light-text">
-    <div class="hidden" id="hideable-menu-content-container">
-        <div class="flex-container">
-            <div class="flex-row">
-                <img id="play-button" class="menu-icon" src="assets/play-icon.png">
-                <img id="pause-button" class="menu-icon hidden" src="assets/pause-icon.png">
-                <img id="reset-button" class="menu-icon" src="assets/reset-icon.png">
-                @* <button id="pause-button" class="toolbar-button" style="display: inline-block">▶️</button>
-                <button id="reset-button" class="toolbar-button" style="display: inline-block">🔄</button> *@
-            </div>
-            <div class="flex-row">
-                <div class="flex-item-left">
-                    <span id="timestep-label">Timestep:</span>
-                </div>
-                <div class="flex-item-right">
-                    <input class="numeric-edit" id="timestep-edit" value="125" />
-                </div>
-            </div>
-            <div class="flex-row">
-                <div class="flex-item-left">
-                    <span id="grid-width-label">Width:</span>
-                </div>
-                <div class="flex-item-right">
-                    <input class="numeric-edit" id="grid-width-edit" value="25" />
-                </div>
-            </div>
-            <div class="flex-row">
-                <div class="flex-item-left">
-                    <span id="grid-height-label">Height:</span>
-                </div>
-                <div class="flex-item-right">
-                    <input class="numeric-edit" id="grid-height-edit" value="25" />
-                </div>
-            </div>
-            <div class="flex-row">
-                <div class="flex-item-left">
-                    <span id="show-grid-label">Show Grid:</span>
-                </div>
-                <div class="flex-item-right">
-                    <input type="checkbox" id="show-grid-checkbox" checked="true" />
-                </div>
-            </div>
-            <div class="flex-row">
-                <div class="flex-item-left">
-                    <span id="detect-oscillations-label">Oscillations:</span>
-                </div>
-                <div class="flex-item-right">
-                    <input type="checkbox" id="detect-oscillations-checkbox" checked="true" />
-                </div>
-            </div>
-            <div class="flex-row">
-                <div class="flex-item-left">
-                    <span id="survival-rules-label">Survival Rules:</span>
-                </div>
-                <div class="flex-item-right">
-                    <input class="rule-edit" id="survival-rules-edit" value="2,3" />
-                </div>
-            </div>
-            <div class="flex-row">
-                <div class="flex-item-left">
-                    <span id="birth-rules-label">Birth Rules:</span>
-                </div>
-                <div class="flex-item-right">
-                    <input class="rule-edit" id="birth-rules-edit" value="3" />
-                </div>
-            </div>
-            <div class="flex-row">
-                <span id="lexicon-input-label">Lexicon Input:</span>
-            </div>
-            <div class="flex-row">
-                <textarea id="lexicon-input-textarea" class="expand-width non-resizeable textarea-height"></textarea>
-            </div>
+<div class="bottom-left padding-0px">
+    <div class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hidden limit-text-container-width text-container-padding" id="hideable-info-menu-content-container">
+            <p><b>Cellular Automata</b></p>
+            <p>This allows you to play with grid-based cellular automata including Conway's Game of Life.</p>
+            <p><b>Controls</b><br>
+            Left mouse: Toggle a cell's active state (only useful when unpaused)<br>
+            Middle mouse button: Click and drag to pan<br>
+            Scroll wheel: Zoom<br>
+            Space bar: Pause/unpause<br>
+            R: Reset<br>
+            Other: See "Controls" menu and hover over a control to see further explanations
+            </p>
+            <p><b>Explanation</b><br>
+            Each timestep, each cell in the grid updates according to some rules. These rules operate on the active states of the cell's neighbours. As a result, interesting and complex patterns emerge.<br>
+            In this simulation, repeating patterns can be detected and highlighted using a colour.
+            </p>
+            <div class="vertical-spacer"></div>
         </div>
-        <div class="vertical-spacer"></div>
+        <div id="info-menu-div" class="hand-cursor unselectable">
+            <img id="info-menu-button" class="menu-icon" src="assets/info-icon.png">
+            <span>Info</span>
+        </div>
     </div>
-    <div id="game-menu-div">
-        <img id="game-menu-button" class="menu-icon" src="assets/options-icon.png">
-        <span>Settings</span>
+
+    <div class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hidden" id="hideable-menu-content-container">
+            <div class="flex-container">
+                <div class="flex-row">
+                    @* <img id="play-button" class="menu-icon" src="assets/play-icon.png">
+                    <img id="pause-button" class="menu-icon hidden" src="assets/pause-icon.png">
+                    <img id="reset-button" class="menu-icon" src="assets/reset-icon.png"> *@
+                    @* <button id="pause-button" class="toolbar-button" style="display: inline-block">▶️</button>
+                    <button id="reset-button" class="toolbar-button" style="display: inline-block">🔄</button> *@
+                </div>
+                <div class="flex-row">
+                    <div class="flex-item-left">
+                        <span id="timestep-label">Timestep:</span>
+                    </div>
+                    <div class="flex-item-right">
+                        <input class="numeric-edit" id="timestep-edit" value="125" />
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div class="flex-item-left">
+                        <span id="grid-width-label">Width:</span>
+                    </div>
+                    <div class="flex-item-right">
+                        <input class="numeric-edit" id="grid-width-edit" value="25" />
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div class="flex-item-left">
+                        <span id="grid-height-label">Height:</span>
+                    </div>
+                    <div class="flex-item-right">
+                        <input class="numeric-edit" id="grid-height-edit" value="25" />
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div class="flex-item-left">
+                        <span id="show-grid-label">Show Grid:</span>
+                    </div>
+                    <div class="flex-item-right">
+                        <input type="checkbox" id="show-grid-checkbox" checked="true" />
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div class="flex-item-left">
+                        <span id="detect-oscillations-label">Oscillations:</span>
+                    </div>
+                    <div class="flex-item-right">
+                        <input type="checkbox" id="detect-oscillations-checkbox" checked="true" />
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div class="flex-item-left">
+                        <span id="survival-rules-label">Survival Rules:</span>
+                    </div>
+                    <div class="flex-item-right">
+                        <input class="rule-edit" id="survival-rules-edit" value="2,3" />
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div class="flex-item-left">
+                        <span id="birth-rules-label">Birth Rules:</span>
+                    </div>
+                    <div class="flex-item-right">
+                        <input class="rule-edit" id="birth-rules-edit" value="3" />
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <span id="lexicon-input-label">Lexicon Input:</span>
+                </div>
+                <div class="flex-row">
+                    <textarea id="lexicon-input-textarea" class="expand-width non-resizeable textarea-height"></textarea>
+                </div>
+            </div>
+            <div class="vertical-spacer"></div>
+        </div>
+        <div id="game-menu-div" class="hand-cursor unselectable">
+            <img id="game-menu-button" class="menu-icon" src="assets/options-icon.png">
+            <span>Controls</span>
+        </div>
+    </div>
+    <div id="play-button" class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/play-icon.png">
+            <span>Play</span>
+        </div>
+    </div>
+    <div id="pause-button" class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only hidden">
+        <div class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/pause-icon.png">
+            <span>Pause</span>
+        </div>
+    </div>
+    <div id="reset-button" class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/reset-icon.png">
+            <span>Reset</span>
+        </div>
     </div>
 </div>
 

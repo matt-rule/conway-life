@@ -29,6 +29,19 @@ let committedView: View = new View();   // Does not change until finished pannin
 let grid: FiniteGrid | SparseMatrixGrid = new FiniteGrid(new Vec(defaultGridWidth, defaultGridHeight), historyLength);
 //let grid: FiniteGrid | SparseMatrixGrid = new SparseMatrixGrid();
 
+function infoMenuMouseDown() {
+    let menuContainer = document.getElementById("hideable-info-menu-content-container");
+    if (!menuContainer)
+        return;
+
+    menuContainer.classList.toggle('hidden');
+}
+
+let infoMenuButton = document.getElementById("info-menu-div");
+if (infoMenuButton) {
+    infoMenuButton.addEventListener('mousedown', infoMenuMouseDown);
+}
+
 function gameMenuMouseDown() {
     let menuContainer = document.getElementById("hideable-menu-content-container");
     if (!menuContainer)

@@ -14,4 +14,25 @@
 
 <partial name="_ProjectMenuPartial" />
 
+<div class="bottom-left padding-20px semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only light-text">
+    <div class="hidden limit-text-container-width text-container-padding" id="hideable-info-menu-content-container">
+        <p><b>Mandelbrot Fractal</b></p>
+        <p>
+            Rendered using a GLSL fragment shader.
+        </p>
+        <p><b>Controls</b><br>
+        Mouse buttons: Click and drag to pan<br>
+        Mouse wheel: Zoom
+        </p>
+        <p><b>More info</b><br>
+        Complex numbers: <a href="https://www.youtube.com/3blue1brown">3blue1brown's videos</a>
+        </p>
+        <div class="vertical-spacer"></div>
+    </div>
+    <div id="info-menu-div" class="hand-cursor unselectable">
+        <img id="info-menu-button" class="menu-icon" src="assets/info-icon.png">
+        <span>Info</span>
+    </div>
+</div>
+
 <canvas id="my_canvas"></canvas>

@@ -14,6 +14,28 @@
 
 <partial name="_ProjectMenuPartial" />
 
+<div class="bottom-left padding-20px semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only light-text">
+    <div class="hidden limit-text-container-width text-container-padding" id="hideable-info-menu-content-container">
+        <p><b>Tree Genotypes</b></p>
+        <p>This simulation allows you to control the evolution of a tree population.</p>
+        <p><b>Controls</b><br>
+        Click "Initialise" to begin, and then click trees to select them.<br>
+        When four trees are selected, click "Replicate" to produce four offspring each, using asexual reproduction.<br>
+        Click "Elitism Select" to have offspring automatically selected according to some hidden criteria.
+        </p>
+        <p><b>Explanation</b><br>
+        Each tree has a genome-like structure consisting of several traits including leaf colour, trunk thickness, number of subdivisions of the trunk, branch angle average/variation, branch length average/variation.<br>
+        Each offspring has one parent only. Its genetics are a clone of the parent's, with some small mutations.<br>
+        This simulation does not use L-systems.
+        </p>
+        <div class="vertical-spacer"></div>
+    </div>
+    <div id="info-menu-div" class="hand-cursor unselectable">
+        <img id="info-menu-button" class="menu-icon" src="assets/info-icon.png">
+        <span>Info</span>
+    </div>
+</div>
+
 <div class="page-flex-container">
   <div class="flex-item flex-item-20">
     <div class="flex-container-inner-left">

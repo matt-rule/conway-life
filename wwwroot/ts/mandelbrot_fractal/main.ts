@@ -8,6 +8,19 @@ let canvas: HTMLCanvasElement | null = document.getElementById("my_canvas") as H
 let lastUpdateTime: number = 0;
 let pause: boolean = true;
 
+function infoMenuMouseDown() {
+    let menuContainer = document.getElementById("hideable-info-menu-content-container");
+    if (!menuContainer)
+        return;
+
+    menuContainer.classList.toggle('hidden');
+}
+
+let infoMenuButton = document.getElementById("info-menu-div");
+if (infoMenuButton) {
+    infoMenuButton.addEventListener('mousedown', infoMenuMouseDown);
+}
+
 if (!canvas) {
     alert('Canvas element not found');
 }

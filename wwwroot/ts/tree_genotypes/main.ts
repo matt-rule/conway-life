@@ -51,6 +51,19 @@ const SCALE_LEN_BASE: number = 0.65;
 const SCALE_LEN_MAIN: number = 0.8;
 const SCALE_THICKNESS: number = 0.4;
 
+function infoMenuMouseDown() {
+    let menuContainer = document.getElementById("hideable-info-menu-content-container");
+    if (!menuContainer)
+        return;
+
+    menuContainer.classList.toggle('hidden');
+}
+
+let infoMenuButton = document.getElementById("info-menu-div");
+if (infoMenuButton) {
+    infoMenuButton.addEventListener('mousedown', infoMenuMouseDown);
+}
+
 function degreesToRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
 }
