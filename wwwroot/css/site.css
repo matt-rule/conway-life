@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Segoe UI', 'Helvetica Neue', 'Helvetica', 'Lucida Grande', Arial, Ubuntu, Cantarell, 'Fira Sans', sans-serif;
 }
 
 input[type="checkbox"] {
@@ -200,7 +201,6 @@ button {
 }
 
 .light-text {
-  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   color: #ddd;
 }
 
