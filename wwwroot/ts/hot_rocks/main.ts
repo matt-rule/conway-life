@@ -19,7 +19,7 @@ export class Game {
         this.squarePosition = vec2.fromValues(200, 100);
     }
 
-    init() {
+    init(image: HTMLImageElement) {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         this.canvas.style.width = `${window.innerWidth}px`;
@@ -28,7 +28,7 @@ export class Game {
         this.canvas.style.maxHeight = `${window.innerHeight}px`;
         let gl: WebGL2RenderingContext | null = this.canvas.getContext("webgl2");
         if (gl) {
-            this.renderer.init(gl, this.canvas.width, this.canvas.height);
+            this.renderer.init(gl, this.canvas.width, this.canvas.height, image);
         }
         else {
             alert('Your browser does not support webgl2');
@@ -43,7 +43,13 @@ export class Game {
 let canvas: HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement;
 if (canvas) {
     let game : Game = new Game(canvas);
-    game.init();
+
+    const image = new Image();
+    image.onload = () => {
+        game.init(image);
+        requestAnimationFrame(animate);
+    };
+    image.src = 'assets/hot_rocks/tile.png';
 
     function animate(time: number) {
         if (game.lastUpdateTime == 0) {
@@ -65,6 +71,4 @@ if (canvas) {
     
         requestAnimationFrame(animate);
     }
-
-    requestAnimationFrame(animate);
 }
