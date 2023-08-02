@@ -1,4 +1,4 @@
-import { mat3 } from "gl-matrix";
+import { mat3, vec2 } from "gl-matrix";
 
 export class Renderer {
     public gl: WebGL2RenderingContext | null;
@@ -125,7 +125,7 @@ export class Renderer {
         return this.calcBufferData();
     }
 
-    public draw() {
+    public draw(squarePosition: vec2) {
         if (!this.gl || !this.shaderProgram || !this.width || !this.height)
         {
             return;
@@ -143,7 +143,7 @@ export class Renderer {
         mat3.scale(projectionMatrix, projectionMatrix, [2/this.width, 2/this.height]);
 
         let modelMatrix = mat3.create();
-        mat3.translate(modelMatrix, modelMatrix, [200, 100]);
+        mat3.translate(modelMatrix, modelMatrix, squarePosition);
         mat3.scale(modelMatrix, modelMatrix, [50, 50]);
 
         let mvp = mat3.create();
