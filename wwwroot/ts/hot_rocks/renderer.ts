@@ -1,4 +1,6 @@
+import * as Constants from "./constants";
 import { mat3, vec2 } from "gl-matrix";
+import { TexObject } from "./texObject";
 
 export class Renderer {
     public gl: WebGL2RenderingContext | null;
@@ -7,7 +9,7 @@ export class Renderer {
     public shaderProgram: WebGLProgram | null;
     public shaderProgramTextured: WebGLProgram | null;
     public matrixLocation: WebGLUniformLocation | null;
-    public matrixLocationTextured: WebGLProgram | null;
+    public matrixLocationTextured: WebGLUniformLocation | null;
     public colorLocation: WebGLUniformLocation | null;
     public squareVertices: number[];
     public squareIndices: number[];
@@ -17,7 +19,7 @@ export class Renderer {
     public squareIndicesTextured: number[];
     public squareVertexBufferTextured: WebGLBuffer | null;
     public squareIndexBufferTextured: WebGLBuffer | null;
-    public texture: WebGLTexture | null;
+    public texObject: TexObject | null;
     
     public constructor()
     {
@@ -37,7 +39,7 @@ export class Renderer {
         this.squareIndicesTextured = [];
         this.squareVertexBufferTextured = null;
         this.squareIndexBufferTextured = null;
-        this.texture = null;
+        this.texObject = null;
     }
 
     public calcBufferData(): boolean
@@ -255,17 +257,15 @@ export class Renderer {
         if ( !this.setup_program_textured() )
             return false;
 
-        this.texture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
-        this.gl.generateMipmap(this.gl.TEXTURE_2D);
+        this.texObject = new TexObject( image );
+        this.texObject.glInit( gl );
 
         let success = this.calcBufferData() && this.calcBufferDataTextured();
         return success;
     }
 
     public draw(squarePosition: vec2) {
-        if (!this.gl || !this.shaderProgram || !this.shaderProgramTextured || !this.width || !this.height)
+        if (!this.gl || !this.shaderProgram || !this.shaderProgramTextured || !this.width || !this.height || !this.matrixLocationTextured )
         {
             return;
         }
@@ -296,23 +296,16 @@ export class Renderer {
 
         let modelMatrix = mat3.create();
         mat3.translate(modelMatrix, modelMatrix, squarePosition);
-        mat3.scale(modelMatrix, modelMatrix, [50, 50]);
+        //mat3.scale(modelMatrix, modelMatrix, [50, 50]);
 
         let mvp = mat3.create();
         mat3.multiply(mvp, projectionMatrix, modelMatrix);
-
-        // Textured only
-        this.gl.uniformMatrix3fv(this.matrixLocationTextured, false, mvp);
 
         // Non-textured only
         //this.gl.uniformMatrix3fv(this.matrixLocation, false, mvp);
         //this.gl.uniform4f(this.colorLocation, 1.0, 0.0, 0.0, 1);
 
-        // Textured only
-        this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
-        this.gl.uniform1i(this.gl.getUniformLocation(this.shaderProgramTextured, "u_sampler"), 0);
-
-        this.gl.drawElements(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
+        this.texObject?.glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
+            this.matrixLocationTextured, this.squareIndices, Constants.BG_TILE_SIZE );
     }
 }
