@@ -20,18 +20,21 @@ export class TexObject {
     }
 
     public glRenderFromCorner( gl: WebGL2RenderingContext, shaderProgramTextured: WebGLProgram,
-        mat: mat3, matLocationTextured: WebGLUniformLocation, squareIndices: number[], scale: number, flip: boolean = false )
+        projectionMatrix: mat3, matLocationTextured: WebGLUniformLocation, squareIndices: number[], position: vec2, scale: number, flip: boolean = false )
     {
-        let aMat = mat3.create();
-        mat3.scale ( aMat, mat, vec2.fromValues( scale, scale ) );
+        let modelMatrix = mat3.create();
+        mat3.translate( modelMatrix, mat3.create(), position );
+        mat3.scale ( modelMatrix, modelMatrix, vec2.fromValues( scale, scale ) );
 
         if (flip)
         {
-            mat3.translate( aMat, aMat, vec2.fromValues( 1.0, 0.0 ) );
-            mat3.scale( aMat, aMat, vec2.fromValues( -1.0, 1.0 ) );
+            mat3.translate( modelMatrix, modelMatrix, vec2.fromValues( 1.0, 0.0 ) );
+            mat3.scale( modelMatrix, modelMatrix, vec2.fromValues( -1.0, 1.0 ) );
         }
 
-        gl.uniformMatrix3fv( matLocationTextured, false, aMat );
+        let mvp = mat3.create();
+        mat3.multiply( mvp, projectionMatrix, modelMatrix )
+        gl.uniformMatrix3fv( matLocationTextured, false, mvp );
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);

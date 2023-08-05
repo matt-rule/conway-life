@@ -264,6 +264,30 @@ export class Renderer {
         return success;
     }
 
+    public worldToScreenScaleFactor ( screenWidth: number ) {
+        return screenWidth / (Constants.TILE_SIZE * Constants.LEVEL_EXT_WIDTH);
+    }
+
+    public renderLevel( projectionMatrix: mat3, screenWidth: number, screenHeight: number, squarePosition: vec2 ): void
+    //public renderLevel( level: ActiveLevel, screenWidth: number, screenHeight: number ): void
+    {
+        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured )
+            return;
+
+        let scaleFactor: number = this.worldToScreenScaleFactor(screenWidth);
+        let scaledProjMatrix = mat3.create();
+        mat3.scale( scaledProjMatrix, projectionMatrix, vec2.fromValues( scaleFactor * 0.5, scaleFactor * 0.5 ));
+
+        for ( let x: number = -1; x < Constants.LEVEL_WIDTH +3; ++x )
+        {
+            this.texObject?.glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
+                this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.BG_TILE_SIZE*x, 0 ), Constants.BG_TILE_SIZE );
+        }
+        
+        this.texObject?.glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
+            this.matrixLocationTextured, this.squareIndices, squarePosition, Constants.BG_TILE_SIZE );
+    }
+
     public draw(squarePosition: vec2) {
         if (!this.gl || !this.shaderProgram || !this.shaderProgramTextured || !this.width || !this.height || !this.matrixLocationTextured )
         {
@@ -294,18 +318,13 @@ export class Renderer {
         mat3.translate(projectionMatrix, projectionMatrix, [-1, -1]);
         mat3.scale(projectionMatrix, projectionMatrix, [2/this.width, 2/this.height]);
 
-        let modelMatrix = mat3.create();
-        mat3.translate(modelMatrix, modelMatrix, squarePosition);
-        //mat3.scale(modelMatrix, modelMatrix, [50, 50]);
-
-        let mvp = mat3.create();
-        mat3.multiply(mvp, projectionMatrix, modelMatrix);
+        //let mvp = mat3.create();
+        //mat3.multiply(mvp, projectionMatrix, modelMatrix);
 
         // Non-textured only
         //this.gl.uniformMatrix3fv(this.matrixLocation, false, mvp);
         //this.gl.uniform4f(this.colorLocation, 1.0, 0.0, 0.0, 1);
 
-        this.texObject?.glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-            this.matrixLocationTextured, this.squareIndices, Constants.BG_TILE_SIZE );
+        this.renderLevel( projectionMatrix, this.width, this.height, squarePosition );
     }
 }
