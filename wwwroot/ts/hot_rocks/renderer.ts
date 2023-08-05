@@ -254,7 +254,8 @@ export class Renderer {
 
         this.gl.viewport(0, 0, this.width, this.height);
         this.gl.clearColor(0.5, 0.0, 0.5, 1.0);
-        this.gl.disable(this.gl.BLEND);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         this.gl.disable(this.gl.CULL_FACE);
 
         if ( !this.setup_program() )
@@ -296,7 +297,7 @@ export class Renderer {
         }
         
         this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
-            this.matrixLocationTextured, this.squareIndices, squarePosition, Constants.BG_TILE_SIZE );
+            this.matrixLocationTextured, this.squareIndices, squarePosition, Constants.SPRITE_SUIT_SIZE );
     }
 
     public draw(squarePosition: vec2) {
