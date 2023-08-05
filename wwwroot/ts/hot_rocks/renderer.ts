@@ -2,6 +2,9 @@ import * as Constants from "./constants";
 import { mat3, vec2 } from "gl-matrix";
 import { TexObject } from "./texObject";
 
+export type ImagesDictionary = {[key: string]: HTMLImageElement};
+type TexObjectDictionary = {[key: number]: TexObject};
+
 export class Renderer {
     public gl: WebGL2RenderingContext | null;
     public width: number | null;
@@ -19,7 +22,8 @@ export class Renderer {
     public squareIndicesTextured: number[];
     public squareVertexBufferTextured: WebGLBuffer | null;
     public squareIndexBufferTextured: WebGLBuffer | null;
-    public texObject: TexObject | null;
+    public texObjectDictionary: TexObjectDictionary;
+    public spriteTexObjectDictionary: TexObjectDictionary;
     
     public constructor()
     {
@@ -39,7 +43,8 @@ export class Renderer {
         this.squareIndicesTextured = [];
         this.squareVertexBufferTextured = null;
         this.squareIndexBufferTextured = null;
-        this.texObject = null;
+        this.texObjectDictionary = {};
+        this.spriteTexObjectDictionary = {};
     }
 
     public calcBufferData(): boolean
@@ -239,7 +244,7 @@ export class Renderer {
         return true;
     }
 
-    public init(gl: WebGL2RenderingContext, width: number, height: number, image: HTMLImageElement): boolean {
+    public init(gl: WebGL2RenderingContext, width: number, height: number, stillImages: ImagesDictionary ): boolean {
         this.gl = gl;
         this.width = width;
         this.height = height;
@@ -257,8 +262,14 @@ export class Renderer {
         if ( !this.setup_program_textured() )
             return false;
 
-        this.texObject = new TexObject( image );
-        this.texObject.glInit( gl );
+        this.texObjectDictionary = {};
+        this.texObjectDictionary[ Constants.TEX_ID_ROCK ] = new TexObject(stillImages[ "assets/hot_rocks/tile.png" ]);
+        this.texObjectDictionary[ Constants.TEX_ID_STANDING ] = new TexObject(stillImages[ "assets/hot_rocks/sprite-standing.png" ]);
+        
+        // The Number() is necessary because Object.keys returns an array of strings, even for number keys
+        Object.keys(this.texObjectDictionary).forEach(key => {
+            this.texObjectDictionary[Number(key)].glInit( gl );
+        });
 
         let success = this.calcBufferData() && this.calcBufferDataTextured();
         return success;
@@ -280,11 +291,11 @@ export class Renderer {
 
         for ( let x: number = -1; x < Constants.LEVEL_WIDTH +3; ++x )
         {
-            this.texObject?.glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
+            this.texObjectDictionary[ Constants.TEX_ID_ROCK ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
                 this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.BG_TILE_SIZE*x, 0 ), Constants.BG_TILE_SIZE );
         }
         
-        this.texObject?.glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
+        this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
             this.matrixLocationTextured, this.squareIndices, squarePosition, Constants.BG_TILE_SIZE );
     }
 

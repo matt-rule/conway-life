@@ -1,4 +1,4 @@
-import { Renderer } from "./renderer";
+import { Renderer, ImagesDictionary } from "./renderer";
 import { vec2 } from "gl-matrix";
 
 const SQUARE_SPEED: number = 60;
@@ -19,7 +19,7 @@ export class Game {
         this.squarePosition = vec2.fromValues(200, 100);
     }
 
-    init(image: HTMLImageElement) {
+    init( stillImages: ImagesDictionary ) {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         this.canvas.style.width = `${window.innerWidth}px`;
@@ -28,7 +28,7 @@ export class Game {
         this.canvas.style.maxHeight = `${window.innerHeight}px`;
         let gl: WebGL2RenderingContext | null = this.canvas.getContext("webgl2");
         if (gl) {
-            this.renderer.init(gl, this.canvas.width, this.canvas.height, image);
+            this.renderer.init( gl, this.canvas.width, this.canvas.height, stillImages );
         }
         else {
             alert('Your browser does not support webgl2');
@@ -40,16 +40,44 @@ export class Game {
     }    
 }
 
+let stillImageUrls = [
+    "assets/hot_rocks/tile.png",
+    "assets/hot_rocks/sprite-standing.png"
+];
+
+let loadStillImagePromises = stillImageUrls.map(url => {
+    return new Promise<{[key: string]: HTMLImageElement}>((resolve, reject) => {
+        let img = new Image();
+        img.onload = () => resolve({[url]: img});
+        img.onerror = reject;
+        img.src = url;
+    });
+});
+
 let canvas: HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement;
 if (canvas) {
     let game : Game = new Game(canvas);
 
-    const image = new Image();
-    image.onload = () => {
-        game.init(image);
-        requestAnimationFrame(animate);
-    };
-    image.src = 'assets/hot_rocks/tile.png';
+    Promise.all(loadStillImagePromises).then(stillImageObjects => {
+        if (!canvas)
+            return;
+
+        let stillImages: ImagesDictionary = Object.assign({}, ...stillImageObjects);
+    
+        //Promise.all(loadAnimatedImagePromises).then(animatedImageObjects => {
+            //let animatedImages: ImagesDictionary = Object.assign({}, ...animatedImageObjects);
+    
+            game = new Game( canvas );
+            game.init(stillImages);
+            //game.init(stillImages, animatedImages);
+            requestAnimationFrame(animate);
+        // }).catch(err => {
+        //     console.error("Error occurred loading animated images: ", err);
+        // });
+    
+    }).catch(err => {
+        console.error("Error occurred loading still images: ", err);
+    });
 
     function animate(time: number) {
         if (game.lastUpdateTime == 0) {
