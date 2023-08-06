@@ -4,7 +4,7 @@ export const INITIAL_SCREEN_HEIGHT: number = 720;
 export const LEVEL_WIDTH: number = 48;
 export const LEVEL_HEIGHT: number = 96;
 
-export const FPS: number = 60;
+export const FPS: number = 90;  // Update FPS only - not drawing
 
 /// <summary>
 /// Including border tiles.

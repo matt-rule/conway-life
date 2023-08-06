@@ -1,4 +1,6 @@
+import * as Constants from "./constants";
 import { Renderer, ImagesDictionary } from "./renderer";
+import { Key, KeyboardState } from "./keyboardState";
 
 export class Game {
     // Define members (properties)
@@ -6,6 +8,8 @@ export class Game {
     public renderer: Renderer;
     public lastUpdateTime: number;
     public gameWon: boolean;
+    public latestKeyState: KeyboardState;
+    public frameTimeCounterSecs: number;
     
     // Define a constructor
     constructor(canvas: HTMLCanvasElement)
@@ -14,6 +18,8 @@ export class Game {
         this.renderer = new Renderer();
         this.lastUpdateTime = 0;
         this.gameWon = false;
+        this.latestKeyState = new KeyboardState();
+        this.frameTimeCounterSecs = 0;
     }
 
     init( stillImages: ImagesDictionary, animatedImages: ImagesDictionary ) {
@@ -32,7 +38,18 @@ export class Game {
         }
     }
 
-    update() {
+    onUpdateFrame( currentKeyState: KeyboardState, deltaTimeSecs: number ) {
+        let intervalSecs: number = 1.0 / Constants.FPS;
 
+        this.frameTimeCounterSecs += deltaTimeSecs;
+
+        while (this.frameTimeCounterSecs > intervalSecs)
+        {
+            if (this.renderer && this.renderer.level)
+                this.renderer.level.update(this.latestKeyState, currentKeyState, intervalSecs);
+            this.frameTimeCounterSecs -= intervalSecs;
+        }
+
+        this.latestKeyState = currentKeyState;
     }    
 }

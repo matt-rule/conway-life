@@ -67,10 +67,10 @@ export class Renderer {
         }
 
         this.squareVertices = [
-            0, 0,
-            1, 0,
-            0, 1,
-            1, 1
+            1, 1,
+            20, 1,
+            1, 20,
+            20, 20
         ];
 
         this.squareIndices = [
@@ -104,10 +104,10 @@ export class Renderer {
         }
 
         this.squareVerticesTextured = [
-            0, 0, 0, 0,
-            1, 0, 1, 0,
-            0, 1, 0, 1,
-            1, 1, 1, 1
+            1, 1, 0, 0,
+            2, 1, 1, 0,
+            1, 2, 0, 1,
+            2, 2, 1, 1          // These go from 1 to 2 to resolve an odd difference between this and gameoff2018
         ];
 
         this.squareIndicesTextured = [
@@ -297,7 +297,7 @@ export class Renderer {
         return success;
     }
 
-    public worldToScreenScaleFactor ( screenWidth: number ) {
+    public worldToScreenScaleFactor ( screenWidth: number ): number {
         return screenWidth / (Constants.TILE_SIZE * Constants.LEVEL_EXT_WIDTH);
     }
 
@@ -320,13 +320,24 @@ export class Renderer {
 
         let scaleFactor: number = this.worldToScreenScaleFactor(screenWidth);
         let scaledProjMatrix = mat3.create();
-        mat3.scale( scaledProjMatrix, projectionMatrix, vec2.fromValues( scaleFactor * 0.5, scaleFactor * 0.5 ));
+        mat3.scale( scaledProjMatrix, projectionMatrix, vec2.fromValues( scaleFactor, scaleFactor ));
 
-        for ( let x: number = -1; x < Constants.LEVEL_WIDTH +3; ++x )
-        {
-            this.texObjectDictionary[ Constants.TEX_ID_ROCK ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
-                this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.BG_TILE_SIZE*x, 0 ), Constants.BG_TILE_SIZE );
-        }
+        // Render tiles
+        for ( let x: number = -1; x <= Constants.LEVEL_WIDTH +2; ++x )
+            for ( let y: number = -1; y <= Constants.LEVEL_HEIGHT +2; ++y )
+            {
+                if
+                (
+                    x < 0
+                    || x >= Constants.LEVEL_WIDTH
+                    || y < 0
+                    || y >= Constants.LEVEL_HEIGHT
+                )
+                {
+                    this.texObjectDictionary[ Constants.TEX_ID_ROCK ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
+                        this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.TILE_SIZE*x, Constants.TILE_SIZE*y ), Constants.TILE_SIZE );
+                }
+            }
         
         this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
             this.matrixLocationTextured, this.squareIndices, this.level.mcPosition, Constants.SPRITE_SUIT_SIZE );

@@ -1,5 +1,6 @@
 import { Game } from "./game";
 import { ImagesDictionary } from "./renderer";
+import { Key, KeyboardState } from "./keyboardState";
 import { vec2 } from "gl-matrix";
 
 const SQUARE_SPEED: number = 60;
@@ -36,6 +37,62 @@ function promiseFunction(url : string) {
 let loadStillImagePromises = stillImageUrls.map(promiseFunction);
 let loadAnimatedImagePromises = animatedImageUrls.map(promiseFunction);
 
+let currentKeyState: KeyboardState = new KeyboardState();
+
+document.addEventListener('keydown', (event: KeyboardEvent) => {
+    switch (event.key)
+    {
+        case 'a':
+        case 'A':
+            currentKeyState.keyStates[Key.A] = true;
+            break;
+        case 'd':
+        case 'D':
+            currentKeyState.keyStates[Key.D] = true;
+            break;
+        case 'w':
+        case 'W':
+            currentKeyState.keyStates[Key.W] = true;
+            break;
+        case ' ':
+            currentKeyState.keyStates[Key.Space] = true;
+            break;
+        case 'ArrowLeft':
+            currentKeyState.keyStates[Key.Left] = true;
+            break;
+        case 'ArrowRight':
+            currentKeyState.keyStates[Key.Right] = true;
+            break;
+    }
+});
+
+document.addEventListener('keyup', (event: KeyboardEvent) => {
+    switch (event.key)
+    {
+        case 'a':
+        case 'A':
+            currentKeyState.keyStates[Key.A] = false;
+            break;
+        case 'd':
+        case 'D':
+            currentKeyState.keyStates[Key.D] = false;
+            break;
+        case 'w':
+        case 'W':
+            currentKeyState.keyStates[Key.W] = false;
+            break;
+        case ' ':
+            currentKeyState.keyStates[Key.Space] = false;
+            break;
+        case 'ArrowLeft':
+            currentKeyState.keyStates[Key.Left] = false;
+            break;
+        case 'ArrowRight':
+            currentKeyState.keyStates[Key.Right] = false;
+            break;
+    }
+});
+
 let canvas: HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement;
 if (canvas) {
     let game : Game = new Game(canvas);
@@ -67,15 +124,16 @@ if (canvas) {
             return;    
         }
 
-        let deltaTime = time - game.lastUpdateTime; // time since last frame in milliseconds
+        let deltaTimeMs = time - game.lastUpdateTime; // time since last frame
         game.lastUpdateTime = time;
+        let deltaTimeSecs = deltaTimeMs / 1000;
     
-        // convert deltaTime to seconds
-        deltaTime /= 1000;
-    
+        game.onUpdateFrame( currentKeyState, deltaTimeSecs );
+
         // update position based on speed and time
-        if (game && game.renderer && game.renderer.level)
-            game.renderer.level.mcPosition[0] += SQUARE_SPEED * deltaTime;
+        //game.update(LatestKeyState, Keyboard.GetState(), interval);
+        // if (game && game.renderer && game.renderer.level)
+        //     game.renderer.level.mcPosition[0] += SQUARE_SPEED * deltaTimeMs;
         
         game.renderer.draw(game.gameWon);
     
