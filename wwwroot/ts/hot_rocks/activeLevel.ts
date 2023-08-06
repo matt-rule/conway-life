@@ -1,12 +1,32 @@
 import * as Constants from "./constants";
 import { vec2 } from "gl-matrix";
 
-export class ActiveLevel {
-    public gameWon: boolean;
-    public mcPosition: vec2;
+export enum CharacterFacing { Left, Right };
+export enum CollisionOutcome { None, Collision, Victory }
+export enum LevelResetCause { Start, Death, Victory }
 
-    constructor ( gameWon: boolean, mcPosition: vec2 ) {
-        this.gameWon = gameWon;
-        this.mcPosition = mcPosition;
+export class ActiveLevel {
+    public mcPosition: vec2 = vec2.fromValues(0, 0);
+
+    constructor () {
+        this.resetLevel(LevelResetCause.Start);
+    }
+
+    public resetLevel(resetCause: LevelResetCause)
+    {
+        this.mcPosition = vec2.fromValues(200, 100);
+        
+
+        // if (resetCause == LevelResetCause.Start)
+        //     this.levelNumber = 1;
+        // else if (resetCause == LevelResetCause.Victory)
+        // {
+        //     ++this.levelNumber;
+        //     if (LevelNumber == 5)
+        //     {
+        //         GameWon = true;
+        //         return;
+        //     }
+        // }
     }
 }

@@ -2,6 +2,7 @@ import * as Constants from "./constants";
 import { mat3, vec2 } from "gl-matrix";
 import { SpriteTexObject } from "./spriteTexObject";
 import { TexObject } from "./texObject";
+import { ActiveLevel } from "./activeLevel";
 
 export type ImagesDictionary = {[key: string]: HTMLImageElement};
 type TexObjectDictionary = {[key: number]: TexObject};
@@ -26,6 +27,7 @@ export class Renderer {
     public squareIndexBufferTextured: WebGLBuffer | null;
     public texObjectDictionary: TexObjectDictionary;
     public spriteTexObjectDictionary: SpriteTexObjectDictionary;
+    public level: ActiveLevel | null;
     
     public constructor()
     {
@@ -47,6 +49,7 @@ export class Renderer {
         this.squareIndexBufferTextured = null;
         this.texObjectDictionary = {};
         this.spriteTexObjectDictionary = {};
+        this.level = null;
     }
 
     public calcBufferData(): boolean
@@ -288,6 +291,8 @@ export class Renderer {
         this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-lava-surface.png" ], 128, 2 );
         this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-flames-big.png" ], 256, Constants.SPRITE_FLAMES_FRAMES );
 
+        this.level = new ActiveLevel();
+
         let success = this.calcBufferData() && this.calcBufferDataTextured();
         return success;
     }
@@ -296,11 +301,22 @@ export class Renderer {
         return screenWidth / (Constants.TILE_SIZE * Constants.LEVEL_EXT_WIDTH);
     }
 
-    public renderLevel( projectionMatrix: mat3, screenWidth: number, screenHeight: number, squarePosition: vec2 ): void
+    public renderVictoryScreen( screenWidth: number, screenHeight: number ): void
+    {
+
+    }
+
+    public renderLevel( gameWon : boolean, projectionMatrix: mat3, screenWidth: number, screenHeight: number ): void
     //public renderLevel( level: ActiveLevel, screenWidth: number, screenHeight: number ): void
     {
-        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured )
+        if ( !this.gl || !this.level || !this.shaderProgramTextured || !this.matrixLocationTextured )
             return;
+
+        if (gameWon)
+        {
+            this.renderVictoryScreen(screenWidth, screenHeight);
+            return;
+        }
 
         let scaleFactor: number = this.worldToScreenScaleFactor(screenWidth);
         let scaledProjMatrix = mat3.create();
@@ -313,10 +329,10 @@ export class Renderer {
         }
         
         this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
-            this.matrixLocationTextured, this.squareIndices, squarePosition, Constants.SPRITE_SUIT_SIZE );
+            this.matrixLocationTextured, this.squareIndices, this.level.mcPosition, Constants.SPRITE_SUIT_SIZE );
     }
 
-    public draw(squarePosition: vec2) {
+    public draw(gameWon: boolean) {
         if (!this.gl || !this.shaderProgram || !this.shaderProgramTextured || !this.width || !this.height || !this.matrixLocationTextured )
         {
             return;
@@ -353,6 +369,6 @@ export class Renderer {
         //this.gl.uniformMatrix3fv(this.matrixLocation, false, mvp);
         //this.gl.uniform4f(this.colorLocation, 1.0, 0.0, 0.0, 1);
 
-        this.renderLevel( projectionMatrix, this.width, this.height, squarePosition );
+        this.renderLevel( gameWon, projectionMatrix, this.width, this.height );
     }
 }
