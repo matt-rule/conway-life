@@ -14,15 +14,29 @@ export class ActiveLevel {
 
     public lavaHeight: number = 0;
     public facing: CharacterFacing = CharacterFacing.Left;
+    public blockData: number[][];
 
-    constructor () {
-        this.resetLevel(LevelResetCause.Start);
+    constructor (levelBlockData: number[][]) {
+        this.resetLevel(levelBlockData, LevelResetCause.Start);
+        this.blockData = levelBlockData;
     }
 
-    public resetLevel(resetCause: LevelResetCause)
+    public getStartingPosition(levelBlockData: number[][])
     {
-        this.mcPosition = vec2.fromValues(200, 100);
+        for ( let tileX: number = 0; tileX < Constants.LEVEL_WIDTH; ++tileX )
+            for ( let tileY: number = 0; tileY <= Constants.LEVEL_HEIGHT; ++tileY )
+                if ( levelBlockData[tileX][tileY] == Constants.TILE_ID_FLAG_WHITE )
+                {
+                    return vec2.fromValues(
+                        tileX * Constants.TILE_SIZE + Constants.TILE_SIZE * 0.5 - Constants.SPRITE_SUIT_SIZE / 2,
+                        (tileY + 0.05) * Constants.TILE_SIZE
+                    );
+                }
+        return vec2.fromValues(256, 256);
+    }
 
+    public resetLevel(levelBlockData: number[][], resetCause: LevelResetCause)
+    {
         // if (resetCause == LevelResetCause.Start)
         //     this.levelNumber = 1;
         // else if (resetCause == LevelResetCause.Victory)
@@ -34,6 +48,8 @@ export class ActiveLevel {
         //         return;
         //     }
         // }
+
+        this.mcPosition = this.getStartingPosition(levelBlockData);
     }
 
     public processPlayerMovement(prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number)

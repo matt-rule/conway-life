@@ -1,3 +1,4 @@
+import * as Constants from "./constants"
 import { Game } from "./game";
 import { ImagesDictionary } from "./renderer";
 import { Key, KeyboardState } from "./keyboardState";
@@ -36,6 +37,57 @@ function promiseFunction(url : string) {
 
 let loadStillImagePromises = stillImageUrls.map(promiseFunction);
 let loadAnimatedImagePromises = animatedImageUrls.map(promiseFunction);
+
+// function loadTilesFromFile(gameWon: boolean): void {
+//     if (gameWon) return;
+
+//     let tiles = new Array<Array<number>>(Constants.LEVEL_WIDTH).fill(new Array<number>(Constants.LEVEL_HEIGHT).fill(0));
+
+//     fetch(`wwwroot/assets/hot_rocks/levels/level_${this.LevelNumber}`)
+//         .then(response => response.arrayBuffer())
+//         .then(arrayBuffer => {
+//             let dataView = new DataView(arrayBuffer);
+
+//             // You will need to know the exact format of your binary file.
+//             // This example assumes 4-byte integers (int32).
+//             for (let x = 0; x < Constants.LEVEL_WIDTH; x++) {
+//                 for (let y = 0; y < Constants.LEVEL_HEIGHT; y++) {
+//                     // Adjust this based on your binary format.
+//                     tiles[x][y] = dataView.getInt32((x * Constants.LEVEL_HEIGHT + y) * 4);
+//                 }
+//             }
+
+//             // Assign the tiles to the class member or handle them as needed.
+//             this.Tiles = tiles;
+//         })
+//         .catch(error => {
+//             // Handle the error
+//             this.Tiles = new Array<Array<number>>(Constants.LEVEL_WIDTH).fill(new Array<number>(Constants.LEVEL_HEIGHT).fill(0));
+//         });
+// }
+
+const levelNumbers = [1, 2, 3, 4];
+async function loadTilesFromFile(gameWon: boolean, levelNumber: number): Promise<number[][]> {
+    if (gameWon)
+        return [];
+
+    let tiles: number[][] = [];
+
+    try {
+        const response = await fetch(`assets/hot_rocks/levels/level_${levelNumber}.json`, { method: 'GET' });
+        tiles = await response.json();
+
+        if (tiles.length !== Constants.LEVEL_WIDTH || tiles[0]?.length !== Constants.LEVEL_HEIGHT) {
+            throw new Error("Incorrect dimensions in the level data");
+        }
+
+    } catch (error) {
+        console.error(error);
+        tiles = new Array(Constants.LEVEL_WIDTH).fill(null).map(() => new Array(Constants.LEVEL_HEIGHT).fill(0));
+    }
+
+    return tiles;
+}
 
 let currentKeyState: KeyboardState = new KeyboardState();
 
@@ -101,14 +153,19 @@ if (canvas) {
         let stillImages: ImagesDictionary = Object.assign({}, ...stillImageObjects);
     
         Promise.all(loadAnimatedImagePromises).then(animatedImageObjects => {
-            if (!canvas)
-                return;
-
             let animatedImages: ImagesDictionary = Object.assign({}, ...animatedImageObjects);
-    
-            game = new Game( canvas );
-            game.init(stillImages, animatedImages);
-            requestAnimationFrame(animate);
+
+            Promise.all(levelNumbers.map(levelNumber => loadTilesFromFile(false, levelNumber))).then(loadedLevels => {
+                if (!canvas)
+                    return;
+        
+                game = new Game( canvas );
+                game.init(stillImages, animatedImages, loadedLevels);
+                requestAnimationFrame(animate);
+            })
+            .catch(err => {
+                console.error('Error occurred loading levels:', err);
+            });
         }).catch(err => {
             console.error("Error occurred loading animated images: ", err);
         });
@@ -135,7 +192,7 @@ if (canvas) {
         // if (game && game.renderer && game.renderer.level)
         //     game.renderer.level.mcPosition[0] += SQUARE_SPEED * deltaTimeMs;
         
-        game.renderer.draw(game.gameWon);
+        game.renderer.draw( game.gameWon, game.loadedLevels[ 0 ] );
     
         requestAnimationFrame(animate);
     }

@@ -10,6 +10,7 @@ export class Game {
     public gameWon: boolean;
     public latestKeyState: KeyboardState;
     public frameTimeCounterSecs: number;
+    public loadedLevels: number[][][];
     
     // Define a constructor
     constructor(canvas: HTMLCanvasElement)
@@ -20,9 +21,11 @@ export class Game {
         this.gameWon = false;
         this.latestKeyState = new KeyboardState();
         this.frameTimeCounterSecs = 0;
+        this.loadedLevels = [];
     }
 
-    init( stillImages: ImagesDictionary, animatedImages: ImagesDictionary ) {
+    init( stillImages: ImagesDictionary, animatedImages: ImagesDictionary, loadedLevels: number[][][] ) {
+        this.loadedLevels = loadedLevels;
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         this.canvas.style.width = `${window.innerWidth}px`;
@@ -31,7 +34,7 @@ export class Game {
         this.canvas.style.maxHeight = `${window.innerHeight}px`;
         let gl: WebGL2RenderingContext | null = this.canvas.getContext("webgl2");
         if (gl) {
-            this.renderer.init( gl, this.canvas.width, this.canvas.height, stillImages, animatedImages );
+            this.renderer.init( gl, loadedLevels[0], this.canvas.width, this.canvas.height, stillImages, animatedImages );
         }
         else {
             alert('Your browser does not support webgl2');

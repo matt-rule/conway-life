@@ -249,7 +249,7 @@ export class Renderer {
         return true;
     }
 
-    public init(gl: WebGL2RenderingContext, width: number, height: number, stillImages: ImagesDictionary, animatedImages: ImagesDictionary ): boolean {
+    public init(gl: WebGL2RenderingContext, levelBlockData: number[][], width: number, height: number, stillImages: ImagesDictionary, animatedImages: ImagesDictionary ): boolean {
         this.gl = gl;
         this.width = width;
         this.height = height;
@@ -291,7 +291,7 @@ export class Renderer {
         this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-lava-surface.png" ], 128, 2 );
         this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-flames-big.png" ], 256, Constants.SPRITE_FLAMES_FRAMES );
 
-        this.level = new ActiveLevel();
+        this.level = new ActiveLevel(levelBlockData);
 
         let success = this.calcBufferData() && this.calcBufferDataTextured();
         return success;
@@ -306,7 +306,7 @@ export class Renderer {
 
     }
 
-    public renderLevel( gameWon : boolean, projectionMatrix: mat3, screenWidth: number, screenHeight: number ): void
+    public renderLevel( gameWon : boolean, levelBlockData: number[][], projectionMatrix: mat3, screenWidth: number, screenHeight: number ): void
     //public renderLevel( level: ActiveLevel, screenWidth: number, screenHeight: number ): void
     {
         if ( !this.gl || !this.level || !this.shaderProgramTextured || !this.matrixLocationTextured )
@@ -326,6 +326,8 @@ export class Renderer {
         for ( let x: number = -1; x <= Constants.LEVEL_WIDTH +2; ++x )
             for ( let y: number = -1; y <= Constants.LEVEL_HEIGHT +2; ++y )
             {
+                let textureToUse: number = -1;
+
                 if
                 (
                     x < 0
@@ -334,8 +336,37 @@ export class Renderer {
                     || y >= Constants.LEVEL_HEIGHT
                 )
                 {
+                    textureToUse = Constants.TEX_ID_ROCK;
                     this.texObjectDictionary[ Constants.TEX_ID_ROCK ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
                         this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.TILE_SIZE*x, Constants.TILE_SIZE*y ), Constants.TILE_SIZE );
+                }
+                else
+                {
+                    switch ( levelBlockData[x][y] )
+                    {
+                        case Constants.TILE_ID_ROCK:
+                            textureToUse = Constants.TEX_ID_ROCK;
+                            break;
+                        case Constants.TILE_ID_SPITTER:
+                            textureToUse = Constants.TEX_ID_SPITTER;
+                            break;
+                        case Constants.TILE_ID_FLAG_RED:
+                            textureToUse = Constants.TEX_ID_FLAG_RED;
+                            break;
+                        case Constants.TILE_ID_FLAG_WHITE:
+                            textureToUse = Constants.TEX_ID_FLAG_WHITE;
+                            break;
+                        case Constants.TILE_ID_FLAME_SPITTER:
+                            textureToUse = Constants.TEX_ID_FLAME_SPITTER;
+                            break;
+                        case Constants.TILE_ID_EMPTY:
+                        default:
+                            break;
+                    }
+
+                    if ( textureToUse != -1 )
+                        this.texObjectDictionary[ textureToUse ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
+                            this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.TILE_SIZE*x, Constants.TILE_SIZE*y ), Constants.TILE_SIZE );
                 }
             }
         
@@ -343,7 +374,7 @@ export class Renderer {
             this.matrixLocationTextured, this.squareIndices, this.level.mcPosition, Constants.SPRITE_SUIT_SIZE );
     }
 
-    public draw(gameWon: boolean) {
+    public draw( gameWon: boolean, levelBlockData: number[][] ) {
         if (!this.gl || !this.shaderProgram || !this.shaderProgramTextured || !this.width || !this.height || !this.matrixLocationTextured )
         {
             return;
@@ -380,6 +411,6 @@ export class Renderer {
         //this.gl.uniformMatrix3fv(this.matrixLocation, false, mvp);
         //this.gl.uniform4f(this.colorLocation, 1.0, 0.0, 0.0, 1);
 
-        this.renderLevel( gameWon, projectionMatrix, this.width, this.height );
+        this.renderLevel( gameWon, levelBlockData, projectionMatrix, this.width, this.height );
     }
 }
