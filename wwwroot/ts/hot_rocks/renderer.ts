@@ -1,9 +1,11 @@
 import * as Constants from "./constants";
 import { mat3, vec2 } from "gl-matrix";
+import { SpriteTexObject } from "./spriteTexObject";
 import { TexObject } from "./texObject";
 
 export type ImagesDictionary = {[key: string]: HTMLImageElement};
 type TexObjectDictionary = {[key: number]: TexObject};
+type SpriteTexObjectDictionary = {[key: number]: SpriteTexObject};
 
 export class Renderer {
     public gl: WebGL2RenderingContext | null;
@@ -23,7 +25,7 @@ export class Renderer {
     public squareVertexBufferTextured: WebGLBuffer | null;
     public squareIndexBufferTextured: WebGLBuffer | null;
     public texObjectDictionary: TexObjectDictionary;
-    public spriteTexObjectDictionary: TexObjectDictionary;
+    public spriteTexObjectDictionary: SpriteTexObjectDictionary;
     
     public constructor()
     {
@@ -244,7 +246,7 @@ export class Renderer {
         return true;
     }
 
-    public init(gl: WebGL2RenderingContext, width: number, height: number, stillImages: ImagesDictionary ): boolean {
+    public init(gl: WebGL2RenderingContext, width: number, height: number, stillImages: ImagesDictionary, animatedImages: ImagesDictionary ): boolean {
         this.gl = gl;
         this.width = width;
         this.height = height;
@@ -264,13 +266,27 @@ export class Renderer {
             return false;
 
         this.texObjectDictionary = {};
+        this.texObjectDictionary[ Constants.TEX_ID_LAVA_BOMB ] = new TexObject(stillImages[ "assets/hot_rocks/lava-bomb.png" ]);
         this.texObjectDictionary[ Constants.TEX_ID_ROCK ] = new TexObject(stillImages[ "assets/hot_rocks/tile.png" ]);
+        this.texObjectDictionary[ Constants.TEX_ID_BG ] = new TexObject(stillImages[ "assets/hot_rocks/bg1.png" ]);
         this.texObjectDictionary[ Constants.TEX_ID_STANDING ] = new TexObject(stillImages[ "assets/hot_rocks/sprite-standing.png" ]);
+        this.texObjectDictionary[ Constants.TEX_ID_SPITTER ] = new TexObject(stillImages[ "assets/hot_rocks/spitter.png" ]);
+        this.texObjectDictionary[ Constants.TEX_ID_BULLET ] = new TexObject(stillImages[ "assets/hot_rocks/lava-bullet-2.png" ]);
+        this.texObjectDictionary[ Constants.TEX_ID_FLAG_RED ] = new TexObject(stillImages[ "assets/hot_rocks/flag-red.png" ]);
+        this.texObjectDictionary[ Constants.TEX_ID_FLAG_WHITE ] = new TexObject(stillImages[ "assets/hot_rocks/flag-white.png" ]);
+        this.texObjectDictionary[ Constants.TEX_ID_FLAME_SPITTER ] = new TexObject(stillImages[ "assets/hot_rocks/spitter-flame.png" ]);
         
         // The Number() is necessary because Object.keys returns an array of strings, even for number keys
         Object.keys(this.texObjectDictionary).forEach(key => {
             this.texObjectDictionary[Number(key)].glInit( gl );
         });
+
+        this.spriteTexObjectDictionary = {};
+        this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-suit.png" ], 256, 8 );
+        this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-font.png" ], 32, 95 );
+        this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-lava-lake.png" ], 128, 2 );
+        this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-lava-surface.png" ], 128, 2 );
+        this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ] = new SpriteTexObject( animatedImages[ "assets/sprite-flames-big.png" ], 256, Constants.SPRITE_FLAMES_FRAMES );
 
         let success = this.calcBufferData() && this.calcBufferDataTextured();
         return success;

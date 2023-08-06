@@ -19,7 +19,7 @@ export class Game {
         this.squarePosition = vec2.fromValues(200, 100);
     }
 
-    init( stillImages: ImagesDictionary ) {
+    init( stillImages: ImagesDictionary, animatedImages: ImagesDictionary ) {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         this.canvas.style.width = `${window.innerWidth}px`;
@@ -28,7 +28,7 @@ export class Game {
         this.canvas.style.maxHeight = `${window.innerHeight}px`;
         let gl: WebGL2RenderingContext | null = this.canvas.getContext("webgl2");
         if (gl) {
-            this.renderer.init( gl, this.canvas.width, this.canvas.height, stillImages );
+            this.renderer.init( gl, this.canvas.width, this.canvas.height, stillImages, animatedImages );
         }
         else {
             alert('Your browser does not support webgl2');
@@ -41,39 +41,56 @@ export class Game {
 }
 
 let stillImageUrls = [
+    "assets/hot_rocks/lava-bomb.png",
     "assets/hot_rocks/tile.png",
-    "assets/hot_rocks/sprite-standing.png"
+    "assets/hot_rocks/bg1.png",
+    "assets/hot_rocks/sprite-standing.png",
+    "assets/hot_rocks/spitter.png",
+    "assets/hot_rocks/lava-bullet-2.png",
+    "assets/hot_rocks/flag-red.png",
+    "assets/hot_rocks/flag-white.png",
+    "assets/hot_rocks/spitter-flame.png"
 ];
 
-let loadStillImagePromises = stillImageUrls.map(url => {
+let animatedImageUrls = [
+    "assets/hot_rocks/sprite-suit.png",
+    "assets/hot_rocks/sprite-font.png",
+    "assets/hot_rocks/sprite-lava-lake.png",
+    "assets/hot_rocks/sprite-lava-surface.png",
+    "assets/hot_rocks/sprite-flames-big.png"
+];
+
+function promiseFunction(url : string) {
     return new Promise<{[key: string]: HTMLImageElement}>((resolve, reject) => {
         let img = new Image();
         img.onload = () => resolve({[url]: img});
         img.onerror = reject;
         img.src = url;
     });
-});
+}
+
+let loadStillImagePromises = stillImageUrls.map(promiseFunction);
+let loadAnimatedImagePromises = animatedImageUrls.map(promiseFunction);
 
 let canvas: HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement;
 if (canvas) {
     let game : Game = new Game(canvas);
 
     Promise.all(loadStillImagePromises).then(stillImageObjects => {
-        if (!canvas)
-            return;
-
         let stillImages: ImagesDictionary = Object.assign({}, ...stillImageObjects);
     
-        //Promise.all(loadAnimatedImagePromises).then(animatedImageObjects => {
-            //let animatedImages: ImagesDictionary = Object.assign({}, ...animatedImageObjects);
+        Promise.all(loadAnimatedImagePromises).then(animatedImageObjects => {
+            if (!canvas)
+                return;
+
+            let animatedImages: ImagesDictionary = Object.assign({}, ...animatedImageObjects);
     
             game = new Game( canvas );
-            game.init(stillImages);
-            //game.init(stillImages, animatedImages);
+            game.init(stillImages, animatedImages);
             requestAnimationFrame(animate);
-        // }).catch(err => {
-        //     console.error("Error occurred loading animated images: ", err);
-        // });
+        }).catch(err => {
+            console.error("Error occurred loading animated images: ", err);
+        });
     
     }).catch(err => {
         console.error("Error occurred loading still images: ", err);
