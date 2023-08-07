@@ -49,10 +49,10 @@ export class Game {
         while (this.frameTimeCounterSecs > intervalSecs)
         {
             if (this.renderer && this.renderer.level)
-                this.renderer.level.update(this.latestKeyState, currentKeyState, intervalSecs);
+                this.renderer.level.update(this.gameWon, this.latestKeyState, currentKeyState, intervalSecs);
             this.frameTimeCounterSecs -= intervalSecs;
         }
 
-        this.latestKeyState = currentKeyState;
+        this.latestKeyState = currentKeyState.clone();
     }    
 }

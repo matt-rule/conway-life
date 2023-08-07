@@ -1,3 +1,4 @@
+import { BoundingBox } from "./boundingBox";
 import * as Constants from "./constants";
 import { Key, KeyboardState } from "./keyboardState";
 import { vec2 } from "gl-matrix";
@@ -10,22 +11,25 @@ export class ActiveLevel {
     public mcPosition: vec2 = vec2.fromValues(0, 0);
     public mcVelocity: vec2 = vec2.fromValues(0, 0);
 
+    public mcGrounded: boolean = false;
     public mcRunning: boolean = false;
 
     public lavaHeight: number = 0;
     public facing: CharacterFacing = CharacterFacing.Left;
-    public blockData: number[][];
+    public tiles: number[][];
 
-    constructor (levelBlockData: number[][]) {
-        this.resetLevel(levelBlockData, LevelResetCause.Start);
-        this.blockData = levelBlockData;
+    public editorMode: boolean = false;
+
+    constructor (tiles: number[][]) {
+        this.tiles = tiles;
+        this.resetLevel( LevelResetCause.Start);
     }
 
-    public getStartingPosition(levelBlockData: number[][])
+    public getStartingPosition()
     {
         for ( let tileX: number = 0; tileX < Constants.LEVEL_WIDTH; ++tileX )
             for ( let tileY: number = 0; tileY <= Constants.LEVEL_HEIGHT; ++tileY )
-                if ( levelBlockData[tileX][tileY] == Constants.TILE_ID_FLAG_WHITE )
+                if ( this.tiles[tileX][tileY] == Constants.TILE_ID_FLAG_WHITE )
                 {
                     return vec2.fromValues(
                         tileX * Constants.TILE_SIZE + Constants.TILE_SIZE * 0.5 - Constants.SPRITE_SUIT_SIZE / 2,
@@ -35,7 +39,7 @@ export class ActiveLevel {
         return vec2.fromValues(256, 256);
     }
 
-    public resetLevel(levelBlockData: number[][], resetCause: LevelResetCause)
+    public resetLevel( resetCause: LevelResetCause )
     {
         // if (resetCause == LevelResetCause.Start)
         //     this.levelNumber = 1;
@@ -49,11 +53,99 @@ export class ActiveLevel {
         //     }
         // }
 
-        this.mcPosition = this.getStartingPosition(levelBlockData);
+        this.mcPosition = this.getStartingPosition();
     }
 
-    public processPlayerMovement(prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number)
+    public saveTilesToFile(): void
     {
+
+    }
+
+    public loadTilesFromFile(): void
+    {
+
+    }
+
+    public getPlayerBoundingBox( playerX: number, playerY: number ): BoundingBox
+    {
+        let left: number = playerX + (Constants.SPRITE_SUIT_SIZE / 2) - Constants.CHAR_PHYSICS_WIDTH;
+        let right: number = playerX + (Constants.SPRITE_SUIT_SIZE / 2) + Constants.CHAR_PHYSICS_WIDTH;
+        let bottom: number = playerY;
+        let top: number = playerY + Constants.SPRITE_SUIT_SIZE;
+
+        return new BoundingBox(left, right, bottom, top);
+    }
+
+    public bbLevelIntersection( gameWon: boolean, bb: BoundingBox ): CollisionOutcome
+    {
+        if ( gameWon )
+            return CollisionOutcome.None;
+
+        let McLeftTile: number = Math.floor(bb.left);
+        let McRightTile: number = Math.floor(bb.right);
+        let McBottomTile: number = Math.floor(bb.bottom);
+        let McTopTile: number = Math.floor(bb.top);
+
+        let collision: boolean = false;
+
+        for (let tileX: number = McLeftTile; tileX <= McRightTile; ++tileX)
+            for (let tileY: number = McBottomTile; tileY <= McTopTile; ++tileY)
+            {
+                if (tileX < 0 || tileX >= Constants.LEVEL_WIDTH
+                    || tileY < 0 || tileY >= Constants.LEVEL_HEIGHT)
+                    collision = true;
+                else if (this.tiles[tileX][tileY] == Constants.TILE_ID_ROCK)
+                    collision = true;
+                else if (this.tiles[tileX][tileY] == Constants.TILE_ID_FLAG_RED)
+                    return CollisionOutcome.Victory;
+            }
+
+        if (collision)
+            return CollisionOutcome.Collision;
+        else
+            return CollisionOutcome.None;
+    }
+
+    public getPlayerBoundingBoxTiles( playerX: number, playerY: number )
+    {
+        let bb = this.getPlayerBoundingBox(playerX, playerY);
+        return new BoundingBox(
+            bb.left / Constants.TILE_SIZE,
+            bb.right / Constants.TILE_SIZE,
+            bb.bottom / Constants.TILE_SIZE,
+            bb.top / Constants.TILE_SIZE
+        );
+    }
+
+    public isIntersectionWithLevel( gameWon: boolean, playerX: number, playerY: number): CollisionOutcome
+    {
+        if ( gameWon )
+            return CollisionOutcome.None;
+
+        let boundingBox: BoundingBox = this.getPlayerBoundingBoxTiles(playerX, playerY);
+        return this.bbLevelIntersection( gameWon, boundingBox );
+    }
+
+    public isLavaCollision( playerY: number ): boolean
+    {
+        return false;
+    }
+
+    public processPlayerMovement(gameWon: boolean, prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number)
+    {
+        if ( gameWon )
+            return;
+
+        if ( this.editorMode )
+        {
+            if (keyState.isKeyDown(Key.F1) && !prevKeyState.isKeyDown(Key.F1))
+                this.saveTilesToFile();
+            if (keyState.isKeyDown(Key.F2) && !prevKeyState.isKeyDown(Key.F2))
+                this.loadTilesFromFile();
+        }
+        if (keyState.isKeyDown(Key.F12) && !prevKeyState.isKeyDown(Key.F12))
+            this.editorMode = !this.editorMode;
+
         let newPosition: vec2 = this.mcPosition;
 
         let moveLeft: boolean = keyState.isKeyDown(Key.Left) || keyState.isKeyDown(Key.A);
@@ -75,37 +167,66 @@ export class ActiveLevel {
         {
             this.mcRunning = false;
         }
-        // if ((keyState.isKeyDown(Key.Space) || keyState.isKeyDown(Key.W)) && !(prevKeyState.isKeyDown(Key.Space) || keyState.isKeyDown(Key.W)))
-        // {
-        //     if (McGrounded)
-        //     {
-        //         McGrounded = false;
-        //         McVelocity.Y += Constants.JUMP_SPEED;
-        //     }
-        // }
+        if (keyState.isKeyDown(Key.Space) && !prevKeyState.isKeyDown(Key.Space)) {
+            console.log('jump detected');
+        }
 
-        // CollisionOutcome outcome = IsIntersectionWithLevel(newPosition.X, newPosition.Y);
-        // switch (outcome)
-        // {
-        //     case CollisionOutcome.None:
-        //         McPosition = newPosition;
-        //         break;
-        //     case CollisionOutcome.Victory:
-        //         ResetLevel(LevelResetCause.Victory);
-        //         return;
-        //     default:
-        //         break;
-        // }
+        if ((keyState.isKeyDown(Key.Space) || keyState.isKeyDown(Key.W)) && !(prevKeyState.isKeyDown(Key.Space) || prevKeyState.isKeyDown(Key.W)))
+        {
+            console.log('jump detected');
+            if ( this.mcGrounded )
+            {
+                console.log('jump detected');
+                this.mcGrounded = false;
+                this.mcVelocity[1] += Constants.JUMP_SPEED;
+            }
+        }
+
+        let outcome: CollisionOutcome = this.isIntersectionWithLevel(gameWon, newPosition[0], newPosition[1]);
+        switch (outcome)
+        {
+            case CollisionOutcome.None:
+                this.mcPosition = newPosition;
+                break;
+            case CollisionOutcome.Victory:
+                this.resetLevel( LevelResetCause.Victory);
+                return;
+            default:
+                break;
+        }
         
-        newPosition = this.mcPosition;
+        newPosition = vec2.clone( this.mcPosition );
 
-        // collisions - process Y
-        // this.mcVelocity[1] -= Constants.GRAVITY * elapsedTime;
-        // newPosition[1] += this.mcVelocity[1] * elapsedTime;
+        // collisions - process Y only
+        // TODO - check whether X is required too
+        this.mcVelocity[1] -= Constants.GRAVITY * elapsedTime;
+        newPosition[1] += this.mcVelocity[1] * elapsedTime;
+
+        outcome = this.isIntersectionWithLevel(gameWon, newPosition[0], newPosition[1]);
+        switch (outcome)
+        {
+            case CollisionOutcome.None:
+                this.mcPosition = newPosition;
+                this.mcGrounded = false;
+                break;
+            case CollisionOutcome.Victory:
+                this.resetLevel( LevelResetCause.Victory);
+                return;
+            default:
+                vec2.zero( this.mcVelocity );
+                this.mcGrounded = true;             // TODO: try setting the character position to some intermediate value
+                break;
+        }
+
+        if ( this.isLavaCollision( this.mcPosition[1] ) )
+        {
+            this.resetLevel(LevelResetCause.Death);
+            return;
+        }
     }
 
-    public update(prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number)
+    public update(gameWon: boolean, prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number)
     {
-        this.processPlayerMovement(prevKeyState, keyState, elapsedTime);
+        this.processPlayerMovement(gameWon, prevKeyState, keyState, elapsedTime);
     }
 }

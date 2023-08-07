@@ -107,6 +107,7 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
             currentKeyState.keyStates[Key.W] = true;
             break;
         case ' ':
+            console.log('spacebar');
             currentKeyState.keyStates[Key.Space] = true;
             break;
         case 'ArrowLeft':
@@ -114,6 +115,15 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
             break;
         case 'ArrowRight':
             currentKeyState.keyStates[Key.Right] = true;
+            break;
+        case 'F1':  // TODO: Test F keys
+            currentKeyState.keyStates[Key.F1] = true;
+            break;
+        case 'F2':
+            currentKeyState.keyStates[Key.F2] = true;
+            break;
+        case 'F12':
+            currentKeyState.keyStates[Key.F12] = true;
             break;
     }
 });
@@ -141,6 +151,15 @@ document.addEventListener('keyup', (event: KeyboardEvent) => {
             break;
         case 'ArrowRight':
             currentKeyState.keyStates[Key.Right] = false;
+            break;
+        case 'F1':  // TODO: Test F keys
+            currentKeyState.keyStates[Key.F1] = false;
+            break;
+        case 'F2':
+            currentKeyState.keyStates[Key.F2] = false;
+            break;
+        case 'F12':
+            currentKeyState.keyStates[Key.F12] = false;
             break;
     }
 });
@@ -186,11 +205,6 @@ if (canvas) {
         let deltaTimeSecs = deltaTimeMs / 1000;
     
         game.onUpdateFrame( currentKeyState, deltaTimeSecs );
-
-        // update position based on speed and time
-        //game.update(LatestKeyState, Keyboard.GetState(), interval);
-        // if (game && game.renderer && game.renderer.level)
-        //     game.renderer.level.mcPosition[0] += SQUARE_SPEED * deltaTimeMs;
         
         game.renderer.draw( game.gameWon, game.loadedLevels[ 0 ] );
     
