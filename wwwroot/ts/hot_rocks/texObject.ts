@@ -17,20 +17,20 @@ export class TexObject {
     }
 
     public glRenderFromCorner( gl: WebGL2RenderingContext, shaderProgramTextured: WebGLProgram,
-        projectionMatrix: mat3, matLocationTextured: WebGLUniformLocation, squareIndices: number[], position: vec2, scale: number, flip: boolean = false )
+        currentMatrix: mat3, matLocationTextured: WebGLUniformLocation, squareIndices: number[], position: vec2, scale: number, flip: boolean = false )
     {
         let modelMatrix = mat3.create();
-        mat3.translate( modelMatrix, mat3.create(), position );
-        mat3.scale ( modelMatrix, modelMatrix, vec2.fromValues( scale, scale ) );
+        mat3.translate( modelMatrix, modelMatrix, position );           // world space translation
 
+        mat3.scale ( modelMatrix, modelMatrix, vec2.fromValues( scale, scale ) );           // applying this appears to be causing a translation
         if (flip)
         {
             mat3.translate( modelMatrix, modelMatrix, vec2.fromValues( 1.0, 0.0 ) );
-            mat3.scale( modelMatrix, modelMatrix, vec2.fromValues( -1.0, 1.0 ) );
+            mat3.scale( modelMatrix, modelMatrix, vec2.fromValues( -1.0, 1.0 ) );           // this also appears to be causing a translation
         }
 
         let mvp = mat3.create();
-        mat3.multiply( mvp, projectionMatrix, modelMatrix )
+        mat3.multiply( mvp, currentMatrix, modelMatrix )
         gl.uniformMatrix3fv( matLocationTextured, false, mvp );
 
         gl.activeTexture(gl.TEXTURE0);

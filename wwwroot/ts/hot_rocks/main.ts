@@ -107,7 +107,6 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
             currentKeyState.keyStates[Key.W] = true;
             break;
         case ' ':
-            console.log('spacebar');
             currentKeyState.keyStates[Key.Space] = true;
             break;
         case 'ArrowLeft':

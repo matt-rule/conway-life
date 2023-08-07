@@ -146,7 +146,7 @@ export class ActiveLevel {
         if (keyState.isKeyDown(Key.F12) && !prevKeyState.isKeyDown(Key.F12))
             this.editorMode = !this.editorMode;
 
-        let newPosition: vec2 = this.mcPosition;
+        let newPosition: vec2 = vec2.clone( this.mcPosition );
 
         let moveLeft: boolean = keyState.isKeyDown(Key.Left) || keyState.isKeyDown(Key.A);
         let moveRight: boolean = keyState.isKeyDown(Key.Right) || keyState.isKeyDown(Key.D);
@@ -167,16 +167,11 @@ export class ActiveLevel {
         {
             this.mcRunning = false;
         }
-        if (keyState.isKeyDown(Key.Space) && !prevKeyState.isKeyDown(Key.Space)) {
-            console.log('jump detected');
-        }
 
         if ((keyState.isKeyDown(Key.Space) || keyState.isKeyDown(Key.W)) && !(prevKeyState.isKeyDown(Key.Space) || prevKeyState.isKeyDown(Key.W)))
         {
-            console.log('jump detected');
             if ( this.mcGrounded )
             {
-                console.log('jump detected');
                 this.mcGrounded = false;
                 this.mcVelocity[1] += Constants.JUMP_SPEED;
             }

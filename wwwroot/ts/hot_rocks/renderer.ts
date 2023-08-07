@@ -2,7 +2,7 @@ import * as Constants from "./constants";
 import { mat3, vec2 } from "gl-matrix";
 import { SpriteTexObject } from "./spriteTexObject";
 import { TexObject } from "./texObject";
-import { ActiveLevel } from "./activeLevel";
+import { ActiveLevel, CharacterFacing } from "./activeLevel";
 
 export type ImagesDictionary = {[key: string]: HTMLImageElement};
 type TexObjectDictionary = {[key: number]: TexObject};
@@ -104,10 +104,10 @@ export class Renderer {
         }
 
         this.squareVerticesTextured = [
-            1, 1, 0, 0,
-            2, 1, 1, 0,
-            1, 2, 0, 1,
-            2, 2, 1, 1          // These go from 1 to 2 to resolve an odd difference between this and gameoff2018
+            0, 0, 0, 0,
+            1, 0, 1, 0,
+            0, 1, 0, 1,
+            1, 1, 1, 1
         ];
 
         this.squareIndicesTextured = [
@@ -297,6 +297,19 @@ export class Renderer {
         return success;
     }
 
+    // provided in world coords
+    public getWorldToScreenOffset(): vec2
+    {
+        if (!this.level)
+            return vec2.fromValues(0,0);
+
+        let result: vec2 = vec2.fromValues(Constants.TILE_SIZE, Constants.TILE_SIZE);
+        if ( this.level.mcPosition[1] > Constants.TILE_SIZE * 12 )
+            vec2.add(result, result, vec2.fromValues(0.0, Constants.TILE_SIZE * 12 - this.level.mcPosition[1]));
+
+        return result;
+    }
+
     public worldToScreenScaleFactor ( screenWidth: number ): number {
         return screenWidth / (Constants.TILE_SIZE * Constants.LEVEL_EXT_WIDTH);
     }
@@ -318,9 +331,47 @@ export class Renderer {
             return;
         }
 
+        // scale by screen width relative to tile size*number of tiles
         let scaleFactor: number = this.worldToScreenScaleFactor(screenWidth);
-        let scaledProjMatrix = mat3.create();
-        mat3.scale( scaledProjMatrix, projectionMatrix, vec2.fromValues( scaleFactor, scaleFactor ));
+
+        // Render background
+        {
+            let viewMatrix = mat3.create();
+            mat3.scale( viewMatrix, viewMatrix, vec2.fromValues( scaleFactor * 0.5, scaleFactor * 0.5 ));
+
+            // Account for border
+            mat3.translate( viewMatrix, viewMatrix, vec2.fromValues( Constants.BG_TILE_SIZE, Constants.BG_TILE_SIZE ) );
+
+            // If they are more than x tiles up
+            if ( this.level.mcPosition[1] > Constants.TILE_SIZE * 12)
+            {
+                // character appears some distance from the bottom of the screen
+                mat3.translate( viewMatrix, viewMatrix, vec2.fromValues( 0, Constants.TILE_SIZE * 12 ) );
+                // account for character position in level
+                mat3.translate( viewMatrix, viewMatrix, vec2.fromValues( 0, -this.level.mcPosition[1] ) );
+            }
+
+            let mvp: mat3 = mat3.create();
+            mat3.multiply( mvp, projectionMatrix, viewMatrix );
+
+            for ( let x: number = -1; x <= Constants.LEVEL_WIDTH +2; ++x )
+                for ( let y: number = -1; y <= Constants.LEVEL_HEIGHT +2; ++y )
+                {
+                    this.texObjectDictionary[ Constants.TEX_ID_BG ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
+                        this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.BG_TILE_SIZE*x, Constants.BG_TILE_SIZE*y ), Constants.BG_TILE_SIZE );
+                }
+        }
+
+        // Set up matrices for foreground objects
+        let viewMatrix = mat3.create();
+        mat3.scale( viewMatrix, viewMatrix, vec2.fromValues( scaleFactor, scaleFactor ));
+
+        // Account for border
+        let offset: vec2 = this.getWorldToScreenOffset();
+        mat3.translate( viewMatrix, viewMatrix, offset );
+
+        let mvp: mat3 = mat3.create();
+        mat3.multiply( mvp, projectionMatrix, viewMatrix );
 
         // Render tiles
         for ( let x: number = -1; x <= Constants.LEVEL_WIDTH +2; ++x )
@@ -337,7 +388,7 @@ export class Renderer {
                 )
                 {
                     textureToUse = Constants.TEX_ID_ROCK;
-                    this.texObjectDictionary[ Constants.TEX_ID_ROCK ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
+                    this.texObjectDictionary[ Constants.TEX_ID_ROCK ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
                         this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.TILE_SIZE*x, Constants.TILE_SIZE*y ), Constants.TILE_SIZE );
                 }
                 else
@@ -365,13 +416,22 @@ export class Renderer {
                     }
 
                     if ( textureToUse != -1 )
-                        this.texObjectDictionary[ textureToUse ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
+                        this.texObjectDictionary[ textureToUse ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
                             this.matrixLocationTextured, this.squareIndices, vec2.fromValues( Constants.TILE_SIZE*x, Constants.TILE_SIZE*y ), Constants.TILE_SIZE );
                 }
             }
         
-        this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, scaledProjMatrix,
-            this.matrixLocationTextured, this.squareIndices, this.level.mcPosition, Constants.SPRITE_SUIT_SIZE );
+        // if (! this.level.mcRunning )
+        // {
+
+        // }
+        // else
+        // {
+
+        // }
+
+        this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
+            this.matrixLocationTextured, this.squareIndices, this.level.mcPosition, Constants.SPRITE_SUIT_SIZE, this.level.facing == CharacterFacing.Right );
     }
 
     public draw( gameWon: boolean, levelBlockData: number[][] ) {
