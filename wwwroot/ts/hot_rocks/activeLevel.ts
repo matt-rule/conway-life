@@ -22,6 +22,7 @@ export class ActiveLevel {
     public lavaHeight: number = 0;
     public facing: CharacterFacing = CharacterFacing.Left;
     
+    public spriteAnimationPosition: number = 0;       // Normalised frame to render (rate of increase may not be 1/sec).
     public lavaAnimationLoopValue: number = 0;       // Normalised frame to render (rate of increase may not be 1/sec).
 
     public editorMode: boolean = false;
@@ -63,6 +64,7 @@ export class ActiveLevel {
         this.lavaSpeedPerLevel = [ 8, 20, 20, 30 ];
         this.mcPosition = this.getStartingPosition();
         this.lavaHeight = 0;
+        this.spriteAnimationPosition = 0;
         this.lavaAnimationLoopValue = 0;
 
         return false;
@@ -243,6 +245,10 @@ export class ActiveLevel {
     // Return true if level won
     public update( gameWon: boolean, prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number): boolean
     {
+        this.spriteAnimationPosition += elapsedTime * Constants.SPRITE_SUIT_FPS / Constants.SPRITE_SUIT_FRAMES;
+        if (this.spriteAnimationPosition > 1.0)
+            this.spriteAnimationPosition -= 1.0;
+
         //if (!EditorMode) // TODO: uncomment
             this.lavaHeight += elapsedTime * this.lavaSpeedPerLevel[this.levelNumber];
 

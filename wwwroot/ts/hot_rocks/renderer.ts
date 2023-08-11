@@ -479,9 +479,24 @@ export class Renderer {
 
         // }
 
-        this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
-            this.squareIndicesTextured, level.mcPosition, Constants.SPRITE_SUIT_SIZE, level.facing == CharacterFacing.Right );
+        // Render sprite suit.
+        if (!level.mcRunning)
+        {
+            this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
+                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+                this.squareIndicesTextured, level.mcPosition, Constants.SPRITE_SUIT_SIZE, level.facing == CharacterFacing.Right );
+        }
+        else
+        {
+            let frameToRender: number = Math.floor(level.spriteAnimationPosition * Constants.SPRITE_SUIT_FRAMES);
+            if (frameToRender < 0)
+                frameToRender = 0;
+            if (frameToRender >= Constants.SPRITE_SUIT_FRAMES)
+                frameToRender = Constants.SPRITE_SUIT_FRAMES - 1;
+            this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
+                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+                this.squareIndicesTextured, level.mcPosition, Constants.SPRITE_SUIT_SIZE, frameToRender, level.facing == CharacterFacing.Right );
+        }
     }
 
     public draw( level: ActiveLevel, gameWon: boolean ) {
