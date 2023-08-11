@@ -205,7 +205,8 @@ if (canvas) {
     
         game.onUpdateFrame( currentKeyState, deltaTimeSecs );
         
-        game.renderer.draw( game.gameWon, game.loadedLevels[ 0 ] );
+        if ( game.level )
+            game.renderer.draw( game.level, game.gameWon );
     
         requestAnimationFrame(animate);
     }

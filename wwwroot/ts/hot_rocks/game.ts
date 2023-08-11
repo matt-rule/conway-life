@@ -1,3 +1,4 @@
+import { ActiveLevel } from "./activeLevel";
 import * as Constants from "./constants";
 import { Renderer, ImagesDictionary } from "./renderer";
 import { Key, KeyboardState } from "./keyboardState";
@@ -11,6 +12,7 @@ export class Game {
     public latestKeyState: KeyboardState;
     public frameTimeCounterSecs: number;
     public loadedLevels: number[][][];
+    public level: ActiveLevel | null;
     
     // Define a constructor
     constructor(canvas: HTMLCanvasElement)
@@ -22,6 +24,7 @@ export class Game {
         this.latestKeyState = new KeyboardState();
         this.frameTimeCounterSecs = 0;
         this.loadedLevels = [];
+        this.level = null;
     }
 
     init( stillImages: ImagesDictionary, animatedImages: ImagesDictionary, loadedLevels: number[][][] ) {
@@ -33,8 +36,10 @@ export class Game {
         this.canvas.style.maxWidth = `${window.innerWidth}px`;
         this.canvas.style.maxHeight = `${window.innerHeight}px`;
         let gl: WebGL2RenderingContext | null = this.canvas.getContext("webgl2");
+
+        this.level = new ActiveLevel(this.loadedLevels);
         if (gl) {
-            this.renderer.init( gl, loadedLevels[0], this.canvas.width, this.canvas.height, stillImages, animatedImages );
+            this.renderer.init( gl, this.canvas.width, this.canvas.height, stillImages, animatedImages );
         }
         else {
             alert('Your browser does not support webgl2');
@@ -48,8 +53,14 @@ export class Game {
 
         while (this.frameTimeCounterSecs > intervalSecs)
         {
-            if (this.renderer && this.renderer.level)
-                this.renderer.level.update(this.gameWon, this.latestKeyState, currentKeyState, intervalSecs);
+            if (this.renderer && this.level)
+            {
+                let levelWon = this.level.update( this.gameWon, this.latestKeyState, currentKeyState, intervalSecs);
+                if (levelWon && this.level.levelNumber == 5)
+                {
+                    this.gameWon = true;
+                }
+            }
             this.frameTimeCounterSecs -= intervalSecs;
         }
 

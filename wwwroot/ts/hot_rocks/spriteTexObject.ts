@@ -2,89 +2,60 @@ import { mat3, vec2 } from "gl-matrix";
 
 export class SpriteTexObject
 {
-    public bitmap: HTMLImageElement | null = null;
-    public texture: WebGLTexture | null = null;         // new
-    public texCount: number = 0;
+    public frameCount: number;
+    public textureWidth: number;
+    public bitmap: HTMLImageElement;
+    public texture: WebGLTexture | null = null;
 
     public constructor(bitmap : HTMLImageElement, textureWidth: number, frameCount: number)
     {
-        // TexCount = frameCount;
-        // Bitmaps = new Bitmap[frameCount];
-        // var wholeFileBitmap = new Bitmap(filename);
-
-        // foreach (int frame in Enumerable.Range(0, frameCount))
-        // {
-        //     Rectangle cropRect = new Rectangle(frame * textureWidth, 0, textureWidth, textureWidth);
-        //     Bitmaps[frame] = new Bitmap(cropRect.Width, cropRect.Height);
-            
-        //     Bitmap target = Bitmaps[frame];
-
-        //     using (Graphics g = Graphics.FromImage(target))
-        //     {
-        //         g.DrawImage(
-        //             wholeFileBitmap,
-        //             new Rectangle(0, 0, target.Width, target.Height),
-        //             cropRect,
-        //             GraphicsUnit.Pixel
-        //         );
-        //     }
-        // }
+        this.bitmap = bitmap;   // TODO consider passing by reference, make sure this is not a clone operation
+        this.frameCount = frameCount;
+        this.textureWidth = textureWidth;
     }
 
-    public GlInit(): void
-    {
-        // Ids = new int[TexCount];
-        // GL.GenTextures(TexCount, Ids);
-
-        // foreach (int frame in Enumerable.Range(0, TexCount))
-        // {
-        //     Bitmap frameBitmap = Bitmaps[frame];
-
-        //     GL.BindTexture(TextureTarget.Texture2D, Ids[frame]);
-
-        //     BitmapData data = frameBitmap.LockBits(new Rectangle(0, 0, frameBitmap.Width, frameBitmap.Height),
-        //         ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-        //     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-        //     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-
-        //     GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, data.Width, data.Height, 0,
-        //         OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
-
-        //     frameBitmap.UnlockBits(data);
-        // }
+    public glInit( gl: WebGL2RenderingContext ): void {
+        this.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.bitmap);
+        //gl.generateMipmap(gl.TEXTURE_2D);
     }
 
-    public GlRenderFromCorner(scale: number, frame: number, flip: boolean = false): void
+    public glRenderFromCorner( gl: WebGL2RenderingContext, shaderProgramTextured: WebGLProgram,
+        currentMatrix: mat3, matLocationTextured: WebGLUniformLocation,
+        uvOffsetLocation: WebGLUniformLocation, uvScaleLocation: WebGLUniformLocation,
+        squareIndices: number[], position: vec2, scale: number, frame: number, flip: boolean = false )
     {
-        // GL.PushMatrix();
-        // {
-        //     GL.Scale(scale, scale, 1.0);
-        //     if (flip)
-        //     {
-        //         GL.Translate(1.0, 0.0, 0.0);
-        //         GL.Scale(-1.0, 1.0, 1.0);
-        //     }
-        //     GL.BindTexture(TextureTarget.Texture2D, Ids[frame]);
+        let modelMatrix = mat3.create();
+        mat3.translate( modelMatrix, modelMatrix, position );           // world space translation
 
-        //     GL.Begin(PrimitiveType.Quads);
-        //     {
-        //         GL.TexCoord2(0.0f, 1.0f);
-        //         GL.Vertex2(0.0, 0.0);
+        mat3.scale ( modelMatrix, modelMatrix, vec2.fromValues( scale, scale ) );           // applying this appears to be causing a translation
+        if (flip)
+        {
+            mat3.translate( modelMatrix, modelMatrix, vec2.fromValues( 1.0, 0.0 ) );
+            mat3.scale( modelMatrix, modelMatrix, vec2.fromValues( -1.0, 1.0 ) );           // this also appears to be causing a translation
+        }
 
-        //         GL.TexCoord2(1.0f, 1.0f);
-        //         GL.Vertex2(1.0, 0.0);
+        let mvp = mat3.create();
+        mat3.multiply( mvp, currentMatrix, modelMatrix )
+        gl.uniformMatrix3fv( matLocationTextured, false, mvp );
 
-        //         GL.TexCoord2(1.0f, 0.0f);
-        //         GL.Vertex2(1.0, 1.0);
+        let uvOffset: vec2 = [frame / this.frameCount + 0.01, -0.02];    // these tiny numbers are meant to get rid of artifacts on the edges
+        let uvScale: vec2 = [1 / this.frameCount - 0.02, 1.0 - 0.04];
+        gl.uniform2fv(uvOffsetLocation, uvOffset);
+        gl.uniform2fv(uvScaleLocation, uvScale);
 
-        //         GL.TexCoord2(0.0f, 0.0f);
-        //         GL.Vertex2(0.0, 1.0);
-        //     }
-        //     GL.End();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.uniform1i(gl.getUniformLocation(shaderProgramTextured, "u_sampler"), 0);
 
-        //     GL.BindTexture(TextureTarget.Texture2D, -1);
-        // }
-        // GL.PopMatrix();
+        gl.drawElements(gl.TRIANGLES, squareIndices.length, gl.UNSIGNED_SHORT, 0);
     }
 }

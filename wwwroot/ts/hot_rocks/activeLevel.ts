@@ -8,6 +8,11 @@ export enum CollisionOutcome { None, Collision, Victory }
 export enum LevelResetCause { Start, Death, Victory }
 
 export class ActiveLevel {
+
+    public levelNumber: number = 1;
+
+    public lavaSpeedPerLevel: number[] = [];
+
     public mcPosition: vec2 = vec2.fromValues(0, 0);
     public mcVelocity: vec2 = vec2.fromValues(0, 0);
 
@@ -16,20 +21,23 @@ export class ActiveLevel {
 
     public lavaHeight: number = 0;
     public facing: CharacterFacing = CharacterFacing.Left;
-    public tiles: number[][];
+    
+    public lavaAnimationLoopValue: number = 0;       // Normalised frame to render (rate of increase may not be 1/sec).
 
     public editorMode: boolean = false;
 
-    constructor (tiles: number[][]) {
-        this.tiles = tiles;
-        this.resetLevel( LevelResetCause.Start);
+    public blockDataLevelArray: number[][][] = [];
+
+    constructor ( blockDataLevelArray: number[][][]) {       // TODO: remove redundancy
+        this.blockDataLevelArray = blockDataLevelArray;
+        this.resetLevel( false, LevelResetCause.Start );
     }
 
     public getStartingPosition()
     {
         for ( let tileX: number = 0; tileX < Constants.LEVEL_WIDTH; ++tileX )
             for ( let tileY: number = 0; tileY <= Constants.LEVEL_HEIGHT; ++tileY )
-                if ( this.tiles[tileX][tileY] == Constants.TILE_ID_FLAG_WHITE )
+                if ( this.blockDataLevelArray[this.levelNumber][tileX][tileY] == Constants.TILE_ID_FLAG_WHITE )
                 {
                     return vec2.fromValues(
                         tileX * Constants.TILE_SIZE + Constants.TILE_SIZE * 0.5 - Constants.SPRITE_SUIT_SIZE / 2,
@@ -39,21 +47,25 @@ export class ActiveLevel {
         return vec2.fromValues(256, 256);
     }
 
-    public resetLevel( resetCause: LevelResetCause )
+    // Returns true if level won
+    public resetLevel( gameWon: boolean, resetCause: LevelResetCause ): boolean
     {
-        // if (resetCause == LevelResetCause.Start)
-        //     this.levelNumber = 1;
-        // else if (resetCause == LevelResetCause.Victory)
-        // {
-        //     ++this.levelNumber;
-        //     if (LevelNumber == 5)
-        //     {
-        //         GameWon = true;
-        //         return;
-        //     }
-        // }
+        if (gameWon)
+            return true;
 
+        if (resetCause == LevelResetCause.Start)
+            this.levelNumber = 0;
+        else if (resetCause == LevelResetCause.Victory)
+        {
+            ++this.levelNumber;
+        }
+
+        this.lavaSpeedPerLevel = [ 8, 20, 20, 30 ];
         this.mcPosition = this.getStartingPosition();
+        this.lavaHeight = 0;
+        this.lavaAnimationLoopValue = 0;
+
+        return false;
     }
 
     public saveTilesToFile(): void
@@ -94,9 +106,9 @@ export class ActiveLevel {
                 if (tileX < 0 || tileX >= Constants.LEVEL_WIDTH
                     || tileY < 0 || tileY >= Constants.LEVEL_HEIGHT)
                     collision = true;
-                else if (this.tiles[tileX][tileY] == Constants.TILE_ID_ROCK)
+                else if (this.blockDataLevelArray[this.levelNumber][tileX][tileY] == Constants.TILE_ID_ROCK)
                     collision = true;
-                else if (this.tiles[tileX][tileY] == Constants.TILE_ID_FLAG_RED)
+                else if (this.blockDataLevelArray[this.levelNumber][tileX][tileY] == Constants.TILE_ID_FLAG_RED)
                     return CollisionOutcome.Victory;
             }
 
@@ -126,15 +138,19 @@ export class ActiveLevel {
         return this.bbLevelIntersection( gameWon, boundingBox );
     }
 
-    public isLavaCollision( playerY: number ): boolean
+    public isLavaCollision( gameWon: boolean, playerY: number ): boolean
     {
-        return false;
+        if (gameWon)
+            return false;
+
+        return playerY < this.lavaHeight;
     }
 
-    public processPlayerMovement(gameWon: boolean, prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number)
+    // Returns true if level won
+    public processPlayerMovement( gameWon: boolean, prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number ): boolean
     {
         if ( gameWon )
-            return;
+            return true;
 
         if ( this.editorMode )
         {
@@ -184,8 +200,9 @@ export class ActiveLevel {
                 this.mcPosition = newPosition;
                 break;
             case CollisionOutcome.Victory:
-                this.resetLevel( LevelResetCause.Victory);
-                return;
+                let won: boolean = this.resetLevel( gameWon, LevelResetCause.Victory);
+                if (won) return true;
+                break;
             default:
                 break;
         }
@@ -205,23 +222,34 @@ export class ActiveLevel {
                 this.mcGrounded = false;
                 break;
             case CollisionOutcome.Victory:
-                this.resetLevel( LevelResetCause.Victory);
-                return;
+                let won: boolean = this.resetLevel( gameWon, LevelResetCause.Victory);
+                if (won) return true;
+                break;
             default:
                 vec2.zero( this.mcVelocity );
                 this.mcGrounded = true;             // TODO: try setting the character position to some intermediate value
                 break;
         }
 
-        if ( this.isLavaCollision( this.mcPosition[1] ) )
+        if ( this.isLavaCollision( gameWon, this.mcPosition[1] ) )
         {
-            this.resetLevel(LevelResetCause.Death);
-            return;
+            this.resetLevel( gameWon, LevelResetCause.Death );
+            return false;
         }
+
+        return false;
     }
 
-    public update(gameWon: boolean, prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number)
+    // Return true if level won
+    public update( gameWon: boolean, prevKeyState: KeyboardState, keyState: KeyboardState, elapsedTime: number): boolean
     {
-        this.processPlayerMovement(gameWon, prevKeyState, keyState, elapsedTime);
+        //if (!EditorMode) // TODO: uncomment
+            this.lavaHeight += elapsedTime * this.lavaSpeedPerLevel[this.levelNumber];
+
+        this.lavaAnimationLoopValue += elapsedTime * Constants.LAVA_LAKE_SPRITE_FPS / Constants.LAVA_LAKE_SPRITE_FRAMES;
+        if (this.lavaAnimationLoopValue > 1.0)
+            this.lavaAnimationLoopValue -= 1.0;
+
+        return this.processPlayerMovement( gameWon, prevKeyState, keyState, elapsedTime);
     }
 }

@@ -2,7 +2,7 @@ import { mat3, vec2 } from "gl-matrix";
 
 export class TexObject {
     public bitmap: HTMLImageElement;
-    public texture: WebGLTexture | null = null;         // new
+    public texture: WebGLTexture | null = null;
 
     public constructor( bitmap: HTMLImageElement )
     {
@@ -35,8 +35,8 @@ export class TexObject {
         mat3.multiply( mvp, currentMatrix, modelMatrix )
         gl.uniformMatrix3fv( matLocationTextured, false, mvp );
 
-        let uvScale = [1, 1];
-        let uvOffset = [0, 0];
+        let uvScale = vec2.fromValues(1, 1);
+        let uvOffset = vec2.fromValues(0, 0);
         gl.uniform2fv(uvOffsetLocation, uvOffset);
         gl.uniform2fv(uvScaleLocation, uvScale);
 
