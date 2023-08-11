@@ -17,7 +17,9 @@ export class TexObject {
     }
 
     public glRenderFromCorner( gl: WebGL2RenderingContext, shaderProgramTextured: WebGLProgram,
-        currentMatrix: mat3, matLocationTextured: WebGLUniformLocation, squareIndices: number[], position: vec2, scale: number, flip: boolean = false )
+        currentMatrix: mat3, matLocationTextured: WebGLUniformLocation,
+        uvOffsetLocation: WebGLUniformLocation, uvScaleLocation: WebGLUniformLocation,
+        squareIndices: number[], position: vec2, scale: number, flip: boolean = false )
     {
         let modelMatrix = mat3.create();
         mat3.translate( modelMatrix, modelMatrix, position );           // world space translation
@@ -32,6 +34,11 @@ export class TexObject {
         let mvp = mat3.create();
         mat3.multiply( mvp, currentMatrix, modelMatrix )
         gl.uniformMatrix3fv( matLocationTextured, false, mvp );
+
+        let uvScale = [1, 1];
+        let uvOffset = [0, 0];
+        gl.uniform2fv(uvOffsetLocation, uvOffset);
+        gl.uniform2fv(uvScaleLocation, uvScale);
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
