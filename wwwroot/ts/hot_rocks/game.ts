@@ -56,7 +56,7 @@ export class Game {
             if (this.renderer && this.level)
             {
                 let levelWon = this.level.update( this.gameWon, this.latestKeyState, currentKeyState, intervalSecs);
-                if (levelWon && this.level.levelNumber == 5)
+                if (levelWon && this.level.levelNumber == 4)
                 {
                     this.gameWon = true;
                 }

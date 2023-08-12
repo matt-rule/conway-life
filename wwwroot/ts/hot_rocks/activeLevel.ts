@@ -2,6 +2,8 @@ import { BoundingBox } from "./boundingBox";
 import * as Constants from "./constants";
 import { Key, KeyboardState } from "./keyboardState";
 import { vec2 } from "gl-matrix";
+import { LavaBombEntity } from "./lavaBombEntity";
+import { Util } from "./util";
 
 export enum CharacterFacing { Left, Right };
 export enum CollisionOutcome { None, Collision, Victory }
@@ -12,6 +14,9 @@ export class ActiveLevel {
     public levelNumber: number = 1;
 
     public lavaSpeedPerLevel: number[] = [];
+
+    public lavaBombs: LavaBombEntity[] = [];
+    public angle: number = 0;
 
     public mcPosition: vec2 = vec2.fromValues(0, 0);
     public mcVelocity: vec2 = vec2.fromValues(0, 0);
@@ -24,6 +29,10 @@ export class ActiveLevel {
     
     public spriteAnimationPosition: number = 0;       // Normalised frame to render (rate of increase may not be 1/sec).
     public lavaAnimationLoopValue: number = 0;       // Normalised frame to render (rate of increase may not be 1/sec).
+
+    public spitterLoopValue: number = 0;
+    public flameSpitterLoopValue: number = 0;
+    public flamesLoopValue: number = 0;
 
     public editorMode: boolean = false;
 
@@ -62,10 +71,20 @@ export class ActiveLevel {
         }
 
         this.lavaSpeedPerLevel = [ 8, 20, 20, 30 ];
+        this.lavaBombs = [];
+        this.angle = 0.0;
         this.mcPosition = this.getStartingPosition();
+        this.mcVelocity = vec2.fromValues(0, 0);
+        this.mcGrounded = false;
+        this.mcRunning = false;
         this.lavaHeight = 0;
+        this.facing = CharacterFacing.Left;
         this.spriteAnimationPosition = 0;
         this.lavaAnimationLoopValue = 0;
+        this.spitterLoopValue = 0;
+        this.flameSpitterLoopValue = 0;
+        this.flamesLoopValue = 0;
+        this.editorMode = false;
 
         return false;
     }
@@ -249,13 +268,110 @@ export class ActiveLevel {
         if (this.spriteAnimationPosition > 1.0)
             this.spriteAnimationPosition -= 1.0;
 
-        //if (!EditorMode) // TODO: uncomment
+        if ( gameWon )
+            return true;
+
+        if (!this.editorMode)
             this.lavaHeight += elapsedTime * this.lavaSpeedPerLevel[this.levelNumber];
+
+        this.angle += elapsedTime * Math.PI;
+
+        this.spitterLoopValue += elapsedTime * Constants.SPITTER_LOOP_SPEED;
+        if (this.spitterLoopValue > 1.0)
+        {
+            this.spitterLoopValue -= 1.0;
+
+            for (let tileX: number = 0; tileX < Constants.LEVEL_WIDTH; ++tileX)
+                for (let tileY: number = 0; tileY < Constants.LEVEL_HEIGHT; ++tileY)
+                    if (this.blockDataLevelArray[this.levelNumber][tileX][tileY] == Constants.TILE_ID_SPITTER)
+                    {
+                        this.lavaBombs.push(new LavaBombEntity(
+                            vec2.fromValues(tileX * Constants.TILE_SIZE + Constants.TILE_SIZE * 0.5, (tileY + 1) * Constants.TILE_SIZE),
+                            vec2.fromValues(0, 750),
+                            2));
+                    }
+        }
+
+        this.flameSpitterLoopValue += elapsedTime * Constants.FLAME_SPITTER_LOOP_SPEED;
+        if (this.flameSpitterLoopValue > 1.0)
+        {
+            this.flameSpitterLoopValue -= 1.0;
+        }
+        this.flamesLoopValue += elapsedTime * Constants.FLAMES_LOOP_SPEED;
+        if (this.flamesLoopValue > 1.0)
+        {
+            this.flamesLoopValue -= 1.0;
+        }
 
         this.lavaAnimationLoopValue += elapsedTime * Constants.LAVA_LAKE_SPRITE_FPS / Constants.LAVA_LAKE_SPRITE_FRAMES;
         if (this.lavaAnimationLoopValue > 1.0)
             this.lavaAnimationLoopValue -= 1.0;
 
-        return this.processPlayerMovement( gameWon, prevKeyState, keyState, elapsedTime);
+        let playerBoundingBox = this.getPlayerBoundingBox(this.mcPosition[0], this.mcPosition[1]);
+        this.lavaBombs.forEach(b =>
+        {
+            if (b.level == 2)
+                b.velocity[1] -= Constants.GRAVITY * elapsedTime;
+            let scaledVelocity = vec2.create();
+            vec2.scale(scaledVelocity, b.velocity, elapsedTime);
+            vec2.add(b.position, b.position, scaledVelocity);
+            var bombBB = b.GetBoundingBox();
+
+            if (BoundingBox.testIntersection(playerBoundingBox, bombBB))
+            {
+                this.resetLevel(gameWon, LevelResetCause.Death);
+                return false;
+            }
+        });
+
+        if (this.flameSpitterLoopValue > 0.33)
+        {
+            for (let tileX: number = 0; tileX < Constants.LEVEL_WIDTH; ++tileX)
+                for (let tileY: number = 0; tileY < Constants.LEVEL_HEIGHT; ++tileY)
+                    if (this.blockDataLevelArray[this.levelNumber][tileX][tileY] == Constants.TILE_ID_FLAME_SPITTER)
+                    {
+                        var flameSpitterBoundingBox = new BoundingBox(
+                            tileX * Constants.TILE_SIZE,
+                            (tileX + 1) * Constants.TILE_SIZE,
+                            tileY * Constants.TILE_SIZE,
+                            (tileY + 3) * Constants.TILE_SIZE);
+
+                        if (BoundingBox.testIntersection(playerBoundingBox, flameSpitterBoundingBox))
+                        {
+                            this.resetLevel(gameWon, LevelResetCause.Death);
+                            return false;
+                        }
+                    }
+        }
+
+        let levelWon: boolean = this.processPlayerMovement( gameWon, prevKeyState, keyState, elapsedTime);
+
+        let toSpawnFrom: LavaBombEntity[] = this.lavaBombs.filter(
+            x => x.level > 1 && x.timeCreated + Constants.LAVA_BOMB_TIMER_MS <= Date.now());
+        this.lavaBombs = this.lavaBombs.filter(
+            x => x.timeCreated + (x.level == 2 ? Constants.LAVA_BOMB_TIMER_MS : Constants.LAVA_BULLET_TIMER_MS) > Date.now());
+        let angledVecs = [...Array(10).keys()].map(x => Math.PI * 2 / 10 * (x + 1)).map(x => Util.vectorFromAngleAndMag(x, 150.0));
+        console.log('angledVecs:', angledVecs);
+
+        toSpawnFrom.forEach(entity => {
+            let newEntities: LavaBombEntity[] = angledVecs.map(angledVec => {
+                let scaledVec = vec2.create();
+                vec2.scale(scaledVec, angledVec, entity.level);
+                // console.log('this.mcVelocity:', this.mcVelocity);
+                // console.log('angledVec:', angledVec);
+                // console.log('entity.level:', entity.level);
+                // console.log('scaledVec:', scaledVec);
+                let newVelocity = vec2.create();
+                // console.log('entity.velocity:', entity.velocity);
+                vec2.add(newVelocity, entity.velocity, scaledVec);
+                // console.log('newVelocity:', newVelocity);
+                return new LavaBombEntity(vec2.clone(entity.position), newVelocity, entity.level - 1);
+            });
+
+            this.lavaBombs = this.lavaBombs.concat( newEntities );
+            // console.log('this.lavaBombs:', this.lavaBombs);
+        });
+
+        return levelWon;
     }
 }

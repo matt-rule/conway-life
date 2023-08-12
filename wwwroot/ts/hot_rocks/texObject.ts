@@ -47,21 +47,30 @@ export class TexObject {
         gl.drawElements(gl.TRIANGLES, squareIndices.length, gl.UNSIGNED_SHORT, 0);
     }
 
-    // public glRenderFromMiddle( gl: WebGL2RenderingContext, shaderProgramTextured: WebGLProgram,
-    //     projectionMatrix: mat3, matLocationTextured: WebGLUniformLocation, squareIndices: number[], position: vec2, scale: number )
-    // {
-    //     let modelMatrix = mat3.create();
-    //     mat3.translate( modelMatrix, mat3.create(), position );
-    //     mat3.scale ( modelMatrix, modelMatrix, vec2.fromValues( scale, scale ) );
+    public glRenderFromMiddle( gl: WebGL2RenderingContext, shaderProgramTextured: WebGLProgram,
+        currentMatrix: mat3, matLocationTextured: WebGLUniformLocation,
+        uvOffsetLocation: WebGLUniformLocation, uvScaleLocation: WebGLUniformLocation,
+        squareIndices: number[], position: vec2, scale: number, rotateAngleRad: number )
+    {
+        let modelMatrix = mat3.create();
+        mat3.translate( modelMatrix, modelMatrix, position );
+        mat3.rotate( modelMatrix, modelMatrix, rotateAngleRad );
 
-    //     let mvp = mat3.create();
-    //     mat3.multiply( mvp, projectionMatrix, modelMatrix )
-    //     gl.uniformMatrix3fv( matLocationTextured, false, mvp );
+        mat3.scale ( modelMatrix, modelMatrix, vec2.fromValues( scale, scale ) );
 
-    //     gl.activeTexture(gl.TEXTURE0);
-    //     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    //     gl.uniform1i(gl.getUniformLocation(shaderProgramTextured, "u_sampler"), 0);
+        let mvp = mat3.create();
+        mat3.multiply( mvp, currentMatrix, modelMatrix )
+        gl.uniformMatrix3fv( matLocationTextured, false, mvp );
 
-    //     gl.drawElements(gl.TRIANGLES, squareIndices.length, gl.UNSIGNED_SHORT, 0);
-    // }
+        let uvScale = vec2.fromValues(1, 1);
+        let uvOffset = vec2.fromValues(0, 0);
+        gl.uniform2fv(uvOffsetLocation, uvOffset);
+        gl.uniform2fv(uvScaleLocation, uvScale);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.uniform1i(gl.getUniformLocation(shaderProgramTextured, "u_sampler"), 0);
+
+        gl.drawElements(gl.TRIANGLES, squareIndices.length, gl.UNSIGNED_SHORT, 0);
+    }
 };

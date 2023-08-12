@@ -3,6 +3,7 @@ import { mat3, vec2 } from "gl-matrix";
 import { SpriteTexObject } from "./spriteTexObject";
 import { TexObject } from "./texObject";
 import { ActiveLevel, CharacterFacing } from "./activeLevel";
+import { Util } from "./util";
 
 export type ImagesDictionary = {[key: string]: HTMLImageElement};
 type TexObjectDictionary = {[key: number]: TexObject};
@@ -382,6 +383,29 @@ export class Renderer {
         let mvp: mat3 = mat3.create();
         mat3.multiply( mvp, projectionMatrix, viewMatrix );
 
+        // Render lava bombs.
+        level.lavaBombs.forEach(lavaBomb => {
+            if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation )
+                return;
+
+            // GL.Translate(lavaBomb.position[0], lavaBomb.position[1], 0);
+            // GL.Rotate(Util.radiansToDegrees(level.angle), 0, 0, 1);
+            switch (lavaBomb.level)
+            {
+                case 1:
+                    this.texObjectDictionary[ Constants.TEX_ID_BULLET ].glRenderFromMiddle( this.gl, this.shaderProgramTextured, mvp,
+                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                        lavaBomb.position, Constants.LAVA_BULLET_SIZE, level.angle);
+                    break;
+                case 2:
+                default:
+                    this.texObjectDictionary[ Constants.TEX_ID_LAVA_BOMB ].glRenderFromMiddle( this.gl, this.shaderProgramTextured, mvp,
+                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                        lavaBomb.position, Constants.LAVA_BOMB_SIZE, level.angle);
+                    break;
+            }
+        });
+
         let lavaFrameToRender: number = Math.floor(level.lavaAnimationLoopValue * Constants.LAVA_LAKE_SPRITE_FRAMES);
         if (lavaFrameToRender < 0)
             lavaFrameToRender = 0;
@@ -469,15 +493,23 @@ export class Renderer {
                             this.squareIndicesTextured, vec2.fromValues( Constants.TILE_SIZE*x, Constants.TILE_SIZE*y ), Constants.TILE_SIZE );
                 }
             }
-        
-        // if (! this.level.mcRunning )
-        // {
 
-        // }
-        // else
-        // {
-
-        // }
+        if (level.flameSpitterLoopValue > 0.33)
+        {
+            // Render flames
+            for ( let x: number = 0; x < Constants.LEVEL_WIDTH; ++x )
+                for ( let y: number = 0; y < Constants.LEVEL_HEIGHT; ++y )
+                {
+                    if (level.blockDataLevelArray[level.levelNumber][x][y] == Constants.TILE_ID_FLAME_SPITTER)
+                    {
+                        this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_FLAMES_BIG ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
+                            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                            vec2.fromValues( Constants.TILE_SIZE * x - Constants.SPRITE_FLAMES_SIZE / 4, Constants.TILE_SIZE * (y + 1) ),
+                            Constants.SPRITE_FLAMES_SIZE, level.flamesLoopValue > 0.5 ? 0 : 1
+                        );
+                    }
+                }
+        }
 
         // Render sprite suit.
         if (!level.mcRunning)
