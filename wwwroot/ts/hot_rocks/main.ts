@@ -3,6 +3,7 @@ import { Game } from "./game";
 import { ImagesDictionary } from "./renderer";
 import { Key, KeyboardState } from "./keyboardState";
 import { vec2 } from "gl-matrix";
+import { LevelResetCause } from "./activeLevel";
 
 const SQUARE_SPEED: number = 60;
 
@@ -37,6 +38,19 @@ function promiseFunction(url : string) {
 
 let loadStillImagePromises = stillImageUrls.map(promiseFunction);
 let loadAnimatedImagePromises = animatedImageUrls.map(promiseFunction);
+
+function infoMenuMouseDown() {
+    let menuContainer = document.getElementById("hideable-info-menu-content-container");
+    if (!menuContainer)
+        return;
+
+    menuContainer.classList.toggle('hidden');
+}
+
+let infoMenuButton = document.getElementById("info-menu-div");
+if (infoMenuButton) {
+    infoMenuButton.addEventListener('mousedown', infoMenuMouseDown);
+}
 
 // function loadTilesFromFile(gameWon: boolean): void {
 //     if (gameWon) return;
@@ -115,6 +129,9 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
         case 'ArrowRight':
             currentKeyState.keyStates[Key.Right] = true;
             break;
+        case 'ArrowUp':
+            currentKeyState.keyStates[Key.Up] = true;
+            break;
         case 'F1':  // TODO: Test F keys
             currentKeyState.keyStates[Key.F1] = true;
             break;
@@ -151,6 +168,9 @@ document.addEventListener('keyup', (event: KeyboardEvent) => {
         case 'ArrowRight':
             currentKeyState.keyStates[Key.Right] = false;
             break;
+        case 'ArrowUp':
+            currentKeyState.keyStates[Key.Up] = false;
+            break;
         case 'F1':  // TODO: Test F keys
             currentKeyState.keyStates[Key.F1] = false;
             break;
@@ -179,6 +199,22 @@ if (canvas) {
         
                 game = new Game( canvas );
                 game.init(stillImages, animatedImages, loadedLevels);
+
+                function reset_btn_click(): void
+                {
+                    game.gameWon = false;
+                    if ( game.level )
+                    {
+                        game.level.levelNumber = 0;
+                        game.level.resetLevel( false, LevelResetCause.Start );
+                    }
+                }
+
+                var reset_btn = document.getElementById("reset_button");
+
+                if (reset_btn)
+                    reset_btn.addEventListener('mouseup', reset_btn_click);
+
                 requestAnimationFrame(animate);
             })
             .catch(err => {

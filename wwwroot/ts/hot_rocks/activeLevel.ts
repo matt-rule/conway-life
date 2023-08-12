@@ -65,7 +65,7 @@ export class ActiveLevel {
             return true;
 
         if (resetCause == LevelResetCause.Start)
-            this.levelNumber = 3;
+            this.levelNumber = 1;
         else if (resetCause == LevelResetCause.Victory)
         {
             ++this.levelNumber;
@@ -206,7 +206,8 @@ export class ActiveLevel {
             this.mcRunning = false;
         }
 
-        if ((keyState.isKeyDown(Key.Space) || keyState.isKeyDown(Key.W)) && !(prevKeyState.isKeyDown(Key.Space) || prevKeyState.isKeyDown(Key.W)))
+        if ((keyState.isKeyDown(Key.Space) || keyState.isKeyDown(Key.W) || keyState.isKeyDown(Key.Up))
+            && !(prevKeyState.isKeyDown(Key.Space) || prevKeyState.isKeyDown(Key.W) || prevKeyState.isKeyDown(Key.Up)))
         {
             if ( this.mcGrounded )
             {

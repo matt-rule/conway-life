@@ -1,4 +1,4 @@
-export enum Key { Left, Right, Space, A, D, W, F1, F2, F12 }
+export enum Key { Left, Right, Up, Space, A, D, W, F1, F2, F12 }
 
 type KeyStateDictionary = {[key in Key]: boolean};
 
@@ -10,6 +10,7 @@ export class KeyboardState
         this.keyStates = {
             [Key.Left]: false,
             [Key.Right]: false,
+            [Key.Up]: false,
             [Key.Space]: false,
             [Key.A]: false,
             [Key.D]: false,
