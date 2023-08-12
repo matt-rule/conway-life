@@ -45,15 +45,16 @@ export class ActiveLevel {
 
     public getStartingPosition()
     {
-        for ( let tileX: number = 0; tileX < Constants.LEVEL_WIDTH; ++tileX )
-            for ( let tileY: number = 0; tileY <= Constants.LEVEL_HEIGHT; ++tileY )
-                if ( this.blockDataLevelArray[this.levelNumber][tileX][tileY] == Constants.TILE_ID_FLAG_WHITE )
-                {
-                    return vec2.fromValues(
-                        tileX * Constants.TILE_SIZE + Constants.TILE_SIZE * 0.5 - Constants.SPRITE_SUIT_SIZE / 2,
-                        (tileY + 0.05) * Constants.TILE_SIZE
-                    );
-                }
+        if (this.levelNumber in this.blockDataLevelArray)
+            for ( let tileX: number = 0; tileX < Constants.LEVEL_WIDTH; ++tileX )
+                for ( let tileY: number = 0; tileY <= Constants.LEVEL_HEIGHT; ++tileY )
+                    if ( this.blockDataLevelArray[this.levelNumber][tileX][tileY] == Constants.TILE_ID_FLAG_WHITE )
+                    {
+                        return vec2.fromValues(
+                            tileX * Constants.TILE_SIZE + Constants.TILE_SIZE * 0.5 - Constants.SPRITE_SUIT_SIZE / 2,
+                            (tileY + 0.05) * Constants.TILE_SIZE
+                        );
+                    }
         return vec2.fromValues(256, 256);
     }
 
@@ -64,7 +65,7 @@ export class ActiveLevel {
             return true;
 
         if (resetCause == LevelResetCause.Start)
-            this.levelNumber = 0;
+            this.levelNumber = 3;
         else if (resetCause == LevelResetCause.Victory)
         {
             ++this.levelNumber;
@@ -86,7 +87,7 @@ export class ActiveLevel {
         this.flamesLoopValue = 0;
         this.editorMode = false;
 
-        return false;
+        return this.levelNumber > 3;
     }
 
     public saveTilesToFile(): void
@@ -351,7 +352,6 @@ export class ActiveLevel {
         this.lavaBombs = this.lavaBombs.filter(
             x => x.timeCreated + (x.level == 2 ? Constants.LAVA_BOMB_TIMER_MS : Constants.LAVA_BULLET_TIMER_MS) > Date.now());
         let angledVecs = [...Array(10).keys()].map(x => Math.PI * 2 / 10 * (x + 1)).map(x => Util.vectorFromAngleAndMag(x, 150.0));
-        console.log('angledVecs:', angledVecs);
 
         toSpawnFrom.forEach(entity => {
             let newEntities: LavaBombEntity[] = angledVecs.map(angledVec => {

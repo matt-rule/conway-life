@@ -265,7 +265,7 @@ export class Renderer {
             return false;
 
         this.gl.viewport(0, 0, this.width, this.height);
-        this.gl.clearColor(0.5, 0.0, 0.5, 1.0);
+        this.gl.clearColor(0.5, 0.5, 0.5, 1.0);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         this.gl.disable(this.gl.CULL_FACE);
@@ -323,20 +323,37 @@ export class Renderer {
         return screenWidth / (Constants.TILE_SIZE * Constants.LEVEL_EXT_WIDTH);
     }
 
-    public renderVictoryScreen( screenWidth: number, screenHeight: number ): void
-    {
-
-    }
-
-    public renderLevel( level: ActiveLevel, gameWon : boolean, levelBlockData: number[][], projectionMatrix: mat3, screenWidth: number, screenHeight: number ): void
-    //public renderLevel( level: ActiveLevel, screenWidth: number, screenHeight: number ): void
+    public renderVictoryScreen( projectionMatrix: mat3, level: ActiveLevel, screenWidth: number, screenHeight: number ): void
     {
         if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation )
             return;
 
+        let victoryText1: string = "!!! VICTORY !!!";
+        let victoryText2: string = "You escaped from the volcano.";
+        this.renderString(projectionMatrix, screenWidth / 2 - (victoryText1.length * (32 - 14)) / 2, screenHeight / 2, victoryText1);
+        this.renderString(projectionMatrix, screenWidth / 2 - (victoryText2.length * (32 - 14)) / 2, screenHeight / 2 - 40, victoryText2);
+
+        // Render sprite suit.
+        let frameToRender: number = Math.floor(level.spriteAnimationPosition * Constants.SPRITE_SUIT_FRAMES);
+        if (frameToRender < 0)
+            frameToRender = 0;
+        if (frameToRender >= Constants.SPRITE_SUIT_FRAMES)
+            frameToRender = Constants.SPRITE_SUIT_FRAMES - 1;
+        this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ].glRenderFromCorner( this.gl, this.shaderProgramTextured, projectionMatrix,
+            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+            this.squareIndicesTextured, vec2.fromValues(200, 200), Constants.SPRITE_SUIT_SIZE, frameToRender, level.facing == CharacterFacing.Left );
+    }
+
+    public renderLevel( level: ActiveLevel, gameWon : boolean, levelBlockData: number[][], projectionMatrix: mat3, screenWidth: number, screenHeight: number ): void
+    {
+        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation )
+            return;
+
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
         if (gameWon)
         {
-            this.renderVictoryScreen(screenWidth, screenHeight);
+            this.renderVictoryScreen(projectionMatrix, level, screenWidth, screenHeight);
             return;
         }
 
@@ -528,6 +545,32 @@ export class Renderer {
             this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
                 this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
                 this.squareIndicesTextured, level.mcPosition, Constants.SPRITE_SUIT_SIZE, frameToRender, level.facing == CharacterFacing.Right );
+        }
+
+        let stringToRender = "Level " + level.levelNumber + (level.editorMode ? " (editor)" : "");
+        this.renderString(projectionMatrix, 30, screenHeight - 100, stringToRender, 16);
+    }
+
+    // Subtracts 32 from the index of printable characters to obtain an index for a textured printable character
+    public getPrintableCharacterIndex(i: number): number {
+        let c: number = '?'.charCodeAt(0);
+        if (i >= 32 && i <= 126) {
+            c = i;
+        }
+        return c - 32;
+    }
+
+    public renderString(mvp: mat3, x: number, y: number, text: string, size: number = Constants.TEXT_DEFAULT_HEIGHT) {
+        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation )
+            return;
+
+        let kerning: number = 0;
+        for (let i: number = 0; i < text.length; ++i)
+        {
+            this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_FONT ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
+                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+                this.squareIndicesTextured, vec2.fromValues(x + kerning, y), size, this.getPrintableCharacterIndex(text.charCodeAt(i)), true );
+            kerning += size - (Constants.TEXT_KERNING / Constants.TEXT_DEFAULT_HEIGHT * size);
         }
     }
 
