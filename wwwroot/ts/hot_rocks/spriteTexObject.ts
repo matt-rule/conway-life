@@ -30,7 +30,7 @@ export class SpriteTexObject
 
     public glRenderFromCorner( gl: WebGL2RenderingContext, shaderProgramTextured: WebGLProgram,
         currentMatrix: mat3, matLocationTextured: WebGLUniformLocation,
-        uvOffsetLocation: WebGLUniformLocation, uvScaleLocation: WebGLUniformLocation,
+        uvOffsetLocation: WebGLUniformLocation, uvScaleLocation: WebGLUniformLocation, samplerLocation: WebGLUniformLocation,
         squareIndices: number[], position: vec2, scale: number, frame: number, flip: boolean = false )
     {
         let modelMatrix = mat3.create();
@@ -54,7 +54,7 @@ export class SpriteTexObject
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        gl.uniform1i(gl.getUniformLocation(shaderProgramTextured, "u_sampler"), 0);
+        gl.uniform1i(samplerLocation, 0);
 
         gl.drawElements(gl.TRIANGLES, squareIndices.length, gl.UNSIGNED_SHORT, 0);
     }

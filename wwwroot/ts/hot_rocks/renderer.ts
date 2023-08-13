@@ -19,6 +19,7 @@ export class Renderer {
     public matrixLocationTextured: WebGLUniformLocation | null;
     public uvOffsetLocation: WebGLUniformLocation | null;
     public uvScaleLocation: WebGLUniformLocation | null;
+    public samplerLocation: WebGLUniformLocation | null;
     // public colorLocation: WebGLUniformLocation | null;
     // public squareVertices: number[];
     // public squareIndices: number[];
@@ -42,6 +43,7 @@ export class Renderer {
         this.matrixLocationTextured = null;
         this.uvOffsetLocation = null;
         this.uvScaleLocation = null;
+        this.samplerLocation = null;
         // this.colorLocation = null;
         // this.squareVertices = [];
         // this.squareIndices = [];
@@ -250,7 +252,8 @@ export class Renderer {
         this.matrixLocationTextured = this.gl.getUniformLocation(this.shaderProgramTextured, "u_matrix");
         this.uvOffsetLocation = this.gl.getUniformLocation(this.shaderProgramTextured, "u_uvOffset");
         this.uvScaleLocation = this.gl.getUniformLocation(this.shaderProgramTextured, "u_uvScale");
-        if (!this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation)
+        this.samplerLocation = this.gl.getUniformLocation(this.shaderProgramTextured, "u_sampler")
+        if (!this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation || !this.samplerLocation)
             return false;
 
         return true;
@@ -325,7 +328,7 @@ export class Renderer {
 
     public renderVictoryScreen( projectionMatrix: mat3, level: ActiveLevel, screenWidth: number, screenHeight: number ): void
     {
-        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation )
+        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation || !this.samplerLocation )
             return;
 
         let victoryText1: string = "!!! VICTORY !!!";
@@ -340,13 +343,13 @@ export class Renderer {
         if (frameToRender >= Constants.SPRITE_SUIT_FRAMES)
             frameToRender = Constants.SPRITE_SUIT_FRAMES - 1;
         this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ].glRenderFromCorner( this.gl, this.shaderProgramTextured, projectionMatrix,
-            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation,
             this.squareIndicesTextured, vec2.fromValues(200, 200), Constants.SPRITE_SUIT_SIZE, frameToRender, level.facing == CharacterFacing.Left );
     }
 
     public renderLevel( level: ActiveLevel, gameWon : boolean, levelBlockData: number[][], projectionMatrix: mat3, screenWidth: number, screenHeight: number ): void
     {
-        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation )
+        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation || !this.samplerLocation)
             return;
 
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
@@ -384,7 +387,7 @@ export class Renderer {
                 for ( let y: number = -1; y <= Constants.LEVEL_HEIGHT +2; ++y )
                 {
                     this.texObjectDictionary[ Constants.TEX_ID_BG ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation, this.squareIndicesTextured,
                         vec2.fromValues( Constants.BG_TILE_SIZE*x, Constants.BG_TILE_SIZE*y ), Constants.BG_TILE_SIZE );
                 }
         }
@@ -402,7 +405,7 @@ export class Renderer {
 
         // Render lava bombs.
         level.lavaBombs.forEach(lavaBomb => {
-            if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation )
+            if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation || !this.samplerLocation )
                 return;
 
             // GL.Translate(lavaBomb.position[0], lavaBomb.position[1], 0);
@@ -411,13 +414,13 @@ export class Renderer {
             {
                 case 1:
                     this.texObjectDictionary[ Constants.TEX_ID_BULLET ].glRenderFromMiddle( this.gl, this.shaderProgramTextured, mvp,
-                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation, this.squareIndicesTextured,
                         lavaBomb.position, Constants.LAVA_BULLET_SIZE, level.angle);
                     break;
                 case 2:
                 default:
                     this.texObjectDictionary[ Constants.TEX_ID_LAVA_BOMB ].glRenderFromMiddle( this.gl, this.shaderProgramTextured, mvp,
-                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation, this.squareIndicesTextured,
                         lavaBomb.position, Constants.LAVA_BOMB_SIZE, level.angle);
                     break;
             }
@@ -443,7 +446,7 @@ export class Renderer {
         {
             this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_LAVA_SURFACE ].glRenderFromCorner(
                 this.gl, this.shaderProgramTextured, mvp, this.matrixLocationTextured,
-                this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation, this.squareIndicesTextured,
                 vec2.fromValues( x * Constants.LAVA_SURFACE_SPRITE_SIZE,
                 level.lavaHeight - Constants.LAVA_SURFACE_SPRITE_SIZE ),
                 Constants.LAVA_SURFACE_SPRITE_SIZE, lavaFrameToRender );
@@ -455,7 +458,7 @@ export class Renderer {
             {
                 this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_LAVA_LAKE ].glRenderFromCorner(
                     this.gl, this.shaderProgramTextured, mvp, this.matrixLocationTextured,
-                    this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                    this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation, this.squareIndicesTextured,
                     vec2.fromValues( x * Constants.LAVA_SURFACE_SPRITE_SIZE,
                     level.lavaHeight - (y + 2) * Constants.LAVA_LAKE_SPRITE_SIZE ),
                     Constants.LAVA_SURFACE_SPRITE_SIZE, lavaFrameToRender );
@@ -477,7 +480,7 @@ export class Renderer {
                 {
                     textureToUse = Constants.TEX_ID_ROCK;
                     this.texObjectDictionary[ Constants.TEX_ID_ROCK ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+                        this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation,
                         this.squareIndicesTextured, vec2.fromValues( Constants.TILE_SIZE*x, Constants.TILE_SIZE*y ), Constants.TILE_SIZE );
                 }
                 else
@@ -506,7 +509,7 @@ export class Renderer {
 
                     if ( textureToUse != -1 )
                         this.texObjectDictionary[ textureToUse ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-                            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+                            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation,
                             this.squareIndicesTextured, vec2.fromValues( Constants.TILE_SIZE*x, Constants.TILE_SIZE*y ), Constants.TILE_SIZE );
                 }
             }
@@ -520,7 +523,7 @@ export class Renderer {
                     if (level.blockDataLevelArray[level.levelNumber][x][y] == Constants.TILE_ID_FLAME_SPITTER)
                     {
                         this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_FLAMES_BIG ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-                            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.squareIndicesTextured,
+                            this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation, this.squareIndicesTextured,
                             vec2.fromValues( Constants.TILE_SIZE * x - Constants.SPRITE_FLAMES_SIZE / 4, Constants.TILE_SIZE * (y + 1) ),
                             Constants.SPRITE_FLAMES_SIZE, level.flamesLoopValue > 0.5 ? 0 : 1
                         );
@@ -532,7 +535,7 @@ export class Renderer {
         if (!level.mcRunning)
         {
             this.texObjectDictionary[ Constants.TEX_ID_STANDING ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation,
                 this.squareIndicesTextured, level.mcPosition, Constants.SPRITE_SUIT_SIZE, level.facing == CharacterFacing.Right );
         }
         else
@@ -543,7 +546,7 @@ export class Renderer {
             if (frameToRender >= Constants.SPRITE_SUIT_FRAMES)
                 frameToRender = Constants.SPRITE_SUIT_FRAMES - 1;
             this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_SUIT ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation,
                 this.squareIndicesTextured, level.mcPosition, Constants.SPRITE_SUIT_SIZE, frameToRender, level.facing == CharacterFacing.Right );
         }
 
@@ -561,14 +564,14 @@ export class Renderer {
     }
 
     public renderString(mvp: mat3, x: number, y: number, text: string, size: number = Constants.TEXT_DEFAULT_HEIGHT) {
-        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation )
+        if ( !this.gl || !this.shaderProgramTextured || !this.matrixLocationTextured || !this.uvOffsetLocation || !this.uvScaleLocation || !this.samplerLocation )
             return;
 
         let kerning: number = 0;
         for (let i: number = 0; i < text.length; ++i)
         {
             this.spriteTexObjectDictionary[ Constants.TEX_ID_SPRITE_FONT ].glRenderFromCorner( this.gl, this.shaderProgramTextured, mvp,
-                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation,
+                this.matrixLocationTextured, this.uvOffsetLocation, this.uvScaleLocation, this.samplerLocation,
                 this.squareIndicesTextured, vec2.fromValues(x + kerning, y), size, this.getPrintableCharacterIndex(text.charCodeAt(i)), true );
             kerning += size - (Constants.TEXT_KERNING / Constants.TEXT_DEFAULT_HEIGHT * size);
         }
