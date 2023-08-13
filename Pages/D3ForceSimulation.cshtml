@@ -1,0 +1,39 @@
+@page
+@model D3ForceSimulationModel
+@{
+    ViewData["Title"] = "D3 Force Simulation";
+}
+
+@section Scripts {
+    <script src="~/js/d3_force_simulation.bundle.js" type="text/javascript"></script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/d3_force_sim.css" asp-append-version="true" />
+}
+
+<partial name="_ProjectMenuPartial" />
+
+<div class="bottom-left padding-0px">
+    <div class="semitransparent-bg-only rounded-border-only thick-white-border-only menu-margin-padding-only-bottom-left light-text inline-block-only">
+        <div class="hidden limit-text-container-width text-container-padding" id="hideable-info-menu-content-container">
+            <p>D3 Force Simulation Demo</p>
+            <p><b>Controls</b><br>
+            Left mouse: Click and drag to move nodes about.<br>
+            </p>
+            <p><b>Explanation</b></p>
+            <p>This uses the D3 Force Simulation module.</p>
+            <p>The visual layout of nodes in a graph is controlled partly by a physics simulation and partly by the user.</p>
+            <p>As an example graph structure, the connectivity of areas in Dark Souls 1 is used.</p>
+            <div class="vertical-spacer"></div>
+        </div>
+        <div id="info-menu-div" class="hand-cursor unselectable">
+            <img class="menu-icon" src="assets/info-icon.png">
+            <span>Info</span>
+        </div>
+    </div>
+</div>
+
+<div id="tooltip" style="display: none; position: absolute;"></div>
+
+<svg></svg>

@@ -18,7 +18,7 @@
             "serverReadyAction": {
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
-                "uriFormat": "%s/hotrocks"
+                "uriFormat": "%s/d3forcesimulation"
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
