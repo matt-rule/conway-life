@@ -550,7 +550,7 @@ export class Renderer {
                 this.squareIndicesTextured, level.mcPosition, Constants.SPRITE_SUIT_SIZE, frameToRender, level.facing == CharacterFacing.Right );
         }
 
-        let stringToRender = "Level " + level.levelNumber + (level.editorMode ? " (editor)" : "");
+        let stringToRender = "Level " + (level.levelNumber + 1) + (level.editorMode ? " (editor)" : "");
         this.renderString(projectionMatrix, 30, screenHeight - 100, stringToRender, 16);
     }
 

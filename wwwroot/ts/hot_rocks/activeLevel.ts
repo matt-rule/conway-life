@@ -11,7 +11,7 @@ export enum LevelResetCause { Start, Death, Victory }
 
 export class ActiveLevel {
 
-    public levelNumber: number = 1;
+    public levelNumber: number = 0;
 
     public lavaSpeedPerLevel: number[] = [];
 
@@ -65,7 +65,7 @@ export class ActiveLevel {
             return true;
 
         if (resetCause == LevelResetCause.Start)
-            this.levelNumber = 1;
+            this.levelNumber = 0;
         else if (resetCause == LevelResetCause.Victory)
         {
             ++this.levelNumber;
