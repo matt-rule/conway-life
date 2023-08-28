@@ -6,12 +6,14 @@ export class Game
     public lastUpdateTime: number;
     public latestKeyState: KeyboardState;
     public frameTimeCounterSecs: number;
+    public rotationAngle: number;
 
     constructor()
     {
         this.lastUpdateTime = 0;
         this.latestKeyState = new KeyboardState();
         this.frameTimeCounterSecs = 0;
+        this.rotationAngle = 0;
     }
 
     onUpdateFrame( currentKeyState: KeyboardState, deltaTimeSecs: number ) {
@@ -21,7 +23,7 @@ export class Game
 
         while (this.frameTimeCounterSecs > intervalSecs)
         {
-            
+            this.rotationAngle += intervalSecs;
             this.frameTimeCounterSecs -= intervalSecs;
         }
 

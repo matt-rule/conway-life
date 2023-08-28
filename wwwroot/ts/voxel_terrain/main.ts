@@ -2,9 +2,24 @@ import * as Constants from "./constants"
 import { Game } from "./game";
 // import { ImagesDictionary } from "./renderer";
 import { Key, KeyboardState } from "../keyboardState";
-import { Renderer } from "./renderer";
+import { ImagesDictionary, Renderer } from "./renderer";
 // import { vec2 } from "gl-matrix";
 // import { LevelResetCause } from "./activeLevel";
+
+let imageUrls = [
+    "assets/voxel_terrain/ice.png"
+];
+
+function promiseFunction(url : string) {
+    return new Promise<{[key: string]: HTMLImageElement}>((resolve, reject) => {
+        let img = new Image();
+        img.onload = () => resolve({[url]: img});
+        img.onerror = reject;
+        img.src = url;
+    });
+}
+
+let loadImagePromises = imageUrls.map(promiseFunction);
 
 // const SQUARE_SPEED: number = 60;
 
@@ -139,55 +154,59 @@ if (tmp) {
     let canvas : HTMLCanvasElement = tmp;
     let game : Game = new Game();
 
-//     Promise.all(loadStillImagePromises).then(stillImageObjects => {
-//         let stillImages: ImagesDictionary = Object.assign({}, ...stillImageObjects);
+    Promise.all(loadImagePromises).then(imageObjects => {
+        let images: ImagesDictionary = Object.assign({}, ...imageObjects);
     
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    canvas.style.width = `${window.innerWidth}px`;
-    canvas.style.height = `${window.innerHeight}px`;
-    canvas.style.maxWidth = `${window.innerWidth}px`;
-    canvas.style.maxHeight = `${window.innerHeight}px`;
-    let gl: WebGL2RenderingContext | null = canvas.getContext("webgl2");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.style.width = `${window.innerWidth}px`;
+        canvas.style.height = `${window.innerHeight}px`;
+        canvas.style.maxWidth = `${window.innerWidth}px`;
+        canvas.style.maxHeight = `${window.innerHeight}px`;
+        let gl: WebGL2RenderingContext | null = canvas.getContext("webgl2");
 
-    if (gl) {
-        let renderer : Renderer = new Renderer( canvas, gl );
-        renderer.init();
+        if (gl) {
+            let renderer : Renderer = new Renderer( canvas, gl );
+            renderer.init( images );
 
-        onresize = (event: UIEvent) => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            canvas.style.width = `${window.innerWidth}px`;
-            canvas.style.height = `${window.innerHeight}px`;
-            canvas.style.maxWidth = `${window.innerWidth}px`;
-            canvas.style.maxHeight = `${window.innerHeight}px`;
+            onresize = (event: UIEvent) => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                canvas.style.width = `${window.innerWidth}px`;
+                canvas.style.height = `${window.innerHeight}px`;
+                canvas.style.maxWidth = `${window.innerWidth}px`;
+                canvas.style.maxHeight = `${window.innerHeight}px`;
 
-            renderer.onResize(window.innerWidth, window.innerHeight);
-        };
+                renderer.onResize(window.innerWidth, window.innerHeight);
+            };
 
-        function animate(time: number) {
-            if (game.lastUpdateTime == 0) {
+            function animate(time: number) {
+                if (game.lastUpdateTime == 0) {
+                    game.lastUpdateTime = time;
+                    requestAnimationFrame(animate);
+                    return;    
+                }
+
+                let deltaTimeMs = time - game.lastUpdateTime; // time since last frame
                 game.lastUpdateTime = time;
+                let deltaTimeSecs = deltaTimeMs / 1000;
+            
+                game.onUpdateFrame( currentKeyState, deltaTimeSecs );
+                
+                renderer.draw( game );
+            
                 requestAnimationFrame(animate);
-                return;    
             }
 
-            let deltaTimeMs = time - game.lastUpdateTime; // time since last frame
-            game.lastUpdateTime = time;
-            let deltaTimeSecs = deltaTimeMs / 1000;
-        
-            game.onUpdateFrame( currentKeyState, deltaTimeSecs );
-            
-            renderer.draw( game );
-        
             requestAnimationFrame(animate);
         }
+        else {
+            alert('Your browser does not support webgl2');
+        }
 
-        requestAnimationFrame(animate);
-    }
-    else {
-        alert('Your browser does not support webgl2');
-    }
+    }).catch(err => {
+        console.error("Error occurred loading texture images: ", err);
+    });
 
 
 //                 function reset_btn_click(): void

@@ -1,7 +1,7 @@
 import * as Constants from "./constants";
 import { mat3, vec2 } from "gl-matrix";
 import { SpriteTexObject } from "./spriteTexObject";
-import { TexObject } from "./texObject";
+import { TexObject } from "../texObject";
 import { ActiveLevel, CharacterFacing } from "./activeLevel";
 import { Util } from "./util";
 
