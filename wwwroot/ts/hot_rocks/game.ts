@@ -1,7 +1,7 @@
 import { ActiveLevel } from "./activeLevel";
 import * as Constants from "./constants";
 import { Renderer, ImagesDictionary } from "./renderer";
-import { Key, KeyboardState } from "./keyboardState";
+import { Key, KeyboardState } from "../keyboardState";
 
 export class Game {
     // Define members (properties)
@@ -14,7 +14,6 @@ export class Game {
     public loadedLevels: number[][][];
     public level: ActiveLevel | null;
     
-    // Define a constructor
     constructor(canvas: HTMLCanvasElement)
     {
         this.canvas = canvas;

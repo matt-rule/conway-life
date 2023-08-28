@@ -1,0 +1,1 @@
+export const UPDATE_FPS: number = 90;  // Update FPS only - not drawing

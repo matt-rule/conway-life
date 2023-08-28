@@ -1,6 +1,6 @@
 import { BoundingBox } from "./boundingBox";
 import * as Constants from "./constants";
-import { Key, KeyboardState } from "./keyboardState";
+import { Key, KeyboardState } from "../keyboardState";
 import { vec2 } from "gl-matrix";
 import { LavaBombEntity } from "./lavaBombEntity";
 import { Util } from "./util";

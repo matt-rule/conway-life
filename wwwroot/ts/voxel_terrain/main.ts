@@ -1,7 +1,8 @@
-// import * as Constants from "./constants"
-// import { Game } from "./game";
+import * as Constants from "./constants"
+import { Game } from "./game";
 // import { ImagesDictionary } from "./renderer";
-// import { Key, KeyboardState } from "./keyboardState";
+import { Key, KeyboardState } from "../keyboardState";
+import { Renderer } from "./renderer";
 // import { vec2 } from "gl-matrix";
 // import { LevelResetCause } from "./activeLevel";
 
@@ -103,102 +104,91 @@
 //     return tiles;
 // }
 
-// let currentKeyState: KeyboardState = new KeyboardState();
+let currentKeyState: KeyboardState = new KeyboardState();
 
-// document.addEventListener('keydown', (event: KeyboardEvent) => {
-//     switch (event.key)
-//     {
-//         case 'a':
-//         case 'A':
-//             currentKeyState.keyStates[Key.A] = true;
-//             break;
-//         case 'd':
-//         case 'D':
-//             currentKeyState.keyStates[Key.D] = true;
-//             break;
-//         case 'w':
-//         case 'W':
-//             currentKeyState.keyStates[Key.W] = true;
-//             break;
-//         case ' ':
-//             currentKeyState.keyStates[Key.Space] = true;
-//             break;
-//         case 'ArrowLeft':
-//             currentKeyState.keyStates[Key.Left] = true;
-//             break;
-//         case 'ArrowRight':
-//             currentKeyState.keyStates[Key.Right] = true;
-//             break;
-//         case 'ArrowUp':
-//             currentKeyState.keyStates[Key.Up] = true;
-//             break;
-//         case 'F1':  // TODO: Test F keys
-//             currentKeyState.keyStates[Key.F1] = true;
-//             break;
-//         case 'F2':
-//             currentKeyState.keyStates[Key.F2] = true;
-//             break;
-//         case 'F12':
-//             currentKeyState.keyStates[Key.F12] = true;
-//             break;
-//     }
-// });
+document.addEventListener('keydown', (event: KeyboardEvent) => {
+    switch (event.key)
+    {
+        case 'a':
+        case 'A':
+            currentKeyState.keyStates[Key.A] = true;
+            break;
+        case 'd':
+        case 'D':
+            currentKeyState.keyStates[Key.D] = true;
+            break;
+    }
+});
 
-// document.addEventListener('keyup', (event: KeyboardEvent) => {
-//     switch (event.key)
-//     {
-//         case 'a':
-//         case 'A':
-//             currentKeyState.keyStates[Key.A] = false;
-//             break;
-//         case 'd':
-//         case 'D':
-//             currentKeyState.keyStates[Key.D] = false;
-//             break;
-//         case 'w':
-//         case 'W':
-//             currentKeyState.keyStates[Key.W] = false;
-//             break;
-//         case ' ':
-//             currentKeyState.keyStates[Key.Space] = false;
-//             break;
-//         case 'ArrowLeft':
-//             currentKeyState.keyStates[Key.Left] = false;
-//             break;
-//         case 'ArrowRight':
-//             currentKeyState.keyStates[Key.Right] = false;
-//             break;
-//         case 'ArrowUp':
-//             currentKeyState.keyStates[Key.Up] = false;
-//             break;
-//         case 'F1':  // TODO: Test F keys
-//             currentKeyState.keyStates[Key.F1] = false;
-//             break;
-//         case 'F2':
-//             currentKeyState.keyStates[Key.F2] = false;
-//             break;
-//         case 'F12':
-//             currentKeyState.keyStates[Key.F12] = false;
-//             break;
-//     }
-// });
+document.addEventListener('keyup', (event: KeyboardEvent) => {
+    switch (event.key)
+    {
+        case 'a':
+        case 'A':
+            currentKeyState.keyStates[Key.A] = false;
+            break;
+        case 'd':
+        case 'D':
+            currentKeyState.keyStates[Key.D] = false;
+            break;
+    }
+});
 
-// let canvas: HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement;
-// if (canvas) {
-//     let game : Game = new Game(canvas);
+let tmp : HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement;
+if (tmp) {
+    let canvas : HTMLCanvasElement = tmp;
+    let game : Game = new Game();
 
 //     Promise.all(loadStillImagePromises).then(stillImageObjects => {
 //         let stillImages: ImagesDictionary = Object.assign({}, ...stillImageObjects);
     
-//         Promise.all(loadAnimatedImagePromises).then(animatedImageObjects => {
-//             let animatedImages: ImagesDictionary = Object.assign({}, ...animatedImageObjects);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
+    canvas.style.maxWidth = `${window.innerWidth}px`;
+    canvas.style.maxHeight = `${window.innerHeight}px`;
+    let gl: WebGL2RenderingContext | null = canvas.getContext("webgl2");
 
-//             Promise.all(levelNumbers.map(levelNumber => loadTilesFromFile(false, levelNumber))).then(loadedLevels => {
-//                 if (!canvas)
-//                     return;
+    if (gl) {
+        let renderer : Renderer = new Renderer( canvas, gl );
+        renderer.init();
+
+        onresize = (event: UIEvent) => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.style.width = `${window.innerWidth}px`;
+            canvas.style.height = `${window.innerHeight}px`;
+            canvas.style.maxWidth = `${window.innerWidth}px`;
+            canvas.style.maxHeight = `${window.innerHeight}px`;
+
+            renderer.onResize(window.innerWidth, window.innerHeight);
+        };
+
+        function animate(time: number) {
+            if (game.lastUpdateTime == 0) {
+                game.lastUpdateTime = time;
+                requestAnimationFrame(animate);
+                return;    
+            }
+
+            let deltaTimeMs = time - game.lastUpdateTime; // time since last frame
+            game.lastUpdateTime = time;
+            let deltaTimeSecs = deltaTimeMs / 1000;
         
-//                 game = new Game( canvas );
-//                 game.init(stillImages, animatedImages, loadedLevels);
+            game.onUpdateFrame( currentKeyState, deltaTimeSecs );
+            
+            renderer.draw( game );
+        
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+    }
+    else {
+        alert('Your browser does not support webgl2');
+    }
+
 
 //                 function reset_btn_click(): void
 //                 {
@@ -227,23 +217,4 @@
 //     }).catch(err => {
 //         console.error("Error occurred loading still images: ", err);
 //     });
-
-//     function animate(time: number) {
-//         if (game.lastUpdateTime == 0) {
-//             game.lastUpdateTime = time;
-//             requestAnimationFrame(animate);
-//             return;    
-//         }
-
-//         let deltaTimeMs = time - game.lastUpdateTime; // time since last frame
-//         game.lastUpdateTime = time;
-//         let deltaTimeSecs = deltaTimeMs / 1000;
-    
-//         game.onUpdateFrame( currentKeyState, deltaTimeSecs );
-        
-//         if ( game.level )
-//             game.renderer.draw( game.level, game.gameWon );
-    
-//         requestAnimationFrame(animate);
-//     }
-// }
+}
