@@ -141,18 +141,6 @@ button {
   min-height: 60px;
 }
 
-.has-centred-text {
-  text-align: center;
-}
-
-.is-centred {
-  margin: auto;
-  top: 50%;
-  left: 50%;
-  position: absolute;
-  transform: translate(-50%, -50%);
-}
-
 .top-left {
   position: absolute;
   top: 0;
