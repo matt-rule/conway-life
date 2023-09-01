@@ -160,6 +160,13 @@ button {
   padding: 20px;
 }
 
+.bottom-right {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 10px 15px;
+}
+
 .bottom-left {
   position: absolute;
   bottom: 0;
@@ -333,4 +340,16 @@ input[type="checkbox"] {
 
 .bottom-margin-12px {
   margin: 0px 0px 12px 0px;
+}
+
+.zero-margin {
+  margin: 0px;
+}
+
+.text-shadow {
+  text-shadow: 1px 1px #333333;
+}
+
+.light-grey {
+  color: #cccccc;
 }

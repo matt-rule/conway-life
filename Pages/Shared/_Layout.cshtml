@@ -11,14 +11,14 @@
 <body style="margin: 0px; height:100%; min-height:100%">
     @* <header>
     </header> *@
-    <div class="" style="height:100%; min-height:100%">
-        <main role="main" class="" style="height:100%; min-height:100%">
+    <div style="height:100%; min-height:100%">
+        <main role="main" style="height:100%; min-height:100%">
             @RenderBody()
+            <div class="bottom-right">
+                <p class="zero-margin text-shadow light-grey">@Html.Raw("© Copyright Matthew Rule 2023" + ( DateTime.Now.Year == 2023 ? "" : "-" + DateTime.Now.Year))</p>
+            </div>
         </main>
     </div>
-
-    @* <footer class="border-top footer text-muted">
-    </footer> *@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
